@@ -76,7 +76,7 @@ const useFileProcessor = ({
           const url = window.URL.createObjectURL(new Blob([data]));
           const link = document.createElement('a');
           link.href = url;
-          link.setAttribute('download', 'pixel-pushup-images.zip'); // Unified zip name for all files
+          link.setAttribute('download', 'pixel-pushup-images.zip');
           document.body.appendChild(link);
           link.click();
           link.parentNode.removeChild(link);

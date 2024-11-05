@@ -1,7 +1,7 @@
 // App.jsx (with container styles)
 import React from 'react';
 import styled from '@emotion/styled';
-import Form from './components/Form';
+import UploadForm from './components/UploadForm';
 
 const Container = styled.div`
   display: flex;
@@ -13,7 +13,7 @@ const Container = styled.div`
 const App = () => {
   return (
     <Container>
-      <Form />
+      <UploadForm />
     </Container>
   );
 };
