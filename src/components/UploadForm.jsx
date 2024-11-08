@@ -13,19 +13,20 @@ import useFileProcessor from '../hooks/useFileProcessor';
 
 const FormContainer = styled.div`
   font-family: 'Inter', sans-serif;
-  max-width: 28rem;
+  max-width: 58rem;
   width: 100%;
   margin: 0 auto;
   background-color: white;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 1.5rem;
+  padding: 2.5rem;
 `;
 
 const DropZoneContainer = styled.div`
-  margin-top: 1rem;
-  padding: 1.5rem;
+  margin-top: 2rem;
+  padding: 2.5rem;
   border: 2px dashed;
   border-color: ${(props) => (props.isDragActive ? '#3B82F6' : '#D1D5DB')};
   border-radius: 0.5rem;
@@ -43,20 +44,20 @@ const DropZoneContainer = styled.div`
 
 const UploadIcon = styled(Upload)`
   margin: 0 auto;
-  height: 3rem;
-  width: 3rem;
+  height: 5rem;
+  width: 5rem;
   color: #9ca3af;
 `;
 
 const DropzoneText = styled.p`
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
+  margin-top: 1.5rem;
+  font-size: 1.5rem;
   color: #4b5563;
 `;
 
 const DropzoneLimitText = styled.p`
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
+  margin-top: 1rem;
+  font-size: 1.5rem;
   color: #6b7280;
 `;
 
@@ -71,7 +72,7 @@ const ModeButtonContainer = styled.div`
 
 const ModeButton = styled.button`
   flex: 1;
-  padding: 0.75rem;
+  padding: 2rem;
   border-radius: 0.5rem;
   border: 2px solid;
   border-color: ${(props) => (props.isSelected ? '#3B82F6' : '#E5E7EB')};
@@ -93,7 +94,7 @@ const ModeButtonIcon = styled.div`
 `;
 
 const ModeButtonText = styled.p`
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   font-weight: 500;
 `;
 
@@ -107,7 +108,7 @@ const FilesList = styled.div`
 const FileItem = styled.div`
   display: flex;
   align-items: center;
-  padding: 0.75rem;
+  padding: 1rem;
   background-color: #f9fafb;
   border-radius: 0.5rem;
 `;
@@ -118,7 +119,7 @@ const FileInfo = styled.div`
 `;
 
 const FileName = styled.p`
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -149,8 +150,8 @@ const RemoveButton = styled.button`
 `;
 
 const LoadingSpinner = styled.div`
-  width: 1rem;
-  height: 1rem;
+  width: 2rem;
+  height: 2rem;
   border: 2px solid #60a5fa;
   border-top-color: transparent;
   border-radius: 50%;
@@ -169,7 +170,7 @@ const BucketInput = styled.div`
 
 const InputLabel = styled.label`
   display: block;
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   font-weight: 500;
   color: #374151;
   margin-bottom: 0.25rem;
@@ -196,9 +197,10 @@ const Input = styled.input`
 
 const Button = styled.button`
   width: 100%;
-  padding: 0.5rem 1rem;
+  padding: 1rem 1.5rem;
   border-radius: 0.375rem;
   font-weight: 500;
+  font-size: 1.8rem;
   color: white;
   transition: background-color 0.2s ease;
   margin-top: 1rem;
@@ -240,6 +242,9 @@ const Message = styled.div`
   padding: 0.75rem;
   border-radius: 0.375rem;
   margin-top: 1rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+
   ${(props) =>
     props.variant === 'error'
       ? `
@@ -260,7 +265,7 @@ const UploadForm = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { processFiles, cancelProcessing, controllers } = useFileProcessor({
+  const { processFiles, cancelProcessing } = useFileProcessor({
     files,
     processingMode,
     bucketLocation,
@@ -290,7 +295,7 @@ const UploadForm = () => {
         status: 'pending',
         progress: 0,
         file,
-      }))
+      })),
     );
   }, []);
 
@@ -332,7 +337,7 @@ const UploadForm = () => {
       prevStatuses.map((file) => ({
         ...file,
         status: 'processing',
-      }))
+      })),
     );
 
     setLoading(true);
@@ -342,9 +347,9 @@ const UploadForm = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'success':
-        return <CheckCircle size={20} color='#10B981' />;
+        return <CheckCircle size={20} color="#10B981" />;
       case 'error':
-        return <AlertCircle size={20} color='#EF4444' />;
+        return <AlertCircle size={20} color="#EF4444" />;
       case 'processing':
         return <LoadingSpinner />;
       case 'pending':
@@ -383,7 +388,7 @@ const UploadForm = () => {
                   {getStatusIcon(file.status)}
                   {!loading && (
                     <RemoveButton onClick={(e) => handleRemoveFile(index, e)}>
-                      <X size={16} color='#6B7280' />
+                      <X size={20} color="#6B7280" />
                     </RemoveButton>
                   )}
                 </FileActions>
@@ -395,26 +400,26 @@ const UploadForm = () => {
         <ProcessingModeContainer>
           <ModeButtonContainer>
             <ModeButton
-              type='button'
+              type="button"
               onClick={() => setProcessingMode('local')}
               isSelected={processingMode === 'local'}
               $loading={loading}
               disabled={loading}
             >
               <ModeButtonIcon>
-                <Download size={20} />
+                <Download size={30} />
               </ModeButtonIcon>
               <ModeButtonText>Download Locally</ModeButtonText>
             </ModeButton>
             <ModeButton
-              type='button'
+              type="button"
               onClick={() => setProcessingMode('aws')}
               isSelected={processingMode === 'aws'}
               $loading={loading}
               disabled={loading}
             >
               <ModeButtonIcon>
-                <Cloud size={20} />
+                <Cloud size={30} />
               </ModeButtonIcon>
               <ModeButtonText>Upload to AWS</ModeButtonText>
             </ModeButton>
@@ -425,33 +430,33 @@ const UploadForm = () => {
           <BucketInput>
             <InputLabel>AWS Bucket Location</InputLabel>
             <Input
-              type='text'
+              type="text"
               value={bucketLocation}
               onChange={(e) => setBucketLocation(e.target.value)}
-              placeholder='s3://my-bucket/path'
+              placeholder="s3://my-bucket/path"
               disabled={loading}
             />
           </BucketInput>
         )}
 
         <Button
-          type='submit'
-          variant='primary'
+          type="submit"
+          variant="primary"
           disabled={loading || files.length === 0}
         >
           {loading ? 'Processing...' : 'Process Images'}
         </Button>
 
         {loading && (
-          <Button type='button' variant='danger' onClick={cancelProcessing}>
+          <Button type="button" variant="danger" onClick={cancelProcessing}>
             Cancel Processing
           </Button>
         )}
 
         {(files.length > 0 || fileStatuses.length > 0 || bucketLocation) && (
           <Button
-            type='button'
-            variant='secondary'
+            type="button"
+            variant="secondary"
             onClick={clearForm}
             disabled={loading}
           >

@@ -23,9 +23,6 @@ const useFileProcessor = ({
     }));
     setFileStatuses(updatedStatuses);
 
-    console.log('Processing all files together as a single zip');
-
-    // Process all files (single or multiple) together
     processAllFiles(files);
   };
 
@@ -85,6 +82,7 @@ const useFileProcessor = ({
         setMessage('Processing complete.');
       })
       .catch((error) => {
+        // replace with toast message
         console.error('Error:', error);
         updatedStatuses.forEach((status) => {
           status.status = 'error';
