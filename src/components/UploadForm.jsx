@@ -125,21 +125,6 @@ const FileName = styled.p`
   text-overflow: ellipsis;
 `;
 
-const ProgressBarContainer = styled.div`
-  width: 100%;
-  height: 0.375rem;
-  background-color: #e5e7eb;
-  border-radius: 9999px;
-  margin-top: 0.5rem;
-`;
-
-const ProgressBar = styled.div`
-  height: 100%;
-  background-color: #3b82f6;
-  border-radius: 9999px;
-  transition: width 0.3s ease;
-`;
-
 const FileActions = styled.div`
   display: flex;
   align-items: center;
@@ -148,12 +133,33 @@ const FileActions = styled.div`
 `;
 
 const RemoveButton = styled.button`
-  padding: 0.25rem;
-  border-radius: 9999px;
-  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
 
   &:hover {
-    background-color: #e5e7eb;
+    color: #ef4444; /* Slight color change on hover for better UX */
+  }
+`;
+
+const LoadingSpinner = styled.div`
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #60a5fa;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 
@@ -217,6 +223,17 @@ const Button = styled.button`
       background-color: #DC2626;
     }
   `}
+
+  ${(props) =>
+    props.variant === 'secondary' &&
+    `
+    background-color: #D1D5DB;
+    color: #374151;
+
+    &:hover {
+      background-color: #9CA3AF;
+    }
+  `}
 `;
 
 const Message = styled.div`
@@ -235,21 +252,6 @@ const Message = styled.div`
   `}
 `;
 
-const LoadingSpinner = styled.div`
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid #60a5fa;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
 const UploadForm = () => {
   const [files, setFiles] = useState([]);
   const [fileStatuses, setFileStatuses] = useState([]);
@@ -266,6 +268,14 @@ const UploadForm = () => {
     setLoading,
     setMessage,
   });
+
+  const clearForm = () => {
+    setFiles([]);
+    setFileStatuses([]);
+    setBucketLocation('');
+    setMessage('');
+    setLoading(false);
+  };
 
   const handleDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles.length > 5) {
@@ -367,11 +377,7 @@ const UploadForm = () => {
               <FileItem key={index}>
                 <FileInfo>
                   <FileName>{file.name}</FileName>
-                  {file.progress > 0 && (
-                    <ProgressBarContainer>
-                      <ProgressBar style={{ width: `${file.progress}%` }} />
-                    </ProgressBarContainer>
-                  )}
+                  {/* Removed ProgressBarContainer */}
                 </FileInfo>
                 <FileActions>
                   {getStatusIcon(file.status)}
@@ -439,6 +445,17 @@ const UploadForm = () => {
         {loading && (
           <Button type='button' variant='danger' onClick={cancelProcessing}>
             Cancel Processing
+          </Button>
+        )}
+
+        {(files.length > 0 || fileStatuses.length > 0 || bucketLocation) && (
+          <Button
+            type='button'
+            variant='secondary'
+            onClick={clearForm}
+            disabled={loading}
+          >
+            Clear Form
           </Button>
         )}
 
