@@ -1,6 +1,12 @@
 // App.jsx (with container styles)
 import React from 'react';
 import styled from '@emotion/styled';
+import ContextProvider from './context/GlobalProvider';
+
+// Import theme
+import { ThemeProvider } from '@emotion/react';
+import theme from './style/theme';
+
 import UploadForm from './components/UploadForm';
 
 const Container = styled.div`
@@ -12,9 +18,13 @@ const Container = styled.div`
 
 const App = () => {
   return (
-    <Container>
-      <UploadForm />
-    </Container>
+    <ContextProvider>
+      <ThemeProvider theme={theme}>
+        <Container>
+          <UploadForm />
+        </Container>
+      </ThemeProvider>
+    </ContextProvider>
   );
 };
 

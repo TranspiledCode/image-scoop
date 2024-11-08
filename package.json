@@ -31,5 +31,12 @@
     "prettier": "^3.3.3",
     "process": "^0.11.10",
     "prop-types": "^15.8.1"
+  },
+  "alias": {
+    "components": "./src/components",
+    "hooks": "./src/hooks",
+    "pages": "./src/pages",
+    "context": "./src/context",
+    "style": "./src/style"
   }
 }
