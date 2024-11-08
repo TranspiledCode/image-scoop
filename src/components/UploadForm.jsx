@@ -1,6 +1,8 @@
 // src/components/UploadForm.jsx
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useToast } from 'context/ToastContext'; // Import useToast hook
+
 import FormContainer from './FormContainer';
 import DropZone from './DropZone';
 import FilesList from './FilesList';
@@ -8,7 +10,6 @@ import ProcessingMode from './ProcessingMode';
 import ExportTypeSelector from './ExportTypeSelector'; // Import the new component
 import BucketInput from './BucketInput';
 import Button from './Button';
-import Message from './Message';
 import useFileProcessor from '../hooks/useFileProcessor';
 
 const UploadForm = () => {
@@ -16,32 +17,30 @@ const UploadForm = () => {
   const [fileStatuses, setFileStatuses] = useState([]);
   const [processingMode, setProcessingMode] = useState('local');
   const [bucketLocation, setBucketLocation] = useState('');
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [exportType, setExportType] = useState('webp'); // New state for export type
+  const { addToast } = useToast(); // Get the addToast function from ToastContext
 
   const { processFiles, cancelProcessing } = useFileProcessor({
     files,
     processingMode,
     bucketLocation,
-    exportType, // Pass exportType to the hook
+    exportType,
     setFileStatuses,
     setLoading,
-    setMessage,
   });
 
   const clearForm = () => {
     setFiles([]);
     setFileStatuses([]);
     setBucketLocation('');
-    setMessage('');
     setLoading(false);
-    setExportType('webp'); // Reset export type
+    setExportType('webp');
   };
 
   const handleDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles.length > 5) {
-      setMessage('You can only upload up to 5 images at a time.');
+      addToast('Maximum number of files exceeded', 'danger');
       return;
     }
 
@@ -81,11 +80,11 @@ const UploadForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (files.length === 0) {
-      setMessage('Please select at least one file.');
+      addToast('Please select at least one file.', 'danger');
       return;
     }
     if (processingMode === 'aws' && !bucketLocation) {
-      setMessage('Please enter a bucket location.');
+      addToast('Please enter a bucket location.', 'danger');
       return;
     }
 
@@ -169,16 +168,6 @@ const UploadForm = () => {
           >
             Clear Form
           </Button>
-        )}
-
-        {message && (
-          <Message
-            variant={
-              message.toLowerCase().includes('error') ? 'error' : 'success'
-            }
-          >
-            {message}
-          </Message>
         )}
       </form>
     </FormContainer>

@@ -26,7 +26,7 @@ const ToastWrapper = styled.div`
     theme.buttons?.variants[variant]?.textColor || theme.colors.white};
   border-radius: 4px;
   margin-bottom: 12px;
-  width: 300px;
+  width: 400px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   opacity: 0;
   transform: translateY(20px);
@@ -39,6 +39,7 @@ const ToastWrapper = styled.div`
 `;
 
 const ToastMessage = styled.div`
+  font-size: 1.6rem;
   flex-grow: 1;
 `;
 

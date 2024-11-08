@@ -2,6 +2,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import ContextProvider from './context/GlobalProvider';
+import { ToastProvider } from './context/ToastContext';
 
 // Import theme
 import { ThemeProvider } from '@emotion/react';
@@ -20,9 +21,11 @@ const App = () => {
   return (
     <ContextProvider>
       <ThemeProvider theme={theme}>
-        <Container>
-          <UploadForm />
-        </Container>
+        <ToastProvider position="bottom-left">
+          <Container>
+            <UploadForm />
+          </Container>
+        </ToastProvider>
       </ThemeProvider>
     </ContextProvider>
   );

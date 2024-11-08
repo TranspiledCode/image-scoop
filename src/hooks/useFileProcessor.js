@@ -1,5 +1,6 @@
 // src/hooks/useFileProcessor.js
 import { useState } from 'react';
+import { useToast } from 'context/ToastContext'; // Import useToast hook
 
 const useFileProcessor = ({
   files,
@@ -8,13 +9,12 @@ const useFileProcessor = ({
   exportType, // Receive exportType as a parameter
   setFileStatuses,
   setLoading,
-  setMessage,
 }) => {
   const [controllers, setControllers] = useState([]);
+  const { addToast } = useToast(); // Get the addToast function from ToastContext
 
   const processFiles = () => {
     setLoading(true);
-    setMessage('');
 
     const updatedStatuses = files.map((file) => ({
       name: file.name,
@@ -81,24 +81,25 @@ const useFileProcessor = ({
           link.parentNode.removeChild(link);
         }
         setLoading(false);
-        setMessage('Processing complete.');
+        addToast('Processing complete.', 'success');
       })
       .catch((error) => {
-        // Replace with toast message or other error handling
+        // eslint-disable-next-line
         console.error('Error:', error);
+        addToast('An error occurred during processing.', 'danger');
         updatedStatuses.forEach((status) => {
           status.status = 'error';
         });
         setFileStatuses([...updatedStatuses]);
         setLoading(false);
-        setMessage('Processing failed.');
+        addToast('Processing failed.', 'danger');
       });
   };
 
   const cancelProcessing = () => {
     controllers.forEach((controller) => controller.abort());
     setLoading(false);
-    setMessage('Processing canceled.');
+    addToast('Processing canceled.', 'info');
   };
 
   return { processFiles, cancelProcessing, controllers };
