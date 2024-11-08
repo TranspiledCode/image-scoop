@@ -36,8 +36,8 @@ const buttons = {
     ghost: {
       borderColor: colors.primary,
       textColor: colors.primary,
-      hoverBgColor: colors.primaryLight,
-      hoverTextColor: colors.white,
+      hoverBgColor: colors.lightGray,
+      hoverTextColor: colors.darkGray,
     },
     outline: {
       bgColor: 'transparent',

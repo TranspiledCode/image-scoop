@@ -1,10 +1,11 @@
-// hooks/useFileProcessor.js
+// src/hooks/useFileProcessor.js
 import { useState } from 'react';
 
 const useFileProcessor = ({
   files,
   processingMode,
   bucketLocation,
+  exportType, // Receive exportType as a parameter
   setFileStatuses,
   setLoading,
   setMessage,
@@ -43,6 +44,7 @@ const useFileProcessor = ({
       formData.append('images', file);
     });
     formData.append('Processing-Mode', processingMode);
+    formData.append('Export-Type', exportType); // Append export type
 
     if (processingMode === 'aws') {
       formData.append('BucketLocation', bucketLocation);
@@ -73,7 +75,7 @@ const useFileProcessor = ({
           const url = window.URL.createObjectURL(new Blob([data]));
           const link = document.createElement('a');
           link.href = url;
-          link.setAttribute('download', 'pixel-pushup-images.zip');
+          link.setAttribute('download', `pixel-pushup-images.zip`);
           document.body.appendChild(link);
           link.click();
           link.parentNode.removeChild(link);
@@ -82,7 +84,7 @@ const useFileProcessor = ({
         setMessage('Processing complete.');
       })
       .catch((error) => {
-        // replace with toast message
+        // Replace with toast message or other error handling
         console.error('Error:', error);
         updatedStatuses.forEach((status) => {
           status.status = 'error';
