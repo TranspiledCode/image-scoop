@@ -47,7 +47,7 @@ const useFileProcessor = ({
     formData.append('Export-Type', exportType); // Append export type
 
     if (processingMode === 'aws') {
-      formData.append('BucketLocation', bucketLocation);
+      formData.append('S3_Prefix', bucketLocation);
     }
 
     fetch('http://localhost:5000/pushup', {
