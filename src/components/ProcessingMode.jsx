@@ -1,5 +1,6 @@
 // src/components/ProcessingMode.js
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
 import { Cloud, Download } from 'lucide-react';
 
@@ -70,5 +71,11 @@ const ProcessingMode = ({ processingMode, setProcessingMode, loading }) => (
     </ModeButtonContainer>
   </Container>
 );
+
+ProcessingMode.propTypes = {
+  processingMode: PropTypes.string.isRequired,
+  setProcessingMode: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+};
 
 export default ProcessingMode;

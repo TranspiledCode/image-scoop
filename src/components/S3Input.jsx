@@ -1,9 +1,9 @@
-// src/components/BucketInput.js
+// src/components/S3Input.js
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
 
-const BucketInputContainer = styled.div`
+const S3InputContainer = styled.div`
   margin-top: 1rem;
 `;
 
@@ -46,28 +46,28 @@ const Input = styled.input`
   }
 `;
 
-const BucketInput = ({
-  bucketLocation,
-  setBucketLocation,
+const S3Input = ({
+  bucketName,
+  setBucketName,
   loading = false,
 }) => (
-  <BucketInputContainer>
-    <InputLabel htmlFor="bucket-location">S3 Bucket Path</InputLabel>
+  <S3InputContainer>
+    <InputLabel htmlFor="s3-bucket-name">S3 Bucket Name</InputLabel>
     <Input
-      id="bucket-location"
+      id="s3-bucket-name"
       type="text"
-      value={bucketLocation}
-      onChange={(e) => setBucketLocation(e.target.value)}
-      placeholder="assets/img"
+      value={bucketName}
+      onChange={(e) => setBucketName(e.target.value)}
+      placeholder="transpiled"
       disabled={loading}
     />
-  </BucketInputContainer>
+  </S3InputContainer>
 );
 
-BucketInput.propTypes = {
-  bucketLocation: PropTypes.string.isRequired,
-  setBucketLocation: PropTypes.func.isRequired,
+S3Input.propTypes = {
+  bucketName: PropTypes.string.isRequired,
+  setBucketName: PropTypes.func.isRequired,
   loading: PropTypes.bool,
 };
 
-export default BucketInput;
+export default S3Input;

@@ -1,14 +1,15 @@
 // src/components/UploadForm.jsx
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { useToast } from 'context/ToastContext'; // Import useToast hook
+import { useToast } from 'context/ToastContext';
 
 import FormContainer from './FormContainer';
 import DropZone from './DropZone';
 import FilesList from './FilesList';
 import ProcessingMode from './ProcessingMode';
-import ExportTypeSelector from './ExportTypeSelector'; // Import the new component
+import ExportTypeSelector from './ExportTypeSelector';
 import BucketInput from './BucketInput';
+import S3Input from './S3Input';
 import Button from './Button';
 import useFileProcessor from '../hooks/useFileProcessor';
 
@@ -16,27 +17,32 @@ const UploadForm = () => {
   const [files, setFiles] = useState([]);
   const [fileStatuses, setFileStatuses] = useState([]);
   const [processingMode, setProcessingMode] = useState('local');
+  const [bucketName, setBucketName] = useState('');
   const [bucketLocation, setBucketLocation] = useState('');
   const [loading, setLoading] = useState(false);
-  const [exportType, setExportType] = useState('webp'); // New state for export type
-  const { addToast } = useToast(); // Get the addToast function from ToastContext
+  const [exportType, setExportType] = useState('webp');
+  const { addToast } = useToast();
 
-  const { processFiles, cancelProcessing } = useFileProcessor({
-    files,
-    processingMode,
-    bucketLocation,
-    exportType,
-    setFileStatuses,
-    setLoading,
-  });
 
   const clearForm = () => {
     setFiles([]);
     setFileStatuses([]);
     setBucketLocation('');
+    setBucketName('');
     setLoading(false);
     setExportType('webp');
   };
+
+  const { processFiles, cancelProcessing } = useFileProcessor({
+    files,
+    processingMode,
+    bucketLocation,
+    bucketName,
+    exportType,
+    setFileStatuses,
+    setLoading,
+    clearForm,
+  });
 
   const handleDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles.length > 5) {
@@ -88,6 +94,11 @@ const UploadForm = () => {
       return;
     }
 
+    if (processingMode === 'aws' && !bucketName) {
+      addToast('Please enter a bucket name.', 'danger');
+      return;
+    }
+
     // Update file statuses to 'processing'
     setFileStatuses((prevStatuses) =>
       prevStatuses.map((file) => ({
@@ -131,11 +142,18 @@ const UploadForm = () => {
         />
 
         {processingMode === 'aws' && (
-          <BucketInput
-            bucketLocation={bucketLocation}
-            setBucketLocation={setBucketLocation}
-            loading={loading}
-          />
+          <>
+            <S3Input
+              bucketName={bucketName}
+              setBucketName={setBucketName}
+              loading={loading}
+            />
+            <BucketInput
+              bucketLocation={bucketLocation}
+              setBucketLocation={setBucketLocation}
+              loading={loading}
+            />
+          </>
         )}
 
         <Button
@@ -158,7 +176,7 @@ const UploadForm = () => {
           </Button>
         )}
 
-        {(files.length > 0 || fileStatuses.length > 0 || bucketLocation) && (
+        {(files.length > 0 || fileStatuses.length > 0 || bucketLocation || bucketName) && (
           <Button
             type="button"
             fullWidth

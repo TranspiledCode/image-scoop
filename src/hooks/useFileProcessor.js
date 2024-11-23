@@ -6,9 +6,11 @@ const useFileProcessor = ({
   files,
   processingMode,
   bucketLocation,
+  bucketName,
   exportType, // Receive exportType as a parameter
   setFileStatuses,
   setLoading,
+  clearForm,
 }) => {
   const [controllers, setControllers] = useState([]);
   const { addToast } = useToast(); // Get the addToast function from ToastContext
@@ -48,6 +50,7 @@ const useFileProcessor = ({
 
     if (processingMode === 'aws') {
       formData.append('S3_Prefix', bucketLocation);
+      formData.append('S3_Bucket_Name', bucketName);
     }
 
     fetch('http://localhost:5000/pushup', {
@@ -81,6 +84,7 @@ const useFileProcessor = ({
           link.parentNode.removeChild(link);
         }
         setLoading(false);
+        clearForm();
         addToast('Processing complete.', 'success');
       })
       .catch((error) => {
