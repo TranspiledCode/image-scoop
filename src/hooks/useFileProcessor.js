@@ -1,4 +1,3 @@
-// src/hooks/useFileProcessor.js
 import { useState } from 'react';
 import { useToast } from 'context/ToastContext'; // Import useToast hook
 
@@ -15,18 +14,34 @@ const useFileProcessor = ({
   const [controllers, setControllers] = useState([]);
   const { addToast } = useToast(); // Get the addToast function from ToastContext
 
+  // Utility function to normalize filenames
+  const normalizeFilename = (filename) => {
+    const parts = filename.split('.');
+    const extension = parts.pop(); // Extract the file extension
+    const baseName = parts.join('-').replace(/\s+/g, '_');
+    const newName = `${baseName}.${extension}`.toLowerCase();
+    console.log(newName);
+    return newName;
+  };
+
   const processFiles = () => {
     setLoading(true);
 
-    const updatedStatuses = files.map((file) => ({
-      name: file.name,
-      status: 'pending',
-      progress: 0,
-      file: file,
-    }));
+    const updatedStatuses = files.map((file) => {
+      const normalizedFilename = normalizeFilename(file.name);
+      return {
+        name: normalizedFilename,
+        status: 'pending',
+        progress: 0,
+        file: new File([file], normalizedFilename, {
+          type: file.type,
+        }), // Create a new File with the normalized name
+      };
+    });
+
     setFileStatuses(updatedStatuses);
 
-    processAllFiles(files);
+    processAllFiles(updatedStatuses.map((status) => status.file));
   };
 
   const processAllFiles = (fileInput) => {
