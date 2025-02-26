@@ -1,30 +1,30 @@
+// useFileProcessor.js
 import { useState } from 'react';
-import { useToast } from 'context/ToastContext'; // Import useToast hook
+import { useToast } from 'context/ToastContext';
 
 const useFileProcessor = ({
   files,
-  processingMode,
-  bucketLocation,
-  bucketName,
-  exportType, // Receive exportType as a parameter
+  exportType,
   setFileStatuses,
   setLoading,
   clearForm,
 }) => {
   const [controllers, setControllers] = useState([]);
-  const { addToast } = useToast(); // Get the addToast function from ToastContext
+  const { addToast } = useToast();
 
-  // Utility function to normalize filenames
   const normalizeFilename = (filename) => {
     const parts = filename.split('.');
-    const extension = parts.pop(); // Extract the file extension
+    const extension = parts.pop();
     const baseName = parts.join('-').replace(/\s+/g, '_');
     const newName = `${baseName}.${extension}`.toLowerCase();
-    console.log(newName);
+    // eslint-disable-next-line no-console
+    console.log(`Normalized filename: ${filename} -> ${newName}`);
     return newName;
   };
 
   const processFiles = () => {
+    // eslint-disable-next-line no-console
+    console.log('Starting file processing...');
     setLoading(true);
 
     const updatedStatuses = files.map((file) => {
@@ -35,12 +35,11 @@ const useFileProcessor = ({
         progress: 0,
         file: new File([file], normalizedFilename, {
           type: file.type,
-        }), // Create a new File with the normalized name
+        }),
       };
     });
 
     setFileStatuses(updatedStatuses);
-
     processAllFiles(updatedStatuses.map((status) => status.file));
   };
 
@@ -60,22 +59,22 @@ const useFileProcessor = ({
     fileInput.forEach((file) => {
       formData.append('images', file);
     });
-    formData.append('Processing-Mode', processingMode);
-    formData.append('Export-Type', exportType); // Append export type
+    formData.append('Export-Type', exportType);
+    // eslint-disable-next-line no-console
+    console.log('FormData prepared, starting fetch.');
 
-    if (processingMode === 'aws') {
-      formData.append('S3_Prefix', bucketLocation);
-      formData.append('S3_Bucket_Name', bucketName);
-    }
+    const API_URL =
+      process.env.REACT_APP_API_URL || '/.netlify/functions/image-processor';
 
-    fetch('http://localhost:5000/pushup', {
+    fetch(API_URL, {
       method: 'POST',
       body: formData,
-      signal: controller.signal,
     })
       .then((response) => {
+        // eslint-disable-next-line no-console
+        console.log('Received response from API.');
         if (response.ok) {
-          return processingMode === 'local' ? response.blob() : response.json();
+          return response.blob();
         } else {
           return response.json().then((err) => {
             throw err;
@@ -89,22 +88,22 @@ const useFileProcessor = ({
         });
         setFileStatuses([...updatedStatuses]);
 
-        if (processingMode === 'local') {
-          const url = window.URL.createObjectURL(new Blob([data]));
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', `pixel-pushup-images.zip`);
-          document.body.appendChild(link);
-          link.click();
-          link.parentNode.removeChild(link);
-        }
+        // eslint-disable-next-line no-console
+        console.log('File processing succeeded, triggering download.');
+        const url = window.URL.createObjectURL(new Blob([data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `processed_images.zip`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
         setLoading(false);
         clearForm();
         addToast('Processing complete.', 'success');
       })
       .catch((error) => {
-        // eslint-disable-next-line
-        console.error('Error:', error);
+        // eslint-disable-next-line no-console
+        console.error('Error during processing:', error);
         addToast('An error occurred during processing.', 'danger');
         updatedStatuses.forEach((status) => {
           status.status = 'error';
@@ -118,6 +117,8 @@ const useFileProcessor = ({
   const cancelProcessing = () => {
     controllers.forEach((controller) => controller.abort());
     setLoading(false);
+    // eslint-disable-next-line no-console
+    console.log('Processing canceled by the user.');
     addToast('Processing canceled.', 'info');
   };
 

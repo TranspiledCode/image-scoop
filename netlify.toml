@@ -1,0 +1,12 @@
+[build]
+command = "npm run build"
+publish = "build"
+functions = "netlify/functions"
+
+[functions]
+node_bundler = "esbuild"
+
+[dev]
+command = "parcel public/index.html --port 1234 --no-cache"  # Command to start Parcel
+port = 8888  # Port where netlify dev serves the app
+publish = "dist"  # Parcel’s output directory (adjust if different)

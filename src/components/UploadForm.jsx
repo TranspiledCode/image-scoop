@@ -2,114 +2,99 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from 'context/ToastContext';
-
 import FormContainer from './FormContainer';
 import DropZone from './DropZone';
 import FilesList from './FilesList';
-import ProcessingMode from './ProcessingMode';
 import ExportTypeSelector from './ExportTypeSelector';
-import BucketInput from './BucketInput';
-import S3Input from './S3Input';
 import Button from './Button';
 import useFileProcessor from '../hooks/useFileProcessor';
 
 const UploadForm = () => {
   const [files, setFiles] = useState([]);
   const [fileStatuses, setFileStatuses] = useState([]);
-  const [processingMode, setProcessingMode] = useState('local');
-  const [bucketName, setBucketName] = useState('');
-  const [bucketLocation, setBucketLocation] = useState('');
   const [loading, setLoading] = useState(false);
   const [exportType, setExportType] = useState('webp');
   const { addToast } = useToast();
 
-
-  const clearForm = () => {
+  const clearForm = useCallback(() => {
     setFiles([]);
     setFileStatuses([]);
-    setBucketLocation('');
-    setBucketName('');
     setLoading(false);
     setExportType('webp');
-  };
+  }, []);
 
-  const { processFiles, cancelProcessing } = useFileProcessor({
+  const { processFiles, cancelProcessing, isCancelled } = useFileProcessor({
     files,
-    processingMode,
-    bucketLocation,
-    bucketName,
     exportType,
     setFileStatuses,
     setLoading,
     clearForm,
+    addToast,
   });
 
-  const handleDrop = useCallback((acceptedFiles) => {
-    if (acceptedFiles.length > 5) {
-      addToast('Maximum number of files exceeded', 'danger');
-      return;
-    }
+  const handleDrop = useCallback(
+    (acceptedFiles) => {
+      if (acceptedFiles.length > 5) {
+        addToast('Maximum of 5 files allowed', 'danger');
+        return;
+      }
 
-    setFiles(acceptedFiles);
-    setFileStatuses(
-      acceptedFiles.map((file) => ({
+      const newFiles = acceptedFiles.map((file) => ({
         name: file.name,
         status: 'pending',
         progress: 0,
         file,
-      })),
-    );
-  }, []);
+      }));
+      setFiles(acceptedFiles);
+      setFileStatuses(newFiles);
+    },
+    [addToast],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif'],
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp'], // Added .webp support
     },
     disabled: loading,
     maxFiles: 5,
   });
 
-  const handleRemoveFile = (index, event) => {
-    if (loading) return;
-    event.stopPropagation();
-    event.preventDefault();
+  const handleRemoveFile = useCallback(
+    (index, event) => {
+      if (loading) return;
+      event.stopPropagation();
+      event.preventDefault();
 
-    const updatedFiles = [...files];
-    const updatedStatuses = [...fileStatuses];
-    updatedFiles.splice(index, 1);
-    updatedStatuses.splice(index, 1);
-    setFiles(updatedFiles);
-    setFileStatuses(updatedStatuses);
-  };
+      setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+      setFileStatuses((prevStatuses) =>
+        prevStatuses.filter((_, i) => i !== index),
+      );
+    },
+    [loading],
+  );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (files.length === 0) {
-      addToast('Please select at least one file.', 'danger');
-      return;
-    }
-    if (processingMode === 'aws' && !bucketLocation) {
-      addToast('Please enter a bucket location.', 'danger');
-      return;
-    }
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (files.length === 0) {
+        addToast('Please select at least one file', 'danger');
+        return;
+      }
 
-    if (processingMode === 'aws' && !bucketName) {
-      addToast('Please enter a bucket name.', 'danger');
-      return;
-    }
+      setFileStatuses((prev) =>
+        prev.map((file) => ({ ...file, status: 'processing', progress: 0 })),
+      );
+      setLoading(true);
+      processFiles();
+    },
+    [files.length, processFiles, addToast],
+  );
 
-    // Update file statuses to 'processing'
-    setFileStatuses((prevStatuses) =>
-      prevStatuses.map((file) => ({
-        ...file,
-        status: 'processing',
-      })),
-    );
-
-    setLoading(true);
-    processFiles();
-  };
+  const handleCancel = useCallback(() => {
+    cancelProcessing();
+    addToast('Processing cancelled', 'warning');
+  }, [cancelProcessing, addToast]);
 
   return (
     <FormContainer>
@@ -121,7 +106,7 @@ const UploadForm = () => {
           loading={loading}
         />
 
-        {files.length > 0 && (
+        {fileStatuses.length > 0 && (
           <FilesList
             fileStatuses={fileStatuses}
             handleRemoveFile={handleRemoveFile}
@@ -129,32 +114,11 @@ const UploadForm = () => {
           />
         )}
 
-        <ProcessingMode
-          processingMode={processingMode}
-          setProcessingMode={setProcessingMode}
-          loading={loading}
-        />
-
         <ExportTypeSelector
           exportType={exportType}
           setExportType={setExportType}
           disabled={loading}
         />
-
-        {processingMode === 'aws' && (
-          <>
-            <S3Input
-              bucketName={bucketName}
-              setBucketName={setBucketName}
-              loading={loading}
-            />
-            <BucketInput
-              bucketLocation={bucketLocation}
-              setBucketLocation={setBucketLocation}
-              loading={loading}
-            />
-          </>
-        )}
 
         <Button
           type="submit"
@@ -170,13 +134,14 @@ const UploadForm = () => {
             type="button"
             fullWidth
             variant="danger"
-            onClick={cancelProcessing}
+            onClick={handleCancel}
+            disabled={isCancelled}
           >
-            Cancel Processing
+            {isCancelled ? 'Cancelling...' : 'Cancel Processing'}
           </Button>
         )}
 
-        {(files.length > 0 || fileStatuses.length > 0 || bucketLocation || bucketName) && (
+        {fileStatuses.length > 0 && (
           <Button
             type="button"
             fullWidth

@@ -4,11 +4,10 @@ import styled from '@emotion/styled';
 import ContextProvider from './context/GlobalProvider';
 import { ToastProvider } from './context/ToastContext';
 
-// Import theme
 import { ThemeProvider } from '@emotion/react';
 import theme from './style/theme';
 
-import UploadForm from './components/UploadForm';
+import Home from 'pages/Home';
 
 const Container = styled.div`
   display: flex;
@@ -23,7 +22,7 @@ const App = () => {
       <ThemeProvider theme={theme}>
         <ToastProvider position="bottom-left">
           <Container>
-            <UploadForm />
+            <Home />
           </Container>
         </ToastProvider>
       </ThemeProvider>
