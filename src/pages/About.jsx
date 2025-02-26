@@ -14,7 +14,7 @@ import {
 const AboutContainer = styled.div`
   max-width: 80rem;
   width: 100%;
-  margin: 5rem auto;
+  margin: 3rem auto;
   background-color: ${({ theme }) => theme.colors.white};
   border-radius: 1.5rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -22,7 +22,7 @@ const AboutContainer = styled.div`
   position: relative;
   overflow: hidden;
 
-  @media (max-width: 768px) {
+  @media (min-width: 768px) {
     margin: 7rem auto;
     padding: 1.5rem;
   }
