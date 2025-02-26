@@ -47,7 +47,11 @@ const ContentContainer = styled.div`
   position: relative;
   z-index: 1;
   padding: 0 2rem 4rem;
-  margin-top: 15rem;
+  margin-top: 5rem;
+
+  @media (min-width: 768px) {
+    margin-top: 7rem;
+  }
 `;
 
 const Footer = styled.footer`
