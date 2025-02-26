@@ -9,4 +9,5 @@ node_bundler = "esbuild"
 [dev]
 command = "parcel public/index.html --port 1234 --no-cache"  # Command to start Parcel
 port = 8888  # Port where netlify dev serves the app
+targetPort = 1234  # Port where Parcel is running
 publish = "dist"  # Parcel’s output directory (adjust if different)
