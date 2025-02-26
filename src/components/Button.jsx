@@ -2,8 +2,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import PropTypes from 'prop-types';
-import Icon from './Icon';
-import { useTheme } from '@emotion/react';
 
 const StyledButton = styled.button`
   background-color: ${({ variant, theme }) =>
@@ -19,23 +17,48 @@ const StyledButton = styled.button`
   cursor: pointer;
   transition:
     background-color 0.3s ease,
-    color 0.3s ease;
+    color 0.3s ease,
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  border-radius: 0.375rem;
-  font-weight: 500;
-  margin-top: 1rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.7s ease;
+  }
 
   &:disabled {
     background-color: ${({ theme }) => theme.colors.gray};
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 
   @media (min-width: 768px) {
-    &:hover {
+    &:hover:not(:disabled) {
       background-color: ${({ variant, theme }) =>
         theme.buttons.variants[variant].hoverBgColor ||
         theme.buttons.variants[variant].hoverColor ||
@@ -43,29 +66,25 @@ const StyledButton = styled.button`
       color: ${({ variant, theme }) =>
         theme.buttons.variants[variant].hoverTextColor ||
         theme.buttons.variants[variant].textColor};
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+
+      &::before {
+        left: 100%;
+      }
     }
   }
 `;
 
-const IconWrapper = styled.span`
-  display: inline-flex;
-  margin-left: 2rem;
-`;
-
 const Button = ({
   children,
-  icon,
   variant = 'primary',
   size = 'medium',
   type = 'button',
   disabled = false,
   fullWidth = false,
-  onClick, // Added onClick prop
+  onClick,
 }) => {
-  const theme = useTheme();
-
-  const iconSize = theme.buttons.sizes[size].iconSize;
-
   return (
     <StyledButton
       variant={variant}
@@ -73,14 +92,9 @@ const Button = ({
       type={type}
       disabled={disabled}
       fullWidth={fullWidth}
-      onClick={onClick} // Pass onClick to StyledButton
+      onClick={onClick}
     >
       {children}
-      {icon && (
-        <IconWrapper>
-          <Icon name={icon} size={iconSize} color="white" />
-        </IconWrapper>
-      )}
     </StyledButton>
   );
 };
@@ -101,7 +115,7 @@ Button.propTypes = {
   type: PropTypes.string,
   disabled: PropTypes.bool,
   fullWidth: PropTypes.bool,
-  onClick: PropTypes.func, // Added onClick to PropTypes
+  onClick: PropTypes.func,
 };
 
 export default Button;

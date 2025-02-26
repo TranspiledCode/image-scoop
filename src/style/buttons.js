@@ -5,19 +5,19 @@ const buttons = {
   variants: {
     primary: {
       bgColor: colors.primary,
-      hoverColor: colors.primaryLight,
+      hoverColor: colors.primaryDark,
       textColor: colors.white,
       hoverTextColor: colors.white,
     },
     secondary: {
       bgColor: colors.secondary,
-      hoverColor: colors.secondaryLight,
+      hoverColor: colors.secondaryDark,
       textColor: colors.white,
       hoverTextColor: colors.white,
     },
     success: {
       bgColor: colors.success,
-      hoverColor: colors.secondaryAccent,
+      hoverColor: colors.tertiaryDark,
       textColor: colors.white,
       hoverTextColor: colors.white,
     },
@@ -36,8 +36,8 @@ const buttons = {
     ghost: {
       borderColor: colors.primary,
       textColor: colors.primary,
-      hoverBgColor: colors.lightGray,
-      hoverTextColor: colors.darkGray,
+      hoverBgColor: colors.primary + '15',
+      hoverTextColor: colors.primaryDark,
     },
     outline: {
       bgColor: 'transparent',
@@ -49,31 +49,31 @@ const buttons = {
     },
     info: {
       bgColor: colors.info,
-      hoverColor: colors.primaryAccent,
+      hoverColor: colors.blueberry,
       textColor: colors.white,
       hoverTextColor: colors.white,
     },
   },
   sizes: {
     tiny: {
-      padding: '4px 8px',
+      padding: '6px 12px',
       fontSize: '12px',
-      iconSize: '12px',
-    },
-    small: {
-      padding: '8px 16px',
-      fontSize: '14px',
       iconSize: '14px',
     },
-    medium: {
-      padding: '12px 24px',
-      fontSize: '16px',
+    small: {
+      padding: '8px 18px',
+      fontSize: '14px',
       iconSize: '16px',
     },
+    medium: {
+      padding: '12px 28px',
+      fontSize: '16px',
+      iconSize: '18px',
+    },
     large: {
-      padding: '16px 32px',
-      fontSize: '20px',
-      iconSize: '20px',
+      padding: '16px 36px',
+      fontSize: '18px',
+      iconSize: '22px',
     },
   },
 };

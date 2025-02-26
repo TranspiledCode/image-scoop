@@ -54,7 +54,7 @@ const UploadForm = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp'], // Added .webp support
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
     },
     disabled: loading,
     maxFiles: 5,

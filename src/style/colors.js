@@ -1,40 +1,41 @@
 // colors.js
 const colors = {
-  // Primary Colors
-  primary: '#1E3A8A',
-  primaryLight: '#3B82F6',
-  primaryDark: '#1E40AF',
-  primaryAccent: '#60A5FA',
+  // Primary Colors - Strawberry Pink
+  primary: '#FF5C8D',
+  primaryLight: '#FF85A9',
+  primaryDark: '#E03F71',
+  primaryAccent: '#FF9BBB',
 
-  // Secondary Colors
-  secondary: '#10B981',
-  secondaryLight: '#6EE7B7',
-  secondaryDark: '#047857',
-  secondaryAccent: '#34D399',
+  // Secondary Colors - Orange Sherbet
+  secondary: '#FF9D5C',
+  secondaryLight: '#FFBE8E',
+  secondaryDark: '#E07B39',
+  secondaryAccent: '#FFCDA7',
 
-  // Tertiary Colors
-  tertiary: '#F59E0B',
-  tertiaryLight: '#FBBF24',
-  tertiaryDark: '#D97706',
-  tertiaryAccent: '#FCD34D',
+  // Tertiary Colors - Lime Ice
+  tertiary: '#93D152',
+  tertiaryLight: '#B6E283',
+  tertiaryDark: '#70A934',
+  tertiaryAccent: '#C9EBAA',
+
+  // Additional Ice Cream Colors
+  blueberry: '#7B68EE',
+  vanilla: '#FFF8E1',
+  chocolate: '#6B4226',
+  mint: '#98E6C9',
 
   // Neutral Colors
-  black: '#111827',
+  black: '#2D2D2D',
   white: '#FFFFFF',
-  gray: '#6B7280',
-  lightGray: '#E5E7EB',
-  darkGray: '#374151',
+  gray: '#9E9E9E',
+  lightGray: '#F8F9FA',
+  darkGray: '#4F4F4F',
 
   // Functional Colors
-  success: '#10B981',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  info: '#3B82F6',
-
-  // Additional Modern Colors
-  purple: '#8B5CF6',
-  teal: '#14B8A6',
-  rose: '#F43F5E',
+  success: '#93D152',
+  error: '#FF5C5C',
+  warning: '#FFD05C',
+  info: '#5CB3FF',
 };
 
 export default colors;
