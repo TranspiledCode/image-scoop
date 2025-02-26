@@ -7,7 +7,7 @@ import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from '@emotion/react';
 import theme from './style/theme';
 
-import Home from 'pages/Home';
+import Home from 'components/Home';
 
 const Container = styled.div`
   display: flex;
