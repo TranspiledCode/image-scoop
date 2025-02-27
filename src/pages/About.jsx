@@ -140,11 +140,11 @@ const AboutSection = () => {
     <AboutContainer id="about-section">
       <Title>
         <IceCream size={28} />
-        How Pixel Pushup Works
+        How Image Scoop Works
       </Title>
 
       <Description>
-        Pixel Pushup is a simple, fast tool for optimizing your images for the
+        Image Scoop is a simple, fast tool for optimizing your images for the
         web. It helps reduce file sizes while maintaining quality, making your
         websites load faster.
       </Description>

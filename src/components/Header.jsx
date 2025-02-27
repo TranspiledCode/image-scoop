@@ -164,7 +164,7 @@ const Header = () => {
           <LogoLink to="/">
             <HeaderTitle>
               <LogoIcon size={32} />
-              Pixel Pushup
+              Image Scoop
             </HeaderTitle>
           </LogoLink>
           <Tagline>Make your images pop like ice cream!</Tagline>

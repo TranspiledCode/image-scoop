@@ -81,7 +81,7 @@ const Home = () => {
         <UploadForm />
       </ContentContainer>
       <Footer>
-        © {new Date().getFullYear()} Pixel Pushup •{' '}
+        © {new Date().getFullYear()} Image Scoop •
         <FooterLink
           href="https://transpiled.com"
           target="_blank"

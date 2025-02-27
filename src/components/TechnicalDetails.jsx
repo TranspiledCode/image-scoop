@@ -108,7 +108,7 @@ const TechnicalDetails = () => {
       </SectionTitle>
 
       <p>
-        Pixel Pushup uses advanced image processing techniques to optimize your
+        Image Scoop uses advanced image processing techniques to optimize your
         images. Here is what happens behind the scenes when you process your
         images:
       </p>
