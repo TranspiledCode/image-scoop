@@ -80,7 +80,7 @@ const NavLink = styled(Link)`
   padding: 0.5rem 1rem;
   border-radius: 2rem;
   font-weight: 500;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   transition: all 0.3s ease;
   background-color: rgba(105, 99, 99, 0.174);
 
@@ -133,7 +133,7 @@ const MobileMenuOverlay = styled.div`
 const MobileNavLink = styled(Link)`
   color: ${({ theme }) => theme.colors.white};
   text-decoration: none;
-  font-size: 2rem;
+  font-size: 3.5rem;
   padding: 1rem;
   width: 100%;
   text-align: center;
@@ -145,8 +145,8 @@ const MobileNavLink = styled(Link)`
 // Styled component for the close button in the mobile menu
 const CloseButton = styled.button`
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 4rem;
+  right: 2rem;
   background: none;
   border: none;
   color: ${({ theme }) => theme.colors.white};
@@ -170,8 +170,7 @@ const Header = () => {
           <Tagline>Make your images pop like ice cream!</Tagline>
         </div>
         <NavLinks>
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/about">About</NavLink>
+          <NavLink to="/about">How It Works</NavLink>
         </NavLinks>
         <MenuButton onClick={() => setIsMenuOpen(true)} aria-label="Open menu">
           <Menu size={24} />
