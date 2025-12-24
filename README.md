@@ -28,7 +28,12 @@ yarn install
 yarn dev
 ```
 
-The app will be available at `http://localhost:8888` (Netlify Dev proxy).
+**⚠️ IMPORTANT:** Always access the app at `http://localhost:8888` (Netlify Dev proxy).
+
+- ✅ **Use:** `http://localhost:8888` - Full functionality with Netlify Functions
+- ❌ **Don't use:** `http://localhost:1234` - Parcel only, functions won't work
+
+The Netlify dev server proxies requests to Parcel (running on 1234) and provides access to serverless functions.
 
 ### Scripts
 

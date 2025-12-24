@@ -175,7 +175,7 @@ export const handler = middy(processImages)
   .use(httpMultipartBodyParser())
   .use(
     cors({
-      origin: ['http://localhost:8888', 'http://localhost:1234'],
+      origin: 'http://localhost:8888',
       methods: 'GET,POST,OPTIONS',
       headers: 'Content-Type',
     }),
