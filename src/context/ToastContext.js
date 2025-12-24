@@ -1,5 +1,6 @@
 // ToastContext.js
 import React, { createContext, useState, useContext, useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import ToastContainer from 'components/ToastContainer';
 import PropTypes from 'prop-types';
 
@@ -11,7 +12,7 @@ export const ToastProvider = ({ children, position = 'top-right' }) => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = useCallback((message, variant = 'info', duration = 5000) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = uuidv4();
     const newToast = { id, message, variant, duration };
 
     setToasts((prevToasts) => [...prevToasts, newToast]);
