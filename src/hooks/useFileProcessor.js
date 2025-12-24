@@ -18,7 +18,7 @@ const useFileProcessor = ({
     const baseName = parts.join('-').replace(/\s+/g, '_');
     const newName = `${baseName}.${extension}`.toLowerCase();
     // eslint-disable-next-line no-console
-    console.log(`Normalized filename !!: ${filename} -> ${newName}`);
+    console.log(`Normalized filename: ${filename} -> ${newName}`);
     return newName;
   };
 
