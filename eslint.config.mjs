@@ -9,6 +9,7 @@ export default [
       globals: {
         ...globals.browser,
         process: 'readonly',
+        Buffer: 'readonly',
       },
       parserOptions: {
         ecmaVersion: 2021,
@@ -31,7 +32,7 @@ export default [
     rules: {
       'react/prop-types': 'warn',
       'react/react-in-jsx-scope': 'off',
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
 ];

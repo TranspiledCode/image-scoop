@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "parcel public/index.html --port 1234 --no-cache",
+    "dev": "netlify dev",
     "build": "parcel build public/index.html",
     "format": "prettier --write \"src/**/*.{js,jsx}\"",
     "lint": "eslint \"src/**/*.{js,jsx}\"",
@@ -36,6 +36,7 @@
     "buffer": "^5.5.0||^6.0.0",
     "eslint": "^9.14.0",
     "eslint-plugin-react": "^7.37.2",
+    "netlify-cli": "^23.13.0",
     "parcel": "^2.12.0",
     "prettier": "^3.3.3",
     "process": "^0.11.10",
