@@ -60,19 +60,14 @@ const useFileProcessor = ({
       formData.append('images', file);
     });
     formData.append('Export-Type', exportType);
-    // eslint-disable-next-line no-console
-    console.log('FormData prepared, starting fetch.');
-
     const API_URL =
-      process.env.REACT_APP_API_URL || '/.netlify/functions/image-processor';
+      process.env.REACT_APP_API_URL || '/.netlify/functions/process-image';
 
     fetch(API_URL, {
       method: 'POST',
       body: formData,
     })
       .then((response) => {
-        // eslint-disable-next-line no-console
-        console.log('Received response from API.');
         if (response.ok) {
           return response.blob();
         } else {
@@ -88,8 +83,6 @@ const useFileProcessor = ({
         });
         setFileStatuses([...updatedStatuses]);
 
-        // eslint-disable-next-line no-console
-        console.log('File processing succeeded, triggering download.');
         const url = window.URL.createObjectURL(new Blob([data]));
         const link = document.createElement('a');
         link.href = url;
@@ -102,7 +95,6 @@ const useFileProcessor = ({
         addToast('Processing complete.', 'success');
       })
       .catch((error) => {
-        // eslint-disable-next-line no-console
         console.error('Error during processing:', error);
         addToast('An error occurred during processing.', 'danger');
         updatedStatuses.forEach((status) => {
@@ -117,8 +109,6 @@ const useFileProcessor = ({
   const cancelProcessing = () => {
     controllers.forEach((controller) => controller.abort());
     setLoading(false);
-    // eslint-disable-next-line no-console
-    console.log('Processing canceled by the user.');
     addToast('Processing canceled.', 'info');
   };
 
