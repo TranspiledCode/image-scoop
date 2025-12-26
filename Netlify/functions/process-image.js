@@ -6,6 +6,12 @@ import middy from '@middy/core';
 import httpMultipartBodyParser from '@middy/http-multipart-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import cors from '@middy/http-cors';
+import {
+  MAX_FILES_PER_BATCH,
+  PER_FILE_LIMIT_BYTES,
+  TOTAL_BATCH_LIMIT_BYTES,
+  humanFileSize,
+} from '../../src/shared/uploadLimits.js';
 
 const CONFIG = {
   MAX_WORKERS: 4, // Adjust based on Netlify's environment
@@ -85,7 +91,7 @@ class ImageProcessor {
 }
 
 const processImages = async (event) => {
-  console.log('Received event:', {
+  console.warn('Received event:', {
     headers: event.headers,
     bodyKeys: Object.keys(event.body || {}),
   });
@@ -101,7 +107,53 @@ const processImages = async (event) => {
     const images = Array.isArray(event.body.images)
       ? event.body.images
       : [event.body.images];
-    console.log(`Processing ${images.length} image(s).`);
+    console.warn(`Processing ${images.length} image(s).`);
+
+    if (images.length > MAX_FILES_PER_BATCH) {
+      const message = `You can upload up to ${MAX_FILES_PER_BATCH} files per batch.`;
+      console.error(message);
+      return {
+        statusCode: 413,
+        body: JSON.stringify({ error: message, code: 'too_many_files' }),
+      };
+    }
+
+    let totalBytes = 0;
+
+    const parsedImages = images.map((imageFile) => {
+      const buffer = Buffer.isBuffer(imageFile.content)
+        ? imageFile.content
+        : Buffer.from(imageFile.content, 'binary');
+      const fileSizeBytes = buffer.length;
+
+      if (fileSizeBytes > PER_FILE_LIMIT_BYTES) {
+        const message = `${imageFile.filename} exceeds the per-file limit of ${humanFileSize(
+          PER_FILE_LIMIT_BYTES,
+        )}.`;
+        console.error(message);
+        throw Object.assign(new Error(message), {
+          statusCode: 413,
+          code: 'file_too_large',
+        });
+      }
+
+      totalBytes += fileSizeBytes;
+
+      if (totalBytes > TOTAL_BATCH_LIMIT_BYTES) {
+        const message = `Total upload size exceeds ${humanFileSize(TOTAL_BATCH_LIMIT_BYTES)}.`;
+        console.error(message);
+        throw Object.assign(new Error(message), {
+          statusCode: 413,
+          code: 'batch_too_large',
+        });
+      }
+
+      return {
+        buffer,
+        original: imageFile,
+        fileSizeBytes,
+      };
+    });
 
     const exportType = (event.body['Export-Type'] || 'webp').toLowerCase();
     const validFormats = ['png', 'webp', 'jpeg'];
@@ -120,14 +172,13 @@ const processImages = async (event) => {
     const output = new PassThrough();
     archive.pipe(output);
 
-    const processImagePromises = images.map(async (imageFile) => {
-      const buffer = Buffer.from(imageFile.content, 'binary');
+    const processImagePromises = parsedImages.map(async ({ original, buffer }) => {
       if (!(await processor.validateImage(buffer))) {
-        throw new Error(`Invalid image: ${imageFile.filename}`);
+        throw new Error(`Invalid image: ${original.filename}`);
       }
 
       const image = await processor.processImage(buffer, exportType);
-      const filename = imageFile.filename.split('.')[0];
+      const filename = original.filename.split('.')[0];
 
       await Promise.all(
         Object.entries(CONFIG.SIZES).map(async ([sizeName, size]) => {
@@ -163,10 +214,11 @@ const processImages = async (event) => {
       body: zipBuffer.toString('base64'),
     };
   } catch (error) {
-    console.error('Error in processImages:', error.stack);
+    console.error('Error in processImages:', error.stack || error);
+    const statusCode = error.statusCode || 500;
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      statusCode,
+      body: JSON.stringify({ error: error.message, code: error.code || 'server_error' }),
     };
   }
 };

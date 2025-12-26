@@ -12,6 +12,12 @@ const useFileProcessor = ({
   const [controllers, setControllers] = useState([]);
   const { addToast } = useToast();
 
+  const toastWithLog = (message, variant = 'info') => {
+    // eslint-disable-next-line no-console
+    console.log(`[toast:${variant}] ${message}`);
+    addToast(message, variant);
+  };
+
   const normalizeFilename = (filename) => {
     const parts = filename.split('.');
     const extension = parts.pop();
@@ -92,24 +98,48 @@ const useFileProcessor = ({
         link.parentNode.removeChild(link);
         setLoading(false);
         clearForm();
-        addToast('Processing complete.', 'success');
+        toastWithLog('Processing complete.', 'success');
       })
       .catch((error) => {
         console.error('Error during processing:', error);
-        addToast('An error occurred during processing.', 'danger');
+        let message = 'An error occurred during processing.';
+
+        if (error) {
+          if (typeof error === 'string') {
+            message = error;
+          } else if (error.error) {
+            message = error.error;
+          } else if (error.message) {
+            message = error.message;
+          }
+
+          if (error.code === 'file_too_large') {
+            message =
+              error.error ||
+              'One or more files exceed the maximum allowed size.';
+          } else if (error.code === 'batch_too_large') {
+            message =
+              error.error || 'The batch exceeds the maximum total upload size.';
+          } else if (error.code === 'too_many_files') {
+            message =
+              error.error || 'Too many files were submitted in a single batch.';
+          }
+        }
+
+        toastWithLog(message, 'danger');
         updatedStatuses.forEach((status) => {
           status.status = 'error';
         });
         setFileStatuses([...updatedStatuses]);
         setLoading(false);
-        addToast('Processing failed.', 'danger');
+        toastWithLog('Processing failed.', 'danger');
       });
   };
 
   const cancelProcessing = () => {
     controllers.forEach((controller) => controller.abort());
     setLoading(false);
-    addToast('Processing canceled.', 'info');
+    toastWithLog('Processing canceled.', 'info');
   };
 
   return { processFiles, cancelProcessing, controllers };
