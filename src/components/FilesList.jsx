@@ -1,5 +1,5 @@
 // src/components/FilesList.jsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
 // Direct imports from lucide-react
@@ -8,6 +8,7 @@ import { AlertCircle } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
 import { Image } from 'lucide-react';
 import { useTheme } from '@emotion/react';
+import { humanFileSize } from 'shared/uploadLimits';
 
 // Styled Components with Theme-Based Colors
 const FilesListContainer = styled.div`
@@ -15,6 +16,25 @@ const FilesListContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+`;
+
+const FilesSummary = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: ${({ theme }) => theme.colors.primary + '10'};
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  color: ${({ theme }) => theme.colors.black};
+`;
+
+const SummaryItem = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const FileItem = styled.div`
@@ -30,6 +50,7 @@ const FileItem = styled.div`
         case 'success':
           return theme.colors.success;
         case 'error':
+        case 'rejected':
           return theme.colors.error;
         case 'processing':
           return theme.colors.secondary;
@@ -39,6 +60,7 @@ const FileItem = styled.div`
       }
     }};
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  opacity: ${({ status }) => (status === 'rejected' ? 0.8 : 1)};
 
   &:hover {
     transform: translateX(5px);
@@ -76,6 +98,17 @@ const FileSize = styled.p`
   font-size: 0.875rem;
   color: ${({ theme }) => theme.colors.gray};
   margin: 0.25rem 0 0 0;
+`;
+
+const ReasonBadge = styled.span`
+  display: inline-block;
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.error};
+  background-color: ${({ theme }) => theme.colors.error + '15'};
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
 `;
 
 const FileActions = styled.div`
@@ -123,21 +156,12 @@ const LoadingSpinner = styled.div`
   }
 `;
 
-const formatFileSize = (size) => {
-  if (!size) return '';
-  const i = Math.floor(Math.log(size) / Math.log(1024));
-  return (
-    (size / Math.pow(1024, i)).toFixed(1) +
-    ' ' +
-    ['B', 'KB', 'MB', 'GB', 'TB'][i]
-  );
-};
-
 const getStatusIcon = (status, theme) => {
   switch (status) {
     case 'success':
       return <CheckCircle size={20} color={theme.colors.success} />;
     case 'error':
+    case 'rejected':
       return <AlertCircle size={20} color={theme.colors.error} />;
     case 'processing':
       return <LoadingSpinner />;
@@ -148,11 +172,36 @@ const getStatusIcon = (status, theme) => {
 };
 
 // React Component
-const FilesList = ({ fileStatuses, handleRemoveFile, loading = false }) => {
+const FilesList = ({
+  fileStatuses,
+  handleRemoveFile,
+  loading = false,
+  totalSize = 0,
+  maxFiles,
+  maxTotalSize,
+}) => {
   const theme = useTheme();
+  const summary = useMemo(() => {
+    const currentTotal = humanFileSize(totalSize);
+    const maxTotal = humanFileSize(maxTotalSize);
+    return {
+      fileCount: `${fileStatuses.length} / ${maxFiles} files`,
+      size: `${currentTotal} / ${maxTotal}`,
+    };
+  }, [fileStatuses.length, maxFiles, maxTotalSize, totalSize]);
 
   return (
     <FilesListContainer>
+      <FilesSummary>
+        <SummaryItem>
+          <strong>Files:</strong>
+          <span>{summary.fileCount}</span>
+        </SummaryItem>
+        <SummaryItem>
+          <strong>Total size:</strong>
+          <span>{summary.size}</span>
+        </SummaryItem>
+      </FilesSummary>
       {fileStatuses.map((file, index) => (
         <FileItem key={index} status={file.status}>
           <FileIconWrapper>
@@ -160,7 +209,8 @@ const FilesList = ({ fileStatuses, handleRemoveFile, loading = false }) => {
           </FileIconWrapper>
           <FileInfo>
             <FileName title={file.name}>{file.name}</FileName>
-            {file.file && <FileSize>{formatFileSize(file.file.size)}</FileSize>}
+            {file.file && <FileSize>{humanFileSize(file.file.size)}</FileSize>}
+            {file.reason && <ReasonBadge>{file.reason}</ReasonBadge>}
           </FileInfo>
           <FileActions>
             {getStatusIcon(file.status, theme)}
@@ -185,12 +235,22 @@ FilesList.propTypes = {
   fileStatuses: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
-      status: PropTypes.oneOf(['success', 'error', 'processing', 'pending']),
+      status: PropTypes.oneOf([
+        'success',
+        'error',
+        'processing',
+        'pending',
+        'rejected',
+      ]),
       file: PropTypes.object,
+      reason: PropTypes.string,
     }),
   ).isRequired,
   handleRemoveFile: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  totalSize: PropTypes.number,
+  maxFiles: PropTypes.number.isRequired,
+  maxTotalSize: PropTypes.number.isRequired,
 };
 
 export default FilesList;
