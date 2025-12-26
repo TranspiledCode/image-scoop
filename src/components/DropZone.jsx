@@ -1,4 +1,4 @@
-// src/components/DropZone.js
+// src/components/DropZone.jsx
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
@@ -115,6 +115,7 @@ const DropZone = ({
   getInputProps,
   isDragActive,
   loading = false,
+  limitText = null,
 }) => (
   <DropZoneContainer
     {...getRootProps()}
@@ -134,7 +135,7 @@ const DropZone = ({
           ? 'Drop your images here!'
           : "Drag 'n' drop your images, or click to select files"}
       </DropzoneText>
-      <DropzoneLimitText>Up to 5 delicious images allowed</DropzoneLimitText>
+      {limitText && <DropzoneLimitText>{limitText}</DropzoneLimitText>}
     </ContentWrapper>
   </DropZoneContainer>
 );
@@ -145,6 +146,7 @@ DropZone.propTypes = {
   getInputProps: PropTypes.func.isRequired,
   isDragActive: PropTypes.bool.isRequired,
   loading: PropTypes.bool,
+  limitText: PropTypes.node,
 };
 
 export default DropZone;
