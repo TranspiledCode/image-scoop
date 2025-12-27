@@ -19,6 +19,7 @@ const UploadForm = () => {
   const [fileStatuses, setFileStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exportType, setExportType] = useState('webp');
+  const [omitFilename, setOmitFilename] = useState(false);
   const [processPhase, setProcessPhase] = useState(null);
   const [processedCount, setProcessedCount] = useState(0);
   const [startTime, setStartTime] = useState(null);
@@ -333,7 +334,12 @@ const UploadForm = () => {
           prev.map((file) => ({ ...file, status: 'processing' })),
         );
 
-        const result = await processFromR2(batchId, uploadedFiles, exportType);
+        const result = await processFromR2(
+          batchId,
+          uploadedFiles,
+          exportType,
+          omitFilename,
+        );
 
         const end = Date.now();
         setEndTime(end);
@@ -380,6 +386,7 @@ const UploadForm = () => {
       uploadFiles,
       processFromR2,
       exportType,
+      omitFilename,
       clearForm,
     ],
   );
@@ -426,6 +433,28 @@ const UploadForm = () => {
           setExportType={setExportType}
           disabled={loading}
         />
+
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginTop: '1rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={omitFilename}
+            onChange={(e) => setOmitFilename(e.target.checked)}
+            disabled={loading}
+            style={{ cursor: loading ? 'not-allowed' : 'pointer' }}
+          />
+          <span>
+            Omit filename from output (e.g., t.webp instead of photo_t.webp)
+          </span>
+        </label>
 
         <Button
           type="submit"

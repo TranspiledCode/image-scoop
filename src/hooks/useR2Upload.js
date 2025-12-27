@@ -102,29 +102,33 @@ const useR2Upload = () => {
     [getUploadUrls, uploadFileToR2],
   );
 
-  const processFromR2 = useCallback(async (batchId, uploadedFiles, format) => {
-    try {
-      const response = await fetch('/.netlify/functions/process-from-r2', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          batchId,
-          files: uploadedFiles,
-          format,
-        }),
-      });
+  const processFromR2 = useCallback(
+    async (batchId, uploadedFiles, format, omitFilename = false) => {
+      try {
+        const response = await fetch('/.netlify/functions/process-from-r2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            batchId,
+            files: uploadedFiles,
+            format,
+            omitFilename,
+          }),
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Processing failed');
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Processing failed');
+        }
+
+        return response.json();
+      } catch (error) {
+        toastWithLog(error.message || 'Processing failed', 'danger');
+        throw error;
       }
-
-      return response.json();
-    } catch (error) {
-      toastWithLog(error.message || 'Processing failed', 'danger');
-      throw error;
-    }
-  }, []);
+    },
+    [],
+  );
 
   return {
     uploading,
