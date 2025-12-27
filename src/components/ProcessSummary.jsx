@@ -219,7 +219,7 @@ const ProcessSummary = ({
   const getPhaseTitle = () => {
     switch (phase) {
       case 'uploading':
-        return 'Uploading to R2...';
+        return 'Uploading...';
       case 'processing':
         return 'Processing Images...';
       case 'complete':
