@@ -7,19 +7,23 @@ import DropZone from './DropZone';
 import FilesList from './FilesList';
 import ExportTypeSelector from './ExportTypeSelector';
 import Button from './Button';
-import useFileProcessor from '../hooks/useFileProcessor';
-import {
-  MAX_FILES_PER_BATCH,
-  PER_FILE_LIMIT_BYTES,
-  TOTAL_BATCH_LIMIT_BYTES,
-  humanFileSize,
-} from 'shared/uploadLimits';
+import useR2Upload from '../hooks/useR2Upload';
+import ProcessSummary from './ProcessSummary';
+import { MAX_FILES_PER_BATCH, humanFileSize } from 'shared/uploadLimits';
+
+const PER_FILE_LIMIT_BYTES = 10 * 1024 * 1024;
+const TOTAL_BATCH_LIMIT_BYTES = 100 * 1024 * 1024;
 
 const UploadForm = () => {
   const [files, setFiles] = useState([]);
   const [fileStatuses, setFileStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exportType, setExportType] = useState('webp');
+  const [processPhase, setProcessPhase] = useState(null);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
+  const [completedFiles, setCompletedFiles] = useState([]);
   const { addToast } = useToast();
 
   const logToast = useCallback(
@@ -36,16 +40,14 @@ const UploadForm = () => {
     setFileStatuses([]);
     setLoading(false);
     setExportType('webp');
+    setProcessPhase(null);
+    setProcessedCount(0);
+    setStartTime(null);
+    setEndTime(null);
+    setCompletedFiles([]);
   }, []);
 
-  const { processFiles, cancelProcessing, isCancelled } = useFileProcessor({
-    files,
-    exportType,
-    setFileStatuses,
-    setLoading,
-    clearForm,
-    addToast,
-  });
+  const { uploadFiles, processFromR2, uploadProgress } = useR2Upload();
 
   const limitMessages = useMemo(
     () => ({
@@ -173,11 +175,28 @@ const UploadForm = () => {
       setFiles(validFiles);
       setFileStatuses(allStatuses);
 
+      // Clear previous summary when new files are dropped
+      setProcessPhase(null);
+      setProcessedCount(0);
+      setStartTime(null);
+      setEndTime(null);
+      setCompletedFiles([]);
+
       if (allRejected.length > 0) {
-        logToast(
-          `${validFiles.length} accepted, ${allRejected.length} rejected. See list below.`,
-          'warning',
+        const exceededLimit = allRejected.some((r) =>
+          r.reason.includes('Maximum'),
         );
+        if (exceededLimit && validFiles.length === MAX_FILES_PER_BATCH) {
+          logToast(
+            `Accepted first ${MAX_FILES_PER_BATCH} files. ${allRejected.length} additional file${allRejected.length === 1 ? '' : 's'} rejected (limit: ${MAX_FILES_PER_BATCH} per batch).`,
+            'warning',
+          );
+        } else {
+          logToast(
+            `${validFiles.length} accepted, ${allRejected.length} rejected. See list below.`,
+            'warning',
+          );
+        }
       } else {
         const readyMessage = `${validFiles.length} file${validFiles.length === 1 ? '' : 's'} ready (${humanFileSize(
           totalSize,
@@ -194,7 +213,6 @@ const UploadForm = () => {
       'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
     },
     disabled: loading,
-    maxFiles: MAX_FILES_PER_BATCH,
     maxSize: PER_FILE_LIMIT_BYTES,
   });
 
@@ -218,7 +236,7 @@ const UploadForm = () => {
   );
 
   const handleSubmit = useCallback(
-    (e) => {
+    async (e) => {
       e.preventDefault();
       if (files.length === 0) {
         logToast('Please select at least one file', 'danger');
@@ -239,19 +257,94 @@ const UploadForm = () => {
         return;
       }
 
-      setFileStatuses((prev) =>
-        prev.map((file) => ({ ...file, status: 'processing', progress: 0 })),
-      );
       setLoading(true);
-      processFiles();
+      setProcessPhase(null);
+      setStartTime(null);
+      setEndTime(null);
+      setProcessedCount(0);
+
+      // Clear old statuses first
+      setFileStatuses([]);
+
+      // Then set new statuses in next tick
+      setTimeout(() => {
+        setFileStatuses(
+          files.map((file) => ({
+            name: file.name,
+            status: 'processing',
+            progress: 0,
+            file,
+          })),
+        );
+      }, 0);
+
+      try {
+        const start = Date.now();
+        setStartTime(start);
+        setProcessPhase('uploading');
+        logToast('Uploading files...', 'info');
+        const { batchId, uploadedFiles } = await uploadFiles(files);
+
+        setProcessPhase('processing');
+        logToast('Processing images...', 'info');
+        setFileStatuses((prev) =>
+          prev.map((file) => ({ ...file, status: 'processing' })),
+        );
+
+        const result = await processFromR2(batchId, uploadedFiles, exportType);
+
+        const end = Date.now();
+        setEndTime(end);
+        setProcessPhase('complete');
+        setProcessedCount(result.filesProcessed || files.length);
+        setCompletedFiles(files.map((file) => file.name));
+        setFileStatuses((prev) =>
+          prev.map((file) => ({ ...file, status: 'success' })),
+        );
+        setLoading(false);
+
+        logToast('Processing complete!', 'success');
+
+        const link = document.createElement('a');
+        link.href = result.downloadUrl;
+        link.download = `processed-images-${batchId}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clear files after successful processing to prevent reprocessing
+        setTimeout(() => {
+          setFiles([]);
+          setFileStatuses([]);
+        }, 2000);
+      } catch (error) {
+        console.error('Processing error:', error);
+        setFileStatuses((prev) =>
+          prev.map((file) => ({ ...file, status: 'error' })),
+        );
+        logToast(error.message || 'Processing failed', 'danger');
+        setLoading(false);
+        setProcessPhase(null);
+      }
     },
-    [files, limitMessages.total, logToast, processFiles],
+    [
+      files,
+      limitMessages.total,
+      logToast,
+      uploadFiles,
+      processFromR2,
+      exportType,
+      clearForm,
+    ],
   );
 
   const handleCancel = useCallback(() => {
-    cancelProcessing();
+    setLoading(false);
+    setFileStatuses([]);
+    setFiles([]);
+    setProcessPhase(null);
     logToast('Processing cancelled', 'warning');
-  }, [cancelProcessing, logToast]);
+  }, [logToast]);
 
   return (
     <FormContainer>
@@ -302,9 +395,8 @@ const UploadForm = () => {
             fullWidth
             variant="danger"
             onClick={handleCancel}
-            disabled={isCancelled}
           >
-            {isCancelled ? 'Cancelling...' : 'Cancel Processing'}
+            Cancel Processing
           </Button>
         )}
 
@@ -320,6 +412,17 @@ const UploadForm = () => {
           </Button>
         )}
       </form>
+
+      <ProcessSummary
+        phase={processPhase}
+        uploadProgress={uploadProgress}
+        filesCount={files.length}
+        totalSize={totalSize}
+        processedCount={processedCount}
+        startTime={startTime}
+        endTime={endTime}
+        completedFiles={completedFiles}
+      />
     </FormContainer>
   );
 };
