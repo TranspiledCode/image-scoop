@@ -116,12 +116,19 @@ async function getFileFromR2(key) {
 
 async function uploadZipToR2(batchId, zipBuffer) {
   const zipKey = `processed/${batchId}.zip`;
+  
+  // Create timestamp for filename (YYYYMMDD-HHMM format)
+  const now = new Date();
+  const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  const filename = `ImageScoop-${timestamp}.zip`;
+  
   await s3Client.send(
     new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: zipKey,
       Body: zipBuffer,
       ContentType: 'application/zip',
+      ContentDisposition: `attachment; filename="${filename}"`,
     }),
   );
 
@@ -219,7 +226,9 @@ export const handler = async (event) => {
 
       for (const [sizeName, buffer] of Object.entries(file.sizes)) {
         const filename = `${baseName}_${sizeName}.${format}`;
-        archive.append(buffer, { name: filename });
+        // Organize files into folders by original filename
+        const folderPath = `${baseName}/${filename}`;
+        archive.append(buffer, { name: folderPath });
       }
     }
 
