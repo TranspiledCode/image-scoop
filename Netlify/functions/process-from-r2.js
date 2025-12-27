@@ -170,7 +170,7 @@ export const handler = async (event) => {
   }
 
   try {
-    const { batchId, files, format } = JSON.parse(event.body);
+    const { batchId, files, format, omitFilename = false } = JSON.parse(event.body);
 
     if (!batchId || !files || !Array.isArray(files) || files.length === 0) {
       return {
@@ -225,7 +225,10 @@ export const handler = async (event) => {
       const baseName = file.originalName.replace(/\.[^/.]+$/, '');
 
       for (const [sizeName, buffer] of Object.entries(file.sizes)) {
-        const filename = `${baseName}_${sizeName}.${format}`;
+        // Conditionally include or omit filename based on option
+        const filename = omitFilename
+          ? `${sizeName}.${format}`
+          : `${baseName}_${sizeName}.${format}`;
         // Organize files into folders by original filename
         const folderPath = `${baseName}/${filename}`;
         archive.append(buffer, { name: folderPath });
