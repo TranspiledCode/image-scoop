@@ -347,9 +347,13 @@ const UploadForm = () => {
 
         logToast('Processing complete!', 'success');
 
+        // Create timestamp for unique filename (YYYYMMDD-HHMM format)
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+
         const link = document.createElement('a');
         link.href = result.downloadUrl;
-        link.download = `processed-images-${batchId}.zip`;
+        link.download = `ImageScoop-${timestamp}.zip`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
