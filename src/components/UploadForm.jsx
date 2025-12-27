@@ -1,5 +1,5 @@
 // src/components/UploadForm.jsx
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from 'context/ToastContext';
 import FormContainer from './FormContainer';
@@ -25,6 +25,9 @@ const UploadForm = () => {
   const [endTime, setEndTime] = useState(null);
   const [completedFiles, setCompletedFiles] = useState([]);
   const { addToast } = useToast();
+
+  // Track renamed files immediately to avoid state timing issues
+  const renamedFilesRef = useRef(new Map());
 
   const logToast = useCallback(
     (message, variant = 'info') => {
@@ -157,6 +160,7 @@ const UploadForm = () => {
 
       const validStatuses = validFiles.map((file) => ({
         name: file.name,
+        editableName: file.name,
         status: 'pending',
         progress: 0,
         file,
@@ -235,6 +239,27 @@ const UploadForm = () => {
     [loading],
   );
 
+  const handleRenameFile = useCallback(
+    (index, newName) => {
+      if (loading) return;
+
+      setFileStatuses((prevStatuses) => {
+        const updated = prevStatuses.map((status, i) => {
+          if (i === index) {
+            // Store rename in ref immediately
+            renamedFilesRef.current.set(status.file, newName);
+            return { ...status, editableName: newName };
+          }
+          return status;
+        });
+        return updated;
+      });
+
+      logToast(`File renamed to: ${newName}`, 'success');
+    },
+    [loading, logToast],
+  );
+
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
@@ -263,18 +288,22 @@ const UploadForm = () => {
       setEndTime(null);
       setProcessedCount(0);
 
-      // Clear old statuses first
+      const currentStatuses = fileStatuses;
+
       setFileStatuses([]);
 
-      // Then set new statuses in next tick
       setTimeout(() => {
         setFileStatuses(
-          files.map((file) => ({
-            name: file.name,
-            status: 'processing',
-            progress: 0,
-            file,
-          })),
+          files.map((file) => {
+            const existingStatus = currentStatuses.find((s) => s.file === file);
+            return {
+              name: file.name,
+              editableName: existingStatus?.editableName || file.name,
+              status: 'processing',
+              progress: 0,
+              file,
+            };
+          }),
         );
       }, 0);
 
@@ -283,7 +312,20 @@ const UploadForm = () => {
         setStartTime(start);
         setProcessPhase('uploading');
         logToast('Uploading files...', 'info');
-        const { batchId, uploadedFiles } = await uploadFiles(files);
+
+        // Create files array with renamed names - use ref for immediate access
+        const filesWithRenames = files.map((file) => {
+          // Check ref first for immediate rename tracking
+          const renamedName = renamedFilesRef.current.get(file) || file.name;
+
+          // Create a new File object with the renamed name if it was changed
+          if (renamedName !== file.name) {
+            return new File([file], renamedName, { type: file.type });
+          }
+          return file;
+        });
+
+        const { batchId, uploadedFiles } = await uploadFiles(filesWithRenames);
 
         setProcessPhase('processing');
         logToast('Processing images...', 'info');
@@ -297,7 +339,7 @@ const UploadForm = () => {
         setEndTime(end);
         setProcessPhase('complete');
         setProcessedCount(result.filesProcessed || files.length);
-        setCompletedFiles(files.map((file) => file.name));
+        setCompletedFiles(filesWithRenames.map((file) => file.name));
         setFileStatuses((prev) =>
           prev.map((file) => ({ ...file, status: 'success' })),
         );
@@ -367,6 +409,7 @@ const UploadForm = () => {
           <FilesList
             fileStatuses={fileStatuses}
             handleRemoveFile={handleRemoveFile}
+            handleRenameFile={handleRenameFile}
             loading={loading}
             totalSize={totalSize}
             maxFiles={MAX_FILES_PER_BATCH}

@@ -1,5 +1,5 @@
 // src/components/FilesList.jsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
 // Direct imports from lucide-react
@@ -7,6 +7,9 @@ import { CheckCircle } from 'lucide-react';
 import { AlertCircle } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
 import { Image } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useTheme } from '@emotion/react';
 import { humanFileSize } from 'shared/uploadLimits';
 
@@ -87,11 +90,61 @@ const FileInfo = styled.div`
 const FileName = styled.p`
   font-size: 1.25rem;
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme, isRenamed }) =>
+    isRenamed ? theme.colors.secondary : theme.colors.black};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const FileNameInput = styled.input`
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.black};
+  border: 2px solid
+    ${({ theme, hasError }) =>
+      hasError ? theme.colors.error : theme.colors.secondary};
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: white;
+  width: 100%;
+  max-width: 400px;
+  outline: none;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${({ theme }) => theme.colors.gray};
+  transition: color 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.secondary};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+`;
+
+const EditActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 `;
 
 const FileSize = styled.p`
@@ -175,12 +228,16 @@ const getStatusIcon = (status, theme) => {
 const FilesList = ({
   fileStatuses,
   handleRemoveFile,
+  handleRenameFile,
   loading = false,
   totalSize = 0,
   maxFiles,
   maxTotalSize,
 }) => {
   const theme = useTheme();
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editValue, setEditValue] = useState('');
+  const [editError, setEditError] = useState('');
   const summary = useMemo(() => {
     const currentTotal = humanFileSize(totalSize);
     const maxTotal = humanFileSize(maxTotalSize);
@@ -189,6 +246,54 @@ const FilesList = ({
       size: `${currentTotal} / ${maxTotal}`,
     };
   }, [fileStatuses.length, maxFiles, maxTotalSize, totalSize]);
+
+  const validateFilename = (filename) => {
+    if (!filename || filename.trim() === '') {
+      return 'Filename cannot be empty';
+    }
+
+    // Check for invalid characters
+    const invalidChars = /[<>:"/\\|?*]/;
+    if (invalidChars.test(filename)) {
+      return 'Filename contains invalid characters';
+    }
+
+    return null;
+  };
+
+  const startEditing = (index, currentName) => {
+    if (loading) return;
+    setEditingIndex(index);
+    setEditValue(currentName);
+    setEditError('');
+  };
+
+  const cancelEditing = () => {
+    setEditingIndex(null);
+    setEditValue('');
+    setEditError('');
+  };
+
+  const saveEdit = (index) => {
+    const error = validateFilename(editValue);
+    if (error) {
+      setEditError(error);
+      return;
+    }
+
+    handleRenameFile(index, editValue);
+    setEditingIndex(null);
+    setEditValue('');
+    setEditError('');
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'Enter') {
+      saveEdit(index);
+    } else if (e.key === 'Escape') {
+      cancelEditing();
+    }
+  };
 
   return (
     <FilesListContainer>
@@ -208,7 +313,53 @@ const FilesList = ({
             <Image size={20} color={theme.colors.primary} />
           </FileIconWrapper>
           <FileInfo>
-            <FileName title={file.name}>{file.name}</FileName>
+            {editingIndex === index ? (
+              <div>
+                <FileNameInput
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
+                  hasError={!!editError}
+                  autoFocus
+                />
+                {editError && <ReasonBadge>{editError}</ReasonBadge>}
+                <EditActions>
+                  <EditButton
+                    onClick={() => saveEdit(index)}
+                    type="button"
+                    title="Save"
+                  >
+                    <Check size={16} color={theme.colors.success} />
+                  </EditButton>
+                  <EditButton
+                    onClick={cancelEditing}
+                    type="button"
+                    title="Cancel"
+                  >
+                    <X size={16} color={theme.colors.error} />
+                  </EditButton>
+                </EditActions>
+              </div>
+            ) : (
+              <FileName
+                title={file.editableName || file.name}
+                isRenamed={file.editableName !== file.name}
+              >
+                {file.editableName || file.name}
+                {!loading && file.status === 'pending' && (
+                  <EditButton
+                    onClick={() =>
+                      startEditing(index, file.editableName || file.name)
+                    }
+                    type="button"
+                    title="Rename file"
+                  >
+                    <Edit2 size={16} />
+                  </EditButton>
+                )}
+              </FileName>
+            )}
             {file.file && <FileSize>{humanFileSize(file.file.size)}</FileSize>}
             {file.reason && <ReasonBadge>{file.reason}</ReasonBadge>}
           </FileInfo>
@@ -235,6 +386,7 @@ FilesList.propTypes = {
   fileStatuses: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
+      editableName: PropTypes.string,
       status: PropTypes.oneOf([
         'success',
         'error',
@@ -247,6 +399,7 @@ FilesList.propTypes = {
     }),
   ).isRequired,
   handleRemoveFile: PropTypes.func.isRequired,
+  handleRenameFile: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   totalSize: PropTypes.number,
   maxFiles: PropTypes.number.isRequired,
