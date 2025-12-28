@@ -1,11 +1,13 @@
 // src/components/UploadForm.jsx
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
+import styled from '@emotion/styled';
 import { useToast } from 'context/ToastContext';
 import FormContainer from './FormContainer';
 import DropZone from './DropZone';
 import FilesList from './FilesList';
-import ExportTypeSelector from './ExportTypeSelector';
+import SettingsPanel from './SettingsPanel';
+import WorkflowSteps from './WorkflowSteps';
 import Button from './Button';
 import useR2Upload from '../hooks/useR2Upload';
 import ProcessSummary from './ProcessSummary';
@@ -13,6 +15,13 @@ import { MAX_FILES_PER_BATCH, humanFileSize } from 'shared/uploadLimits';
 
 const PER_FILE_LIMIT_BYTES = 10 * 1024 * 1024;
 const TOTAL_BATCH_LIMIT_BYTES = 100 * 1024 * 1024;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 2rem;
+`;
 
 const UploadForm = () => {
   const [files, setFiles] = useState([]);
@@ -399,8 +408,18 @@ const UploadForm = () => {
     logToast('Processing cancelled', 'warning');
   }, [logToast]);
 
+  // Calculate current workflow step
+  const currentStep = useMemo(() => {
+    if (processPhase === 'complete') return 4; // Download
+    if (processPhase === 'processing' || processPhase === 'uploading') return 3; // Process
+    if (fileStatuses.length > 0) return 2; // Configure
+    return 1; // Upload
+  }, [processPhase, fileStatuses.length]);
+
   return (
     <FormContainer>
+      {fileStatuses.length > 0 && <WorkflowSteps currentStep={currentStep} />}
+
       <form onSubmit={handleSubmit}>
         <DropZone
           getRootProps={getRootProps}
@@ -428,65 +447,49 @@ const UploadForm = () => {
           />
         )}
 
-        <ExportTypeSelector
-          exportType={exportType}
-          setExportType={setExportType}
-          disabled={loading}
-        />
-
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginTop: '1rem',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.6 : 1,
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={omitFilename}
-            onChange={(e) => setOmitFilename(e.target.checked)}
-            disabled={loading}
-            style={{ cursor: loading ? 'not-allowed' : 'pointer' }}
-          />
-          <span>
-            Omit filename from output (e.g., t.webp instead of photo_t.webp)
-          </span>
-        </label>
-
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={loading || files.length === 0}
-          fullWidth
-        >
-          {loading ? 'Processing...' : 'Process Images'}
-        </Button>
-
-        {loading && (
-          <Button
-            type="button"
-            fullWidth
-            variant="danger"
-            onClick={handleCancel}
-          >
-            Cancel Processing
-          </Button>
-        )}
-
         {fileStatuses.length > 0 && (
-          <Button
-            type="button"
-            fullWidth
-            variant="secondary"
-            onClick={clearForm}
+          <SettingsPanel
+            exportType={exportType}
+            setExportType={setExportType}
+            omitFilename={omitFilename}
+            setOmitFilename={setOmitFilename}
             disabled={loading}
-          >
-            Clear Form
-          </Button>
+          />
         )}
+
+        <ButtonGroup>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loading || files.length === 0}
+            fullWidth
+            size="large"
+          >
+            {loading ? 'Processing...' : 'Process Images'}
+          </Button>
+
+          {loading && (
+            <Button
+              type="button"
+              fullWidth
+              variant="danger"
+              onClick={handleCancel}
+            >
+              Cancel Processing
+            </Button>
+          )}
+
+          {fileStatuses.length > 0 && !loading && (
+            <Button
+              type="button"
+              fullWidth
+              variant="outline"
+              onClick={clearForm}
+            >
+              Clear Form
+            </Button>
+          )}
+        </ButtonGroup>
       </form>
 
       <ProcessSummary

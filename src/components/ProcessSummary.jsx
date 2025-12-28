@@ -192,6 +192,13 @@ const ProcessSummary = ({
   const [elapsedTime, setElapsedTime] = useState(0);
   const theme = useTheme();
 
+  // Auto-expand during active processing
+  useEffect(() => {
+    if (phase === 'uploading' || phase === 'processing') {
+      setIsExpanded(true);
+    }
+  }, [phase]);
+
   useEffect(() => {
     if (phase && phase !== 'complete' && startTime) {
       const interval = setInterval(() => {

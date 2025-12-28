@@ -1,65 +1,29 @@
 import styled from '@emotion/styled';
 
-import UploadForm from 'components/UploadForm';
+import UploadFormWizard from 'components/UploadFormWizard';
 
 const StyledHome = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4rem;
-  background: linear-gradient(
-    135deg,
-    ${({ theme }) => theme.colors.lightGray} 0%,
-    ${({ theme }) => theme.colors.vanilla} 100%
-  );
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-
-  /* Ice cream themed background elements */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 20%;
-    left: -150px;
-    width: 300px;
-    height: 300px;
-    background-color: ${({ theme }) => theme.colors.primaryLight};
-    border-radius: 50%;
-    opacity: 0.05;
-    z-index: 0;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 10%;
-    right: -100px;
-    width: 250px;
-    height: 250px;
-    background-color: ${({ theme }) => theme.colors.secondaryLight};
-    border-radius: 50%;
-    opacity: 0.05;
-    z-index: 0;
-  }
-`;
-
-const ContentContainer = styled.div`
-  position: relative;
-  z-index: 1;
-  padding: 0 2rem 4rem;
-  margin-top: 5rem;
-
-  @media (min-width: 768px) {
-    margin-top: 7rem;
-  }
+  background: ${({ theme }) => theme.colors.vanilla};
 `;
 
 const Footer = styled.footer`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   text-align: center;
-  padding: 1.5rem;
+  padding: 1rem;
   color: ${({ theme }) => theme.colors.darkGray};
   font-size: 0.875rem;
-  margin-top: auto;
+  background: ${({ theme }) => theme.colors.white + '80'};
+  backdrop-filter: blur(10px);
+  z-index: 50;
+  border-top: 1px solid ${({ theme }) => theme.colors.lightGray};
 `;
 
 const FooterLink = styled.a`
@@ -77,9 +41,7 @@ const FooterLink = styled.a`
 const Home = () => {
   return (
     <StyledHome>
-      <ContentContainer>
-        <UploadForm />
-      </ContentContainer>
+      <UploadFormWizard />
       <Footer>
         © {new Date().getFullYear()} Image Scoop •
         <FooterLink

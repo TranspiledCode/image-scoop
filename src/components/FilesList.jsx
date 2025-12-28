@@ -72,14 +72,22 @@ const FileItem = styled.div`
 `;
 
 const FileIconWrapper = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  border-radius: 0.5rem;
   background-color: ${({ theme }) => theme.colors.primaryLight + '30'};
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 1rem;
+  overflow: hidden;
+  flex-shrink: 0;
+`;
+
+const FileThumbnail = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 `;
 
 const FileInfo = styled.div`
@@ -238,6 +246,28 @@ const FilesList = ({
   const [editingIndex, setEditingIndex] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [editError, setEditError] = useState('');
+  const [thumbnails, setThumbnails] = useState({});
+
+  // Generate thumbnails for image files
+  React.useEffect(() => {
+    const generateThumbnails = () => {
+      for (const fileStatus of fileStatuses) {
+        if (fileStatus.file && fileStatus.file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            setThumbnails((prev) => ({
+              ...prev,
+              [fileStatus.name]: e.target.result,
+            }));
+          };
+          reader.readAsDataURL(fileStatus.file);
+        }
+      }
+    };
+
+    generateThumbnails();
+  }, [fileStatuses]);
+
   const summary = useMemo(() => {
     const currentTotal = humanFileSize(totalSize);
     const maxTotal = humanFileSize(maxTotalSize);
@@ -310,7 +340,11 @@ const FilesList = ({
       {fileStatuses.map((file, index) => (
         <FileItem key={index} status={file.status}>
           <FileIconWrapper>
-            <Image size={20} color={theme.colors.primary} />
+            {thumbnails[file.name] ? (
+              <FileThumbnail src={thumbnails[file.name]} alt={file.name} />
+            ) : (
+              <Image size={24} color={theme.colors.primary} />
+            )}
           </FileIconWrapper>
           <FileInfo>
             {editingIndex === index ? (
