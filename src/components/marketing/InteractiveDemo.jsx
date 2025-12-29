@@ -27,9 +27,16 @@ const DemoContainer = styled.div`
 
 const DemoHeader = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 16px;
+`;
+
+const InputGroup = styled.div`
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
 `;
 
 const FilenameInput = styled.input`
@@ -42,7 +49,6 @@ const FilenameInput = styled.input`
   font-family: inherit;
   font-weight: 500;
   flex: 1;
-  max-width: 300px;
   transition: all 0.2s;
 
   &:focus {
@@ -67,13 +73,13 @@ const FormatSelector = styled.div`
 `;
 
 const FormatOption = styled.button`
-  padding: 6px 12px;
+  padding: 10px 20px;
   background: ${({ active }) =>
     active ? 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)' : '#1f2937'};
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 14px;
   color: ${({ active }) => (active ? 'white' : '#9ca3af')};
-  font-weight: 500;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
@@ -103,8 +109,8 @@ const DropZoneArea = styled.div`
     hasImage
       ? '#1f2937'
       : 'url(https://imagedelivery.net/AjKAvtYVvwYZJx-5TwXk4w/image-scoop/backgrounds/mountains/small) center/cover no-repeat'};
-    ${({ isDragActive, hasImage }) =>
-      isDragActive ? '#ec4899' : hasImage ? 'transparent' : '#4b5563'};
+  ${({ isDragActive, hasImage }) =>
+    isDragActive ? '#ec4899' : hasImage ? 'transparent' : '#4b5563'};
   cursor: ${({ isProcessing }) => (isProcessing ? 'default' : 'pointer')};
   transition: all 0.3s;
   filter: ${({ hasImage }) => (hasImage ? 'none' : 'brightness(0.8)')};
@@ -242,16 +248,17 @@ const SmallSpinner = styled(Loader)`
 
 const FooterComplete = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
   width: 100%;
 `;
 
 const MetricsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
-  flex: 1;
+  width: 100%;
 `;
 
 const Metric = styled.div`
@@ -278,17 +285,19 @@ const MetricLabel = styled.div`
 const DownloadButton = styled.button`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 14px 24px;
   background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+  width: 100%;
 
   &:hover {
     transform: translateY(-1px);
@@ -360,6 +369,7 @@ const InteractiveDemo = () => {
     async (file, format) => {
       setIsProcessing(true);
       setError(null);
+      const startTime = performance.now();
 
       try {
         console.warn('Starting image processing with format:', format);
@@ -407,6 +417,10 @@ const InteractiveDemo = () => {
         const avgVariantSize = blob.size / variantCount;
         const savings = ((1 - avgVariantSize / originalSize) * 100).toFixed(1);
 
+        // Calculate elapsed time
+        const endTime = performance.now();
+        const elapsedTime = ((endTime - startTime) / 1000).toFixed(2);
+
         const baseFilename = file.name ? file.name.split('.')[0] : 'optimized';
 
         setProcessedData({
@@ -417,6 +431,7 @@ const InteractiveDemo = () => {
           format,
           filename: `${baseFilename}.zip`,
           isZip: true,
+          elapsedTime,
         });
       } catch (err) {
         console.error('Processing error:', err);
@@ -572,18 +587,20 @@ const InteractiveDemo = () => {
 
           {file && !isProcessing && !processedData && (
             <FooterComplete>
-              <FilenameInput
-                type="text"
-                placeholder="Enter filename"
-                value={customFilename}
-                onChange={(e) => setCustomFilename(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={(e) => e.target.select()}
-              />
-              <ProcessButton onClick={handleProcess}>
-                <Zap />
-                Process Image
-              </ProcessButton>
+              <InputGroup>
+                <FilenameInput
+                  type="text"
+                  placeholder="Enter filename"
+                  value={customFilename}
+                  onChange={(e) => setCustomFilename(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={(e) => e.target.select()}
+                />
+                <ProcessButton onClick={handleProcess}>
+                  <Zap />
+                  Process Image
+                </ProcessButton>
+              </InputGroup>
             </FooterComplete>
           )}
 
@@ -619,6 +636,10 @@ const InteractiveDemo = () => {
                 <Metric>
                   <MetricValue>-{processedData.savings}%</MetricValue>
                   <MetricLabel>Saved</MetricLabel>
+                </Metric>
+                <Metric>
+                  <MetricValue>{processedData.elapsedTime}s</MetricValue>
+                  <MetricLabel>Time</MetricLabel>
                 </Metric>
               </MetricsGrid>
 
