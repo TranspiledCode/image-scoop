@@ -14,6 +14,7 @@ import Process from 'pages/Process';
 import About from 'pages/About';
 import Login from 'pages/Login';
 import SignUp from 'pages/SignUp';
+import ResetPassword from 'pages/ResetPassword';
 
 const App = () => {
   return (
@@ -29,6 +30,7 @@ const App = () => {
                 <Route path="/about" element={<About />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<SignUp />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
               </Routes>
             </Router>
           </ToastProvider>

@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, Lock, LogIn } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const PageContainer = styled.div`
-  min-height: calc(100vh - 80px);
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,61 +17,338 @@ const PageContainer = styled.div`
 const Card = styled.div`
   background: white;
   border-radius: 20px;
-  padding: 48px;
-  max-width: 400px;
+  padding: 3rem;
+  max-width: 440px;
   width: 100%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 640px) {
+    padding: 2rem;
+  }
 `;
 
 const Title = styled.h1`
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
   color: #1f2937;
-  margin-bottom: 8px;
-  text-align: center;
 `;
 
 const Subtitle = styled.p`
-  font-size: 16px;
   color: #6b7280;
-  margin-bottom: 32px;
-  text-align: center;
+  margin: 0 0 2rem 0;
+  font-size: 0.95rem;
 `;
 
-const Message = styled.p`
-  font-size: 15px;
-  color: #6b7280;
-  text-align: center;
-  line-height: 1.6;
-  margin-bottom: 24px;
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 `;
 
-const BackLink = styled(Link)`
-  display: inline-block;
-  color: #ec4899;
-  text-decoration: none;
+const InputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const Label = styled.label`
+  font-size: 0.875rem;
   font-weight: 600;
-  font-size: 15px;
+  color: #374151;
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const InputIcon = styled.div`
+  position: absolute;
+  left: 1rem;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1rem;
   transition: all 0.2s;
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: #ec4899;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+`;
+
+const ForgotPasswordLink = styled(Link)`
+  color: #ec4899;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: right;
+  transition: color 0.2s;
 
   &:hover {
-    color: #f97316;
+    color: #db2777;
+  }
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(236, 72, 153, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+`;
+
+const DividerText = styled.span`
+  color: #6b7280;
+  font-size: 0.875rem;
+`;
+
+const GoogleButton = styled.button`
+  width: 100%;
+  padding: 1rem;
+  background: white;
+  color: #1f2937;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-family: inherit;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const GoogleIcon = styled.svg`
+  width: 20px;
+  height: 20px;
+`;
+
+const Footer = styled.div`
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+`;
+
+const SignupLink = styled(Link)`
+  color: #ec4899;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #db2777;
   }
 `;
 
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { currentUser, login, loginWithGoogle } = useAuth();
+  const { addToast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (currentUser) {
+      navigate('/');
+    }
+  }, [currentUser, navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await login(email, password);
+      addToast('Successfully logged in!', 'success');
+      navigate('/');
+    } catch (err) {
+      setError(
+        err.message || 'Failed to log in. Please check your credentials.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      await loginWithGoogle();
+      addToast('Successfully logged in with Google!', 'success');
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Failed to sign in with Google.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <PageContainer>
       <Card>
-        <Title>Login</Title>
-        <Subtitle>Welcome back!</Subtitle>
-        <Message>
-          The login functionality will be implemented in a future update. For
-          now, you can use all features without an account.
-        </Message>
-        <div style={{ textAlign: 'center' }}>
-          <BackLink to="/">← Back to Home</BackLink>
-        </div>
+        <Title>Welcome back</Title>
+        <Subtitle>Sign in to your account to continue</Subtitle>
+
+        <Form onSubmit={handleSubmit}>
+          <InputGroup>
+            <Label htmlFor="email">Email</Label>
+            <InputWrapper>
+              <InputIcon>
+                <Mail size={20} />
+              </InputIcon>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
+            </InputWrapper>
+          </InputGroup>
+
+          <InputGroup>
+            <Label htmlFor="password">Password</Label>
+            <InputWrapper>
+              <InputIcon>
+                <Lock size={20} />
+              </InputIcon>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </InputWrapper>
+            <ForgotPasswordLink to="/reset-password">
+              Forgot password?
+            </ForgotPasswordLink>
+          </InputGroup>
+
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+
+          <SubmitButton type="submit" disabled={isLoading}>
+            <LogIn size={20} />
+            {isLoading ? 'Signing in...' : 'Sign in'}
+          </SubmitButton>
+        </Form>
+
+        <Divider>
+          <DividerText>or</DividerText>
+        </Divider>
+
+        <GoogleButton
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={isLoading}
+        >
+          <GoogleIcon viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            />
+          </GoogleIcon>
+          Continue with Google
+        </GoogleButton>
+
+        <Footer>
+          Don&apos;t have an account?{' '}
+          <SignupLink to="/signup">Sign up</SignupLink>
+        </Footer>
       </Card>
     </PageContainer>
   );
