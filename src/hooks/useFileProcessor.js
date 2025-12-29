@@ -1,6 +1,7 @@
 // useFileProcessor.js
 import { useState } from 'react';
 import { useToast } from 'context/ToastContext';
+import useAnalytics from './useAnalytics';
 
 const useFileProcessor = ({
   files,
@@ -11,6 +12,13 @@ const useFileProcessor = ({
 }) => {
   const [controllers, setControllers] = useState([]);
   const { addToast } = useToast();
+  const {
+    trackImageUpload,
+    trackFormatConversion,
+    trackExportDownload,
+    trackError,
+    trackConversionComplete,
+  } = useAnalytics();
 
   const toastWithLog = (message, variant = 'info') => {
     // eslint-disable-next-line no-console
@@ -45,6 +53,9 @@ const useFileProcessor = ({
       };
     });
 
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    trackImageUpload(files.length, totalSize);
+
     setFileStatuses(updatedStatuses);
     processAllFiles(updatedStatuses.map((status) => status.file));
   };
@@ -52,6 +63,7 @@ const useFileProcessor = ({
   const processAllFiles = (fileInput) => {
     const controller = new AbortController();
     setControllers([controller]);
+    const startTime = Date.now();
 
     const updatedStatuses = fileInput.map((file) => ({
       name: file.name,
@@ -60,6 +72,9 @@ const useFileProcessor = ({
       file: file,
     }));
     setFileStatuses(updatedStatuses);
+
+    const fromFormat = fileInput[0]?.type?.split('/')[1] || 'unknown';
+    trackFormatConversion(fromFormat, exportType, fileInput.length);
 
     const formData = new FormData();
     fileInput.forEach((file) => {
@@ -89,6 +104,10 @@ const useFileProcessor = ({
         });
         setFileStatuses([...updatedStatuses]);
 
+        const processingTime = Date.now() - startTime;
+        trackConversionComplete(fileInput.length, processingTime);
+        trackExportDownload(exportType, fileInput.length, data.size);
+
         const url = window.URL.createObjectURL(new Blob([data]));
         const link = document.createElement('a');
         link.href = url;
@@ -103,6 +122,7 @@ const useFileProcessor = ({
       .catch((error) => {
         console.error('Error during processing:', error);
         let message = 'An error occurred during processing.';
+        let errorType = 'processing_error';
 
         if (error) {
           if (typeof error === 'string') {
@@ -114,17 +134,22 @@ const useFileProcessor = ({
           }
 
           if (error.code === 'file_too_large') {
+            errorType = 'file_too_large';
             message =
               error.error ||
               'One or more files exceed the maximum allowed size.';
           } else if (error.code === 'batch_too_large') {
+            errorType = 'batch_too_large';
             message =
               error.error || 'The batch exceeds the maximum total upload size.';
           } else if (error.code === 'too_many_files') {
+            errorType = 'too_many_files';
             message =
               error.error || 'Too many files were submitted in a single batch.';
           }
         }
+
+        trackError(errorType, message);
 
         toastWithLog(message, 'danger');
         updatedStatuses.forEach((status) => {
