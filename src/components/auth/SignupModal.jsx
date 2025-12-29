@@ -1,33 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
-import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, UserPlus } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import AuthModal from './AuthModal';
 
-const PageContainer = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #fef3f3 0%, #fdf4e3 50%, #f0fdf4 100%);
-  padding: 2rem;
+const ModalContent = styled.div`
+  padding: 2.5rem;
 `;
 
-const Card = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 3rem;
-  max-width: 440px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-
-  @media (max-width: 640px) {
-    padding: 2rem;
-  }
-`;
-
-const Title = styled.h1`
+const Title = styled.h2`
   font-size: 1.75rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
@@ -193,10 +176,14 @@ const Footer = styled.div`
   font-size: 0.875rem;
 `;
 
-const LoginLink = styled(Link)`
+const LoginLink = styled.button`
+  background: none;
+  border: none;
   color: #ec4899;
   font-weight: 600;
-  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
   transition: color 0.2s;
 
   &:hover {
@@ -204,22 +191,15 @@ const LoginLink = styled(Link)`
   }
 `;
 
-const SignUp = () => {
+const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { currentUser, signup, loginWithGoogle } = useAuth();
+  const { signup, loginWithGoogle } = useAuth();
   const { addToast } = useToast();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (currentUser) {
-      navigate('/');
-    }
-  }, [currentUser, navigate]);
 
   const validateForm = () => {
     if (!displayName || !email || !password || !confirmPassword) {
@@ -252,7 +232,7 @@ const SignUp = () => {
     try {
       await signup(email, password, displayName);
       addToast('Account created successfully!', 'success');
-      navigate('/');
+      onClose();
     } catch (err) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {
@@ -266,7 +246,7 @@ const SignUp = () => {
     try {
       await loginWithGoogle();
       addToast('Successfully signed up with Google!', 'success');
-      navigate('/');
+      onClose();
     } catch (err) {
       setError(err.message || 'Failed to sign up with Google.');
     } finally {
@@ -274,9 +254,18 @@ const SignUp = () => {
     }
   };
 
+  const handleClose = () => {
+    setDisplayName('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setError('');
+    onClose();
+  };
+
   return (
-    <PageContainer>
-      <Card>
+    <AuthModal isOpen={isOpen} onClose={handleClose}>
+      <ModalContent>
         <Title>Create your account</Title>
         <Subtitle>Get started with Image Scoop today</Subtitle>
 
@@ -389,11 +378,20 @@ const SignUp = () => {
         </GoogleButton>
 
         <Footer>
-          Already have an account? <LoginLink to="/login">Sign in</LoginLink>
+          Already have an account?{' '}
+          <LoginLink type="button" onClick={onSwitchToLogin}>
+            Sign in
+          </LoginLink>
         </Footer>
-      </Card>
-    </PageContainer>
+      </ModalContent>
+    </AuthModal>
   );
 };
 
-export default SignUp;
+SignupModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSwitchToLogin: PropTypes.func.isRequired,
+};
+
+export default SignupModal;
