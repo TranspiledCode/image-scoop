@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 1.1.0 (2025-12-29)
+
+
+### Features
+
+* **archive:** organize processed images into folders and improve filename ([15799fd](https://github.com/TranspiledCode/image-scoop/commit/15799fd3dcd2181a76be0c61cc92e7b5a3c5df6c)), closes [#38](https://github.com/TranspiledCode/image-scoop/issues/38)
+* **auth:** build login/signup UI workflow with user menu ([c5b12d9](https://github.com/TranspiledCode/image-scoop/commit/c5b12d9113466b74f1c00dc0daac596934debd8e)), closes [#56](https://github.com/TranspiledCode/image-scoop/issues/56)
+* **demo:** add elapsed time metric and improve layout ([da49b9f](https://github.com/TranspiledCode/image-scoop/commit/da49b9f7cda7a058e7a0c5a6b60a227e4c693f04))
+* **demo:** add interactive image optimization demo with real processing ([8c87c71](https://github.com/TranspiledCode/image-scoop/commit/8c87c719c6e3e62ad5ab2e5fa9f3a3684ccf0147)), closes [#45](https://github.com/TranspiledCode/image-scoop/issues/45)
+* **firebase:** add Firebase authentication and realtime database ([4453b2f](https://github.com/TranspiledCode/image-scoop/commit/4453b2ff3327a915d05044df934cad0a80777abd)), closes [#49](https://github.com/TranspiledCode/image-scoop/issues/49)
+* **firebase:** integrate Firebase authentication and realtime database ([3b16259](https://github.com/TranspiledCode/image-scoop/commit/3b16259888997d943f67f64790998cfdf48bdfb7)), closes [#49](https://github.com/TranspiledCode/image-scoop/issues/49)
+* **output:** add option to omit filename from processed files ([a60fc04](https://github.com/TranspiledCode/image-scoop/commit/a60fc0469d4caeda556a257bf94dda3534a30ec2)), closes [#41](https://github.com/TranspiledCode/image-scoop/issues/41)
+* **release:** add automated release process ([d90bb25](https://github.com/TranspiledCode/image-scoop/commit/d90bb2553bc655955dfe779b2c1257c224b6c3c9)), closes [#25](https://github.com/TranspiledCode/image-scoop/issues/25)
+* **ui:** add header scroll effect and demo background image ([334ec2f](https://github.com/TranspiledCode/image-scoop/commit/334ec2f47eb17b1dc2f53910646480f7ca926207))
+* **upload:** add inline file renaming before processing ([e288e17](https://github.com/TranspiledCode/image-scoop/commit/e288e1779d37049aef284a8dff8072d3ef876c64)), closes [#39](https://github.com/TranspiledCode/image-scoop/issues/39)
+* **upload:** add ProcessSummary drawer with R2 cleanup ([746daec](https://github.com/TranspiledCode/image-scoop/commit/746daecf33fac0175192958efcd84ed70b61b06c)), closes [#35](https://github.com/TranspiledCode/image-scoop/issues/35)
+* **validation:** improve rejected file UX with inline display ([8d91310](https://github.com/TranspiledCode/image-scoop/commit/8d91310de4bd73d3f656cbc5c4cf4d84754e5dbe)), closes [#3](https://github.com/TranspiledCode/image-scoop/issues/3)
+* **wizard:** redesign UploadStep with glassmorphism and rotating backgrounds ([fe688c2](https://github.com/TranspiledCode/image-scoop/commit/fe688c2077f98bd96e0f9bec0c69808d02611b9c))
+
+
+### Bug Fixes
+
+* **cors:** simplify dev setup to use port 8888 only ([528ca6c](https://github.com/TranspiledCode/image-scoop/commit/528ca6ca77e0763d8feb0a360cded82bda272565)), closes [#30](https://github.com/TranspiledCode/image-scoop/issues/30)
+* **cors:** update CORS and API URL configuration for dev environment ([c0932d0](https://github.com/TranspiledCode/image-scoop/commit/c0932d06afbc9f3e92068378769ce5faa87a7dc7)), closes [#30](https://github.com/TranspiledCode/image-scoop/issues/30)
+* **functions:** align process-image endpoint ([187d976](https://github.com/TranspiledCode/image-scoop/commit/187d97664120ebf2492bf539e506986e21f678ac))
+* **security:** resolve critical and high severity vulnerabilities ([ce68178](https://github.com/TranspiledCode/image-scoop/commit/ce68178fffc27187ea256d6e97dd7a62035a8e7d)), closes [#27](https://github.com/TranspiledCode/image-scoop/issues/27)
+
+
+### Code Refactoring
+
+* **toast:** replace Math.random with uuid for toast IDs ([4a47f9e](https://github.com/TranspiledCode/image-scoop/commit/4a47f9edd43f44a77d72b55cce3a2956e5c64c42)), closes [#21](https://github.com/TranspiledCode/image-scoop/issues/21)
+* use .jsx extension for React components ([47a49f1](https://github.com/TranspiledCode/image-scoop/commit/47a49f1e314519ff0d9695321884af484a253b46)), closes [#15](https://github.com/TranspiledCode/image-scoop/issues/15)
+
+
+### Maintenance
+
+* remove debug markers from console.log ([3a585e7](https://github.com/TranspiledCode/image-scoop/commit/3a585e7e7b5d10c1f29fc9710c0c822f3de3ddaa))
+* upgrade to Yarn 4.12.0 without PnP ([db59419](https://github.com/TranspiledCode/image-scoop/commit/db5941997289ee60a458cc9fd5c7d4014d99d43a)), closes [#48](https://github.com/TranspiledCode/image-scoop/issues/48)
+
 ## 1.0.0 (2025-12-23)
 
 ### Features
