@@ -1,5 +1,5 @@
 // src/components/Header.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { IceCream, Menu, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -11,15 +11,19 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   padding: 0 2rem;
   height: 80px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
   color: #1f2937;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  position: sticky;
+  box-shadow: ${({ scrolled }) =>
+    scrolled ? '0 2px 8px rgba(0, 0, 0, 0.1)' : 'none'};
+  position: fixed;
   top: 0;
   z-index: 100;
   width: 100%;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: ${({ scrolled }) =>
+    scrolled ? 'rgba(255, 255, 255, 0.95)' : 'transparent'};
+  backdrop-filter: ${({ scrolled }) => (scrolled ? 'blur(10px)' : 'none')};
+  border-bottom: ${({ scrolled }) =>
+    scrolled ? '1px solid rgba(0, 0, 0, 0.05)' : '1px solid transparent'};
+  transition: all 0.3s ease;
 `;
 
 // Styled component for the header title
@@ -200,8 +204,19 @@ const CloseButton = styled.button`
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToSection = (sectionId) => {
     setIsMenuOpen(false);
@@ -241,7 +256,7 @@ const Header = () => {
 
   return (
     <>
-      <HeaderContainer>
+      <HeaderContainer scrolled={isScrolled}>
         <LogoLink to="/">
           <HeaderTitle>
             <LogoIcon size={24} />

@@ -99,16 +99,31 @@ const DropZoneArea = styled.div`
   border-radius: 16px;
   overflow: hidden;
   aspect-ratio: 16/10;
-  background: #1f2937;
-  border: 2px dashed
+  background: ${({ hasImage }) =>
+    hasImage
+      ? '#1f2937'
+      : 'url(https://imagedelivery.net/AjKAvtYVvwYZJx-5TwXk4w/image-scoop/backgrounds/mountains/small) center/cover no-repeat'};
     ${({ isDragActive, hasImage }) =>
       isDragActive ? '#ec4899' : hasImage ? 'transparent' : '#4b5563'};
   cursor: ${({ isProcessing }) => (isProcessing ? 'default' : 'pointer')};
   transition: all 0.3s;
+  filter: ${({ hasImage }) => (hasImage ? 'none' : 'brightness(0.8)')};
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: ${({ hasImage }) =>
+      hasImage ? 'transparent' : 'rgba(0, 0, 0, 0.5)'};
+    backdrop-filter: ${({ hasImage }) => (hasImage ? 'none' : 'blur(2px)')};
+    pointer-events: none;
+    transition: all 0.3s;
+  }
 
   &:hover {
-    border-color: ${({ isProcessing, hasImage }) =>
-      isProcessing ? (hasImage ? 'transparent' : '#4b5563') : '#ec4899'};
+    border: 2px dashed
+      ${({ isProcessing, hasImage }) =>
+        isProcessing ? (hasImage ? 'transparent' : '#4b5563') : '#ec4899'};
   }
 `;
 
