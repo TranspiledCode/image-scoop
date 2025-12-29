@@ -1,10 +1,12 @@
-// src/components/Header.jsx
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { IceCream, Menu, X } from 'lucide-react';
+import { IceCream, Menu } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import UserMenu from './header/UserMenu';
+import MobileMenu from './header/MobileMenu';
 
-// Styled component for the header container
 const HeaderContainer = styled.header`
   display: flex;
   align-items: center;
@@ -26,7 +28,6 @@ const HeaderContainer = styled.header`
   transition: all 0.3s ease;
 `;
 
-// Styled component for the header title
 const HeaderTitle = styled.h1`
   font-size: 1.5rem;
   font-weight: 700;
@@ -41,7 +42,6 @@ const HeaderTitle = styled.h1`
   background-clip: text;
 `;
 
-// Styled component for the logo icon with animation
 const LogoIcon = styled(IceCream)`
   color: #ec4899;
   animation: float 3s ease-in-out infinite;
@@ -59,7 +59,6 @@ const LogoIcon = styled(IceCream)`
   }
 `;
 
-// Styled component for desktop navigation links
 const NavLinks = styled.nav`
   display: flex;
   gap: 1rem;
@@ -70,7 +69,6 @@ const NavLinks = styled.nav`
   }
 `;
 
-// Styled component for individual navigation links
 const NavLink = styled.button`
   color: #6b7280;
   text-decoration: none;
@@ -108,7 +106,7 @@ const LoginLink = styled(Link)`
 const SignUpButton = styled(Link)`
   color: #ec4899;
   text-decoration: none;
-  padding: 0.6rem 1.5rem;
+  padding: 0.5rem 1.5rem;
   border-radius: 10px;
   font-weight: 600;
   font-size: 16px;
@@ -123,13 +121,11 @@ const SignUpButton = styled(Link)`
   }
 `;
 
-// Styled component for the logo link
 const LogoLink = styled(Link)`
   text-decoration: none;
   color: inherit;
 `;
 
-// Styled component for the menu button (visible on mobile)
 const MenuButton = styled.button`
   background: none;
   border: none;
@@ -142,71 +138,13 @@ const MenuButton = styled.button`
   }
 `;
 
-// Styled component for the mobile menu overlay
-const MobileMenuOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  gap: 1rem;
-`;
-
-// Styled component for mobile navigation links
-const MobileNavLink = styled.button`
-  color: #1f2937;
-  text-decoration: none;
-  font-size: 1.5rem;
-  padding: 1rem 2rem;
-  width: auto;
-  text-align: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 500;
-  border-radius: 12px;
-  transition: all 0.2s;
-
-  &:hover {
-    background: rgba(236, 72, 153, 0.1);
-  }
-`;
-
-const MobileCTAButton = styled(Link)`
-  color: white;
-  text-decoration: none;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1.5rem;
-  background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
-  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);
-`;
-
-// Styled component for the close button in the mobile menu
-const CloseButton = styled.button`
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  background: none;
-  border: none;
-  color: #1f2937;
-  cursor: pointer;
-`;
-
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
+  const { addToast } = useToast();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -218,20 +156,27 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      addToast('Successfully logged out', 'success');
+      navigate('/');
+    } catch {
+      addToast('Failed to logout', 'error');
+    }
+  };
+
   const scrollToSection = (sectionId) => {
     setIsMenuOpen(false);
 
-    // If we're not on the home page, navigate there first
     if (location.pathname !== '/') {
       navigate('/');
-      // Wait for navigation to complete, then scroll
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
           const offset = 80;
           const elementPosition = element.getBoundingClientRect().top;
           const offsetPosition = elementPosition + window.pageYOffset - offset;
-
           window.scrollTo({
             top: offsetPosition,
             behavior: 'smooth',
@@ -239,13 +184,11 @@ const Header = () => {
         }
       }, 100);
     } else {
-      // Already on home page, just scroll
       const element = document.getElementById(sectionId);
       if (element) {
         const offset = 80;
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - offset;
-
         window.scrollTo({
           top: offsetPosition,
           behavior: 'smooth',
@@ -254,12 +197,20 @@ const Header = () => {
     }
   };
 
+  const handleNavigate = (pathOrSection) => {
+    if (pathOrSection.startsWith('/')) {
+      navigate(pathOrSection);
+    } else {
+      scrollToSection(pathOrSection);
+    }
+  };
+
   return (
     <>
       <HeaderContainer scrolled={isScrolled}>
         <LogoLink to="/">
           <HeaderTitle>
-            <LogoIcon size={24} />
+            <LogoIcon size={32} />
             Image Scoop
           </HeaderTitle>
         </LogoLink>
@@ -271,8 +222,14 @@ const Header = () => {
           <NavLink onClick={() => scrollToSection('pricing')}>Pricing</NavLink>
           <NavLink onClick={() => scrollToSection('api')}>API</NavLink>
           <NavLink onClick={() => scrollToSection('faq')}>FAQ</NavLink>
-          <LoginLink to="/login">Login</LoginLink>
-          <SignUpButton to="/signup">Sign Up</SignUpButton>
+          {currentUser ? (
+            <UserMenu />
+          ) : (
+            <>
+              <LoginLink to="/login">Login</LoginLink>
+              <SignUpButton to="/signup">Sign Up</SignUpButton>
+            </>
+          )}
         </NavLinks>
 
         <MenuButton onClick={() => setIsMenuOpen(true)} aria-label="Open menu">
@@ -280,34 +237,13 @@ const Header = () => {
         </MenuButton>
       </HeaderContainer>
 
-      {isMenuOpen && (
-        <MobileMenuOverlay>
-          <CloseButton
-            onClick={() => setIsMenuOpen(false)}
-            aria-label="Close menu"
-          >
-            <X size={32} />
-          </CloseButton>
-          <MobileNavLink onClick={() => scrollToSection('features')}>
-            Features
-          </MobileNavLink>
-          <MobileNavLink onClick={() => scrollToSection('pricing')}>
-            Pricing
-          </MobileNavLink>
-          <MobileNavLink onClick={() => scrollToSection('api')}>
-            API
-          </MobileNavLink>
-          <MobileNavLink onClick={() => scrollToSection('faq')}>
-            FAQ
-          </MobileNavLink>
-          <MobileCTAButton to="/login" onClick={() => setIsMenuOpen(false)}>
-            Login
-          </MobileCTAButton>
-          <MobileCTAButton to="/signup" onClick={() => setIsMenuOpen(false)}>
-            Sign Up
-          </MobileCTAButton>
-        </MobileMenuOverlay>
-      )}
+      <MobileMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        currentUser={currentUser}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+      />
     </>
   );
 };

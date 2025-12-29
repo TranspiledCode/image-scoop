@@ -1,33 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
-import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User, UserPlus } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
+import { Mail, Lock, LogIn } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import AuthModal from './AuthModal';
 
-const PageContainer = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #fef3f3 0%, #fdf4e3 50%, #f0fdf4 100%);
-  padding: 2rem;
+const ModalContent = styled.div`
+  padding: 2.5rem;
 `;
 
-const Card = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 3rem;
-  max-width: 440px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-
-  @media (max-width: 640px) {
-    padding: 2rem;
-  }
-`;
-
-const Title = styled.h1`
+const Title = styled.h2`
   font-size: 1.75rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
@@ -98,10 +81,21 @@ const ErrorMessage = styled.div`
   margin-top: 0.25rem;
 `;
 
-const PasswordHint = styled.div`
-  color: #6b7280;
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
+const ForgotPasswordLink = styled.button`
+  background: none;
+  border: none;
+  color: #ec4899;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: right;
+  font-family: inherit;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #db2777;
+  }
 `;
 
 const SubmitButton = styled.button`
@@ -193,10 +187,14 @@ const Footer = styled.div`
   font-size: 0.875rem;
 `;
 
-const LoginLink = styled(Link)`
+const SignupLink = styled.button`
+  background: none;
+  border: none;
   color: #ec4899;
   font-weight: 600;
-  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
   transition: color 0.2s;
 
   &:hover {
@@ -204,57 +202,32 @@ const LoginLink = styled(Link)`
   }
 `;
 
-const SignUp = () => {
-  const [displayName, setDisplayName] = useState('');
+const LoginModal = ({ isOpen, onClose, onSwitchToSignup, onSwitchToReset }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { currentUser, signup, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const { addToast } = useToast();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (currentUser) {
-      navigate('/');
-    }
-  }, [currentUser, navigate]);
-
-  const validateForm = () => {
-    if (!displayName || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
-      return false;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return false;
-    }
-
-    return true;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!validateForm()) {
+    if (!email || !password) {
+      setError('Please fill in all fields');
       return;
     }
 
     setIsLoading(true);
     try {
-      await signup(email, password, displayName);
-      addToast('Account created successfully!', 'success');
-      navigate('/');
+      await login(email, password);
+      addToast('Successfully logged in!', 'success');
+      onClose();
     } catch (err) {
-      setError(err.message || 'Failed to create account. Please try again.');
+      setError(
+        err.message || 'Failed to log in. Please check your credentials.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -265,39 +238,29 @@ const SignUp = () => {
     setIsLoading(true);
     try {
       await loginWithGoogle();
-      addToast('Successfully signed up with Google!', 'success');
-      navigate('/');
+      addToast('Successfully logged in with Google!', 'success');
+      onClose();
     } catch (err) {
-      setError(err.message || 'Failed to sign up with Google.');
+      setError(err.message || 'Failed to sign in with Google.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleClose = () => {
+    setEmail('');
+    setPassword('');
+    setError('');
+    onClose();
+  };
+
   return (
-    <PageContainer>
-      <Card>
-        <Title>Create your account</Title>
-        <Subtitle>Get started with Image Scoop today</Subtitle>
+    <AuthModal isOpen={isOpen} onClose={handleClose}>
+      <ModalContent>
+        <Title>Welcome back</Title>
+        <Subtitle>Sign in to your account to continue</Subtitle>
 
         <Form onSubmit={handleSubmit}>
-          <InputGroup>
-            <Label htmlFor="displayName">Display Name</Label>
-            <InputWrapper>
-              <InputIcon>
-                <User size={20} />
-              </InputIcon>
-              <Input
-                id="displayName"
-                type="text"
-                placeholder="John Doe"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                disabled={isLoading}
-              />
-            </InputWrapper>
-          </InputGroup>
-
           <InputGroup>
             <Label htmlFor="email">Email</Label>
             <InputWrapper>
@@ -330,31 +293,20 @@ const SignUp = () => {
                 disabled={isLoading}
               />
             </InputWrapper>
-            <PasswordHint>Must be at least 6 characters</PasswordHint>
-          </InputGroup>
-
-          <InputGroup>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <InputWrapper>
-              <InputIcon>
-                <Lock size={20} />
-              </InputIcon>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={isLoading}
-              />
-            </InputWrapper>
+            <ForgotPasswordLink
+              type="button"
+              onClick={onSwitchToReset}
+              disabled={isLoading}
+            >
+              Forgot password?
+            </ForgotPasswordLink>
           </InputGroup>
 
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
           <SubmitButton type="submit" disabled={isLoading}>
-            <UserPlus size={20} />
-            {isLoading ? 'Creating account...' : 'Create account'}
+            <LogIn size={20} />
+            {isLoading ? 'Signing in...' : 'Sign in'}
           </SubmitButton>
         </Form>
 
@@ -389,11 +341,21 @@ const SignUp = () => {
         </GoogleButton>
 
         <Footer>
-          Already have an account? <LoginLink to="/login">Sign in</LoginLink>
+          Don&apos;t have an account?{' '}
+          <SignupLink type="button" onClick={onSwitchToSignup}>
+            Sign up
+          </SignupLink>
         </Footer>
-      </Card>
-    </PageContainer>
+      </ModalContent>
+    </AuthModal>
   );
 };
 
-export default SignUp;
+LoginModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSwitchToSignup: PropTypes.func.isRequired,
+  onSwitchToReset: PropTypes.func.isRequired,
+};
+
+export default LoginModal;
