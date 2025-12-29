@@ -1,10 +1,18 @@
 import { useState, useCallback } from 'react';
 import { useToast } from 'context/ToastContext';
+import useAnalytics from './useAnalytics';
 
 const useR2Upload = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
   const { addToast } = useToast();
+  const {
+    trackImageUpload,
+    trackFormatConversion,
+    trackExportDownload,
+    trackError,
+    trackConversionComplete,
+  } = useAnalytics();
 
   const toastWithLog = (message, variant = 'info') => {
     // eslint-disable-next-line no-console
@@ -70,6 +78,9 @@ const useR2Upload = () => {
       setUploading(true);
       setUploadProgress({});
 
+      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+      trackImageUpload(files.length, totalSize);
+
       try {
         const { batchId, uploadUrls } = await getUploadUrls(files);
 
@@ -95,15 +106,21 @@ const useR2Upload = () => {
         return { batchId, uploadedFiles };
       } catch (error) {
         setUploading(false);
+        trackError('upload_error', error.message || 'Upload failed');
         toastWithLog(error.message || 'Upload failed', 'danger');
         throw error;
       }
     },
-    [getUploadUrls, uploadFileToR2],
+    [getUploadUrls, uploadFileToR2, trackImageUpload, trackError],
   );
 
   const processFromR2 = useCallback(
     async (batchId, uploadedFiles, format, omitFilename = false) => {
+      const startTime = Date.now();
+      const fromFormat =
+        uploadedFiles[0]?.originalName?.split('.').pop() || 'unknown';
+      trackFormatConversion(fromFormat, format, uploadedFiles.length);
+
       try {
         const response = await fetch('/.netlify/functions/process-from-r2', {
           method: 'POST',
@@ -121,13 +138,24 @@ const useR2Upload = () => {
           throw new Error(error.error || 'Processing failed');
         }
 
-        return response.json();
+        const result = await response.json();
+        const processingTime = Date.now() - startTime;
+        trackConversionComplete(uploadedFiles.length, processingTime);
+        trackExportDownload(format, uploadedFiles.length, result.size || 0);
+
+        return result;
       } catch (error) {
+        trackError('processing_error', error.message || 'Processing failed');
         toastWithLog(error.message || 'Processing failed', 'danger');
         throw error;
       }
     },
-    [],
+    [
+      trackFormatConversion,
+      trackConversionComplete,
+      trackExportDownload,
+      trackError,
+    ],
   );
 
   return {
