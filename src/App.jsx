@@ -8,8 +8,11 @@ import Header from './components/Header';
 import { ThemeProvider } from '@emotion/react';
 import theme from './style/theme';
 
-import Home from 'pages/Home';
+import Marketing from 'pages/Marketing';
+import Process from 'pages/Process';
 import About from 'pages/About';
+import Login from 'pages/Login';
+import SignUp from 'pages/SignUp';
 
 const App = () => {
   return (
@@ -19,8 +22,11 @@ const App = () => {
           <Router>
             <Header />
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Marketing />} />
+              <Route path="/process" element={<Process />} />
               <Route path="/about" element={<About />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
             </Routes>
           </Router>
         </ToastProvider>

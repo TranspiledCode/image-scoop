@@ -1,5 +1,12 @@
 // src/components/UploadFormWizard.jsx
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from 'react';
+import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from 'context/ToastContext';
 import WizardContainer from './WizardContainer';
@@ -13,7 +20,7 @@ import { MAX_FILES_PER_BATCH, humanFileSize } from 'shared/uploadLimits';
 const PER_FILE_LIMIT_BYTES = 10 * 1024 * 1024;
 const TOTAL_BATCH_LIMIT_BYTES = 100 * 1024 * 1024;
 
-const UploadFormWizard = () => {
+const UploadFormWizard = ({ preUploadedFiles = [] }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [files, setFiles] = useState([]);
   const [fileStatuses, setFileStatuses] = useState([]);
@@ -33,6 +40,25 @@ const UploadFormWizard = () => {
   const totalSize = useMemo(() => {
     return files.reduce((sum, file) => sum + file.size, 0);
   }, [files]);
+
+  // Handle pre-uploaded files from marketing page
+  useEffect(() => {
+    if (preUploadedFiles.length > 0) {
+      const newFiles = [...preUploadedFiles];
+      const newStatuses = newFiles.map((file) => ({
+        id: file.path || file.name,
+        name: file.name,
+        size: file.size,
+        status: 'pending',
+        editableName: file.name,
+        file,
+      }));
+
+      setFiles(newFiles);
+      setFileStatuses(newStatuses);
+      setCurrentStep(2); // Auto-scroll to settings step
+    }
+  }, [preUploadedFiles]);
 
   const onDrop = useCallback(
     (acceptedFiles, rejectedFiles) => {
@@ -292,6 +318,10 @@ const UploadFormWizard = () => {
       />
     </WizardContainer>
   );
+};
+
+UploadFormWizard.propTypes = {
+  preUploadedFiles: PropTypes.arrayOf(PropTypes.object),
 };
 
 export default UploadFormWizard;
