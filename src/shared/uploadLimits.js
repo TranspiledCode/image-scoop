@@ -2,6 +2,14 @@ export const MAX_FILES_PER_BATCH = 10;
 export const PER_FILE_LIMIT_BYTES = 4 * 1024 * 1024; // 4 MB
 export const TOTAL_BATCH_LIMIT_BYTES = 6 * 1024 * 1024; // 6 MB
 
+export const ACCEPTED_FILE_TYPES = {
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/webp': ['.webp'],
+  'image/gif': ['.gif'],
+  'image/svg+xml': ['.svg'],
+};
+
 export const humanFileSize = (bytes) => {
   if (!Number.isFinite(bytes) || bytes < 0) return '0 B';
   if (bytes === 0) return '0 B';
