@@ -1,6 +1,21 @@
 import { useCallback } from 'react';
+import { auth } from '../config/firebase';
 
 const useAnalytics = () => {
+  const updateStats = useCallback(async (statsData) => {
+    try {
+      await fetch('/.netlify/functions/update-stats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(statsData),
+      });
+    } catch (error) {
+      console.error('Failed to update stats:', error);
+    }
+  }, []);
+
   const trackEvent = useCallback((eventName, eventParams = {}) => {
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', eventName, eventParams);
@@ -59,6 +74,25 @@ const useAnalytics = () => {
     [trackEvent],
   );
 
+  const trackConversionStats = useCallback(
+    async (fileCount, storageSaved) => {
+      const userId =
+        auth.currentUser?.uid ||
+        `anon_${localStorage.getItem('anonUserId') || Date.now()}`;
+
+      if (!localStorage.getItem('anonUserId') && !auth.currentUser) {
+        localStorage.setItem('anonUserId', userId);
+      }
+
+      await updateStats({
+        conversions: fileCount,
+        storageSaved: storageSaved,
+        userId: userId,
+      });
+    },
+    [updateStats],
+  );
+
   return {
     trackEvent,
     trackImageUpload,
@@ -66,6 +100,7 @@ const useAnalytics = () => {
     trackExportDownload,
     trackError,
     trackConversionComplete,
+    trackConversionStats,
   };
 };
 

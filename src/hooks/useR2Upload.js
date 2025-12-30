@@ -12,6 +12,7 @@ const useR2Upload = () => {
     trackExportDownload,
     trackError,
     trackConversionComplete,
+    trackConversionStats,
   } = useAnalytics();
 
   const toastWithLog = (message, variant = 'info') => {
@@ -97,6 +98,7 @@ const useR2Upload = () => {
           return {
             key: urlData.key,
             originalName: file.name,
+            size: file.size,
           };
         });
 
@@ -143,6 +145,17 @@ const useR2Upload = () => {
         trackConversionComplete(uploadedFiles.length, processingTime);
         trackExportDownload(format, uploadedFiles.length, result.size || 0);
 
+        // Calculate storage saved (original size - processed size)
+        const originalSize = uploadedFiles.reduce(
+          (sum, file) => sum + (file.size || 0),
+          0,
+        );
+        const processedSize = result.size || 0;
+        const storageSaved = Math.max(0, originalSize - processedSize);
+
+        // Update Firebase stats
+        await trackConversionStats(uploadedFiles.length, storageSaved);
+
         return result;
       } catch (error) {
         trackError('processing_error', error.message || 'Processing failed');
@@ -155,6 +168,7 @@ const useR2Upload = () => {
       trackConversionComplete,
       trackExportDownload,
       trackError,
+      trackConversionStats,
     ],
   );
 

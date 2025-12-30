@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { TrendingUp, Users, Zap, Globe } from 'lucide-react';
+import useStats from '../../hooks/useStats';
 
 const Section = styled.section`
   padding: 100px 48px;
@@ -115,34 +116,60 @@ const StatLabel = styled.div`
   font-weight: 500;
 `;
 
-const stats = [
-  {
-    icon: Users,
-    gradient: 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)',
-    value: '50K+',
-    label: 'Active Users',
-  },
-  {
-    icon: TrendingUp,
-    gradient: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)',
-    value: '2.4M+',
-    label: 'Images Processed',
-  },
-  {
-    icon: Zap,
-    gradient: 'linear-gradient(135deg, #eab308 0%, #84cc16 100%)',
-    value: '847GB',
-    label: 'Storage Saved',
-  },
-  {
-    icon: Globe,
-    gradient: 'linear-gradient(135deg, #84cc16 0%, #10b981 100%)',
-    value: '99.9%',
-    label: 'Uptime',
-  },
-];
+const formatNumber = (num) => {
+  if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(1)}M+`;
+  }
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}K+`;
+  }
+  return num.toString();
+};
+
+const formatBytes = (bytes) => {
+  if (bytes >= 1000000000000) {
+    return `${(bytes / 1000000000000).toFixed(1)}TB`;
+  }
+  if (bytes >= 1000000000) {
+    return `${(bytes / 1000000000).toFixed(0)}GB`;
+  }
+  if (bytes >= 1000000) {
+    return `${(bytes / 1000000).toFixed(0)}MB`;
+  }
+  return `${(bytes / 1000).toFixed(0)}KB`;
+};
 
 const Stats = () => {
+  const { totalUsers, totalConversions, totalStorageSaved, uptime, loading } =
+    useStats();
+
+  const stats = [
+    {
+      icon: Users,
+      gradient: 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)',
+      value: loading ? '...' : formatNumber(totalUsers),
+      label: 'Users',
+    },
+    {
+      icon: TrendingUp,
+      gradient: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)',
+      value: loading ? '...' : formatNumber(totalConversions),
+      label: 'Images Processed',
+    },
+    {
+      icon: Zap,
+      gradient: 'linear-gradient(135deg, #eab308 0%, #84cc16 100%)',
+      value: loading ? '...' : formatBytes(totalStorageSaved),
+      label: 'Bytes Saved',
+    },
+    {
+      icon: Globe,
+      gradient: 'linear-gradient(135deg, #84cc16 0%, #10b981 100%)',
+      value: `${uptime}%`,
+      label: 'System Reliability',
+    },
+  ];
+
   return (
     <Section>
       <Container>

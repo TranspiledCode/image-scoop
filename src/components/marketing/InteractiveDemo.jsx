@@ -4,6 +4,7 @@ import { keyframes } from '@emotion/react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Loader, XCircle, Zap } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import useAnalytics from '../../hooks/useAnalytics';
 
 const DEMO_FILE_LIMIT = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = {
@@ -364,6 +365,7 @@ const InteractiveDemo = () => {
   const [error, setError] = useState(null);
   const [customFilename, setCustomFilename] = useState('');
   const { addToast } = useToast();
+  const { trackConversionStats } = useAnalytics();
 
   const processImage = useCallback(
     async (file, format) => {
@@ -433,6 +435,10 @@ const InteractiveDemo = () => {
           isZip: true,
           elapsedTime,
         });
+
+        // Track demo conversion stats
+        const storageSaved = Math.max(0, originalSize - avgVariantSize);
+        await trackConversionStats(1, storageSaved);
       } catch (err) {
         console.error('Processing error:', err);
         setError('Failed to process image. Please try again.');
@@ -441,7 +447,7 @@ const InteractiveDemo = () => {
         setIsProcessing(false);
       }
     },
-    [addToast, customFilename],
+    [addToast, customFilename, trackConversionStats],
   );
 
   const onDrop = useCallback(
