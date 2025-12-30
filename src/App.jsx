@@ -6,6 +6,7 @@ import { ToastProvider } from './context/ToastContext';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
 import ErrorBoundary from './components/ErrorBoundary';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import { ThemeProvider } from '@emotion/react';
 import theme from './style/theme';
@@ -28,7 +29,14 @@ const App = () => {
                 <Header />
                 <Routes>
                   <Route path="/" element={<Marketing />} />
-                  <Route path="/process" element={<Process />} />
+                  <Route
+                    path="/process"
+                    element={
+                      <ProtectedRoute>
+                        <Process />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="/about" element={<About />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<SignUp />} />
