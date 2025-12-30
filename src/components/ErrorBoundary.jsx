@@ -1,7 +1,7 @@
 import React from 'react';
-import styled from '@emotion/styled';
 import PropTypes from 'prop-types';
 import * as Sentry from '@sentry/react';
+import styled from '@emotion/styled';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 const ErrorContainer = styled.div`
@@ -137,97 +137,78 @@ const ActionButton = styled.button`
   }
 `;
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    };
-    this.handleReload = this.handleReload.bind(this);
-    this.handleGoHome = this.handleGoHome.bind(this);
-  }
+const ErrorBoundary = Sentry.ErrorBoundary;
 
-  // eslint-disable-next-line no-unused-vars
-  static getDerivedStateFromError(error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    this.setState({
-      error,
-      errorInfo,
-    });
-
-    if (process.env.NODE_ENV === 'production') {
-      Sentry.captureException(error, {
-        contexts: {
-          react: {
-            componentStack: errorInfo.componentStack,
-          },
-        },
-      });
-    } else {
-      console.error('Error caught by ErrorBoundary:', error, errorInfo);
-    }
-  }
-
-  handleReload() {
-    window.location.reload();
-  }
-
-  handleGoHome() {
+const ErrorFallback = ({ error, resetError }) => {
+  const handleGoHome = () => {
     window.location.href = '/';
-  }
+  };
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <ErrorContainer>
-          <ErrorCard>
-            <IconWrapper>
-              <AlertTriangle />
-            </IconWrapper>
+  return (
+    <ErrorContainer>
+      <ErrorCard>
+        <IconWrapper>
+          <AlertTriangle />
+        </IconWrapper>
 
-            <Title>Oops! Something went wrong</Title>
+        <Title>Oops! Something went wrong</Title>
 
-            <Message>
-              We encountered an unexpected error. Don&apos;t worry, your data is
-              safe. Try reloading the page or return to the homepage.
-            </Message>
+        <Message>
+          We are sorry for the inconvenience. The error has been reported and we
+          will fix it as soon as possible.
+        </Message>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <ErrorDetails>
-                <summary>Error Details (Development Only)</summary>
-                <pre>
-                  {this.state.error.toString()}
-                  {this.state.errorInfo?.componentStack}
-                </pre>
-              </ErrorDetails>
-            )}
+        {process.env.NODE_ENV === 'development' && error && (
+          <ErrorDetails>
+            <summary>Error Details (Development Only)</summary>
+            <pre>{error.message}</pre>
+          </ErrorDetails>
+        )}
 
-            <ButtonGroup>
-              <ActionButton variant="primary" onClick={this.handleReload}>
-                <RefreshCw />
-                Reload Page
-              </ActionButton>
-              <ActionButton onClick={this.handleGoHome}>
-                <Home />
-                Go Home
-              </ActionButton>
-            </ButtonGroup>
-          </ErrorCard>
-        </ErrorContainer>
-      );
-    }
+        <ButtonGroup>
+          <ActionButton variant="primary" onClick={resetError}>
+            <RefreshCw />
+            Try Again
+          </ActionButton>
+          <ActionButton onClick={handleGoHome}>
+            <Home />
+            Go Home
+          </ActionButton>
+        </ButtonGroup>
+      </ErrorCard>
+    </ErrorContainer>
+  );
+};
 
-    return this.props.children;
-  }
-}
+ErrorFallback.propTypes = {
+  error: PropTypes.object.isRequired,
+  resetError: PropTypes.func.isRequired,
+};
 
-ErrorBoundary.propTypes = {
+const AppErrorBoundary = ({ children }) => {
+  return (
+    <ErrorBoundary
+      fallback={ErrorFallback}
+      showDialog={false}
+      beforeCapture={(scope) => {
+        scope.setTag('component', 'AppErrorBoundary');
+        scope.setLevel('error');
+        scope.setContext('errorBoundary', {
+          caught: true,
+          component: 'AppErrorBoundary',
+        });
+      }}
+      onError={() => {
+        // Error is automatically sent to Sentry
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+};
+
+AppErrorBoundary.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export default ErrorBoundary;
+export default AppErrorBoundary;
