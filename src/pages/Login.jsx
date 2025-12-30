@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -219,12 +219,14 @@ const Login = () => {
   const { currentUser, login, loginWithGoogle } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnUrl = location.state?.returnUrl || '/';
 
   useEffect(() => {
     if (currentUser) {
-      navigate('/');
+      navigate(returnUrl);
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, returnUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -239,7 +241,7 @@ const Login = () => {
     try {
       await login(email, password);
       addToast('Successfully logged in!', 'success');
-      navigate('/');
+      navigate(returnUrl);
     } catch (err) {
       setError(
         err.message || 'Failed to log in. Please check your credentials.',
@@ -255,7 +257,7 @@ const Login = () => {
     try {
       await loginWithGoogle();
       addToast('Successfully logged in with Google!', 'success');
-      navigate('/');
+      navigate(returnUrl);
     } catch (err) {
       setError(err.message || 'Failed to sign in with Google.');
     } finally {
