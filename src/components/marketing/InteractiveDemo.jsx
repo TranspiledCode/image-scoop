@@ -1,8 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, Loader, XCircle, Zap } from 'lucide-react';
+import {
+  Upload,
+  Download,
+  Loader,
+  XCircle,
+  Zap,
+  Sparkles,
+  Info,
+} from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import useAnalytics from '../../hooks/useAnalytics';
 
@@ -31,6 +39,8 @@ const DemoHeader = styled.div`
   justify-content: flex-end;
   align-items: center;
   margin-bottom: 16px;
+  position: relative;
+  z-index: 10;
 `;
 
 const InputGroup = styled.div`
@@ -40,11 +50,20 @@ const InputGroup = styled.div`
   align-items: center;
 `;
 
+const FilenameInputWrapper = styled.div`
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
 const FilenameInput = styled.input`
   background: #1f2937;
-  border: 1px solid #374151;
+  border: 2px solid #374151;
   border-radius: 8px;
   padding: 12px 16px;
+  padding-right: 40px;
   font-size: 14px;
   color: white;
   font-family: inherit;
@@ -56,6 +75,7 @@ const FilenameInput = styled.input`
     outline: none;
     border-color: #10b981;
     background: #374151;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
   }
 
   &::placeholder {
@@ -65,6 +85,156 @@ const FilenameInput = styled.input`
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+`;
+
+const SparkleIcon = styled(Sparkles)`
+  position: absolute;
+  right: 12px;
+  width: 18px;
+  height: 18px;
+  color: #fbbf24;
+  pointer-events: none;
+  animation: ${keyframes`
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  `} 2s ease-in-out infinite;
+`;
+
+const popIn = keyframes`
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+const fadeOut = keyframes`
+  0%, 90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+`;
+
+const drawArrow = keyframes`
+  to {
+    stroke-dashoffset: 0;
+  }
+`;
+
+const TutorialOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+  animation: ${fadeOut} 5s ease-in-out forwards;
+`;
+
+const Callout = styled.div`
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  opacity: 0;
+  animation: ${popIn} 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: ${({ delay }) => delay}s;
+`;
+
+const CalloutBadge = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+  flex-shrink: 0;
+`;
+
+const CalloutText = styled.div`
+  background: rgba(31, 41, 55, 0.95);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+`;
+
+const CalloutArrow = styled.svg`
+  position: absolute;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+
+  .arrow-path {
+    fill: none;
+    stroke: white;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 150;
+    stroke-dashoffset: 150;
+    animation: ${drawArrow} 0.8s ease-out forwards;
+    animation-delay: ${({ delay }) => delay}s;
+  }
+
+  .arrow-head-guide {
+    fill: none;
+    stroke: none;
+  }
+
+  .arrow-head {
+    fill: white;
+  }
+`;
+
+const InfoButton = styled.button`
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(31, 41, 55, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 1001;
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  font-family: inherit;
+
+  &:hover {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -364,8 +534,75 @@ const InteractiveDemo = () => {
   const [processedData, setProcessedData] = useState(null);
   const [error, setError] = useState(null);
   const [customFilename, setCustomFilename] = useState('');
+  const [placeholderText, setPlaceholderText] = useState('');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [showTutorial, setShowTutorial] = useState(false);
   const { addToast } = useToast();
   const { trackConversionStats } = useAnalytics();
+  const inputRef = useRef(null);
+  const formatSelectorRef = useRef(null);
+  const processButtonRef = useRef(null);
+  const hasShownTutorial = useRef(false);
+  const tutorialTimerRef = useRef(null);
+
+  const placeholderExamples = [
+    'my-image',
+    'vacation-2024',
+    'product-photo',
+    'hero-banner',
+  ];
+
+  useEffect(() => {
+    if (file && !hasShownTutorial.current && !isProcessing && !processedData) {
+      setShowTutorial(true);
+      hasShownTutorial.current = true;
+      tutorialTimerRef.current = setTimeout(() => setShowTutorial(false), 5000);
+      return () => {
+        if (tutorialTimerRef.current) {
+          clearTimeout(tutorialTimerRef.current);
+        }
+      };
+    }
+  }, [file, isProcessing, processedData]);
+
+  useEffect(() => {
+    if (!file || isProcessing || processedData || customFilename) return;
+
+    const currentExample = placeholderExamples[placeholderIndex];
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId;
+
+    const type = () => {
+      if (!isDeleting && charIndex < currentExample.length) {
+        setPlaceholderText(currentExample.substring(0, charIndex + 1));
+        charIndex++;
+        timeoutId = setTimeout(type, 100);
+      } else if (!isDeleting && charIndex === currentExample.length) {
+        timeoutId = setTimeout(() => {
+          isDeleting = true;
+          type();
+        }, 2000);
+      } else if (isDeleting && charIndex > 0) {
+        setPlaceholderText(currentExample.substring(0, charIndex - 1));
+        charIndex--;
+        timeoutId = setTimeout(type, 50);
+      } else if (isDeleting && charIndex === 0) {
+        setPlaceholderIndex((prev) => (prev + 1) % placeholderExamples.length);
+      }
+    };
+
+    type();
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    file,
+    isProcessing,
+    processedData,
+    customFilename,
+    placeholderIndex,
+    placeholderExamples,
+  ]);
 
   const processImage = useCallback(
     async (file, format) => {
@@ -521,6 +758,14 @@ const InteractiveDemo = () => {
     addToast('Images downloaded successfully!', 'success');
   };
 
+  const handleShowTutorial = () => {
+    if (tutorialTimerRef.current) {
+      clearTimeout(tutorialTimerRef.current);
+    }
+    setShowTutorial(true);
+    tutorialTimerRef.current = setTimeout(() => setShowTutorial(false), 5000);
+  };
+
   const formatBytes = (bytes) => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -530,9 +775,147 @@ const InteractiveDemo = () => {
   };
 
   return (
-    <DemoContainer>
+    <DemoContainer style={{ position: 'relative' }}>
+      {file && !isProcessing && !processedData && (
+        <InfoButton onClick={handleShowTutorial} title="Show tutorial">
+          <Info />
+        </InfoButton>
+      )}
+      {showTutorial && (
+        <TutorialOverlay>
+          {/* Callout 1: Format Selector */}
+          <Callout
+            delay={0.2}
+            style={{
+              top: '40px',
+              right: '280px',
+            }}
+          >
+            <CalloutBadge>1</CalloutBadge>
+            <CalloutText>Choose format</CalloutText>
+          </Callout>
+          <CalloutArrow
+            delay={0.2}
+            style={{
+              position: 'absolute',
+              top: '52px',
+              right: '165px',
+              width: '105px',
+              height: '35px',
+            }}
+            viewBox="0 0 105 35"
+          >
+            <path
+              id="arrow1-path"
+              className="arrow-path"
+              d="M 5 17 Q 20 8, 40 17 Q 60 26, 80 17 Q 90 12, 95 15"
+            />
+            <path
+              id="arrow1-head-path"
+              className="arrow-head-guide"
+              d="M 5 17 Q 20 8, 40 17 Q 60 26, 80 17 Q 90 12, 95 15 T 105 15"
+            />
+            <g className="arrow-head">
+              <animateMotion
+                dur="0.4s"
+                begin="0.2s"
+                fill="freeze"
+                calcMode="spline"
+                keyTimes="0; 1"
+                keySplines="0.25 0.46 0.45 0.94"
+              >
+                <mpath href="#arrow1-head-path" />
+              </animateMotion>
+              <path d="M 0 0 L -14 -6 L -10 6 Z" />
+            </g>
+          </CalloutArrow>
+
+          {/* Callout 2: Rename Field */}
+          <Callout delay={1.5} style={{ bottom: '115px', left: '30px' }}>
+            <CalloutBadge>2</CalloutBadge>
+            <CalloutText>Rename (optional)</CalloutText>
+          </Callout>
+          <CalloutArrow
+            delay={1.5}
+            style={{
+              position: 'absolute',
+              bottom: '92px',
+              left: '210px',
+              width: '55px',
+              height: '65px',
+            }}
+            viewBox="0 0 55 65"
+          >
+            <path
+              id="arrow2-path"
+              className="arrow-path"
+              d="M 27 5 Q 15 18, 27 32 Q 35 42, 27 52 L 27 58"
+            />
+            <path
+              id="arrow2-head-path"
+              className="arrow-head-guide"
+              d="M 27 5 Q 15 18, 27 32 Q 35 42, 27 52 L 27 62"
+            />
+            <g className="arrow-head">
+              <animateMotion
+                dur="0.2s"
+                begin="1.5s"
+                fill="freeze"
+                calcMode="spline"
+                keyTimes="0; 1"
+                keySplines="0.25 0.46 0.45 0.94"
+              >
+                <mpath href="#arrow2-head-path" />
+              </animateMotion>
+              <path d="M 0 0 L -10 -16 L 10 -16 Z" />
+            </g>
+          </CalloutArrow>
+
+          {/* Callout 3: Process Button */}
+          <Callout delay={3} style={{ bottom: '115px', right: '30px' }}>
+            <CalloutBadge>3</CalloutBadge>
+            <CalloutText>Process it!</CalloutText>
+          </Callout>
+          <CalloutArrow
+            delay={3}
+            style={{
+              position: 'absolute',
+              bottom: '92px',
+              right: '165px',
+              width: '55px',
+              height: '65px',
+            }}
+            viewBox="0 0 55 65"
+          >
+            <path
+              id="arrow3-path"
+              className="arrow-path"
+              d="M 27 5 Q 39 18, 27 32 Q 19 42, 27 52 L 27 58"
+            />
+            <path
+              id="arrow3-head-path"
+              className="arrow-head-guide"
+              d="M 27 5 Q 39 18, 27 32 Q 19 42, 27 52 L 27 62"
+            />
+            <g className="arrow-head">
+              <animateMotion
+                dur="0.2s"
+                begin="3s"
+                fill="freeze"
+                calcMode="spline"
+                keyTimes="0; 1"
+                keySplines="0.25 0.46 0.45 0.94"
+              >
+                <mpath href="#arrow3-head-path" />
+              </animateMotion>
+              <path d="M 0 0 L -10 -16 L 10 -16 Z" />
+            </g>
+          </CalloutArrow>
+        </TutorialOverlay>
+      )}
+
       <DemoHeader>
-        <FormatSelector>
+        <FormatSelector ref={formatSelectorRef}>
           <FormatOption
             active={selectedFormat === 'webp'}
             onClick={() => setSelectedFormat('webp')}
@@ -594,15 +977,19 @@ const InteractiveDemo = () => {
           {file && !isProcessing && !processedData && (
             <FooterComplete>
               <InputGroup>
-                <FilenameInput
-                  type="text"
-                  placeholder="Enter filename"
-                  value={customFilename}
-                  onChange={(e) => setCustomFilename(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={(e) => e.target.select()}
-                />
-                <ProcessButton onClick={handleProcess}>
+                <FilenameInputWrapper>
+                  <FilenameInput
+                    ref={inputRef}
+                    type="text"
+                    placeholder={placeholderText || 'Enter custom filename...'}
+                    value={customFilename}
+                    onChange={(e) => setCustomFilename(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={(e) => e.target.select()}
+                  />
+                  <SparkleIcon />
+                </FilenameInputWrapper>
+                <ProcessButton ref={processButtonRef} onClick={handleProcess}>
                   <Zap />
                   Process Image
                 </ProcessButton>
