@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ============================================================
-# Parcel + Netlify Functions Development Server
+# Netlify Dev Server with Functions Support
 # ============================================================
 
 # Set NODE_ENV to development
@@ -30,7 +30,6 @@ get_local_ip() {
 LOCAL_IP=$(get_local_ip)
 LOCALHOST="localhost"
 PORT=8888
-FUNCTIONS_PORT=9999
 
 # Display header with enhanced styling
 echo ""
@@ -48,87 +47,56 @@ check_port() {
   fi
 }
 
-# Clean up any existing processes on our ports
+# Clean up any existing processes on port 8888
 echo "🧹 Cleaning up existing processes..."
 lsof -ti:$PORT | xargs kill -9 2>/dev/null || true
-lsof -ti:$FUNCTIONS_PORT | xargs kill -9 2>/dev/null || true
 sleep 1
 
-# Check if ports are available after cleanup
+# Check if port is available after cleanup
 if ! check_port $PORT; then
   echo "❌ Port $PORT is still in use after cleanup. Please manually free the port."
   exit 1
 fi
 
-if ! check_port $FUNCTIONS_PORT; then
-  echo "❌ Port $FUNCTIONS_PORT is still in use after cleanup. Please manually free the port."
-  exit 1
-fi
+# Start Netlify Dev (which starts Parcel and serves functions)
+echo "⚡ Starting Netlify Dev server..."
+echo "   This will start Parcel and Netlify Functions..."
+echo ""
 
-# Start Netlify Functions in background
-echo "⚡ Starting Netlify Functions on port $FUNCTIONS_PORT..."
-netlify functions:serve --port $FUNCTIONS_PORT > /dev/null 2>&1 &
-FUNCTIONS_PID=$!
+netlify dev &
+NETLIFY_PID=$!
 
-# Give functions time to start
-sleep 6
-
-# Start Parcel in background
-echo "⚡ Starting Parcel development server on port $PORT..."
-parcel public/index.html --port $PORT > /dev/null 2>&1 &
-PARCEL_PID=$!
-
-# Wait for servers to initialize with better feedback
+# Wait for server to initialize
 echo "⏳ Initializing development environment..."
-echo "   • Waiting for Parcel server..."
 
-# Check if servers are running with timeout
+# Check if server is running with timeout
 TIMEOUT=30
 for i in $(seq 1 $TIMEOUT); do
-  PARCEL_READY=false
-  FUNCTIONS_READY=false
-  
-  # Check Parcel
   if curl -s http://$LOCALHOST:$PORT > /dev/null 2>&1; then
-    PARCEL_READY=true
-  fi
-  
-  # Check Functions
-  if curl -s http://$LOCALHOST:$FUNCTIONS_PORT > /dev/null 2>&1; then
-    FUNCTIONS_READY=true
-  fi
-  
-  if $PARCEL_READY && $FUNCTIONS_READY; then
     break
   fi
   
   # Show progress
   printf "."
-  sleep 0.5
+  sleep 1
 done
 
 echo ""
 
-# Check if both servers started successfully
+# Check if server started successfully
 if ! curl -s http://$LOCALHOST:$PORT > /dev/null 2>&1; then
-  echo "❌ Failed to start Parcel server"
-  kill $FUNCTIONS_PID 2>/dev/null
-  exit 1
-fi
-
-if ! curl -s http://$LOCALHOST:$FUNCTIONS_PORT > /dev/null 2>&1; then
-  echo "❌ Failed to start Netlify Functions"
-  kill $PARCEL_PID 2>/dev/null
+  echo "❌ Failed to start Netlify Dev server"
+  kill $NETLIFY_PID 2>/dev/null
   exit 1
 fi
 
 echo ""
-echo "✅ DEVELOPMENT SERVERS READY"
+echo "✅ DEVELOPMENT SERVER READY"
 echo "══════════════════════════════════════════════════════"
 echo ""
 echo "🖥️  LOCAL ACCESS:"
 echo "   → App:           http://$LOCALHOST:$PORT"
-echo "   → Functions:     http://$LOCALHOST:$FUNCTIONS_PORT/.netlify/functions/"
+echo "   → Functions:     http://$LOCALHOST:$PORT/.netlify/functions/"
 echo ""
 echo "🌐 NETWORK ACCESS:"
 echo "   → App:       http://$LOCAL_IP:$PORT"
@@ -154,28 +122,22 @@ else
 fi
 
 echo ""
-echo "🔄 Servers running... Press Ctrl+C to stop"
+echo "🔄 Server running... Press Ctrl+C to stop"
 echo ""
 
 # Function to cleanup on exit
 cleanup() {
   echo ""
-  echo "🛑 Shutting down development servers..."
+  echo "🛑 Shutting down development server..."
   
-  # Kill processes
-  if [ ! -z "$PARCEL_PID" ]; then
-    kill $PARCEL_PID 2>/dev/null
-    echo "   ✓ Parcel server stopped"
+  # Kill Netlify Dev process
+  if [ ! -z "$NETLIFY_PID" ]; then
+    kill $NETLIFY_PID 2>/dev/null
+    echo "   ✓ Netlify Dev stopped"
   fi
   
-  if [ ! -z "$FUNCTIONS_PID" ]; then
-    kill $FUNCTIONS_PID 2>/dev/null
-    echo "   ✓ Netlify Functions stopped"
-  fi
-  
-  # Clean up any remaining processes on our ports
+  # Clean up any remaining processes on port
   lsof -ti:$PORT | xargs kill -9 2>/dev/null
-  lsof -ti:$FUNCTIONS_PORT | xargs kill -9 2>/dev/null
   
   echo "🏁 Development environment shut down cleanly"
   exit 0
@@ -184,16 +146,11 @@ cleanup() {
 # Set up signal handlers
 trap cleanup SIGINT SIGTERM
 
-# Keep the script running and monitor processes
+# Keep the script running and monitor process
 while true; do
-  # Check if processes are still running
-  if ! kill -0 $PARCEL_PID 2>/dev/null; then
-    echo "❌ Parcel server stopped unexpectedly"
-    cleanup
-  fi
-  
-  if ! kill -0 $FUNCTIONS_PID 2>/dev/null; then
-    echo "❌ Netlify Functions stopped unexpectedly"
+  # Check if process is still running
+  if ! kill -0 $NETLIFY_PID 2>/dev/null; then
+    echo "❌ Netlify Dev stopped unexpectedly"
     cleanup
   fi
   
