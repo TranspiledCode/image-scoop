@@ -22,6 +22,7 @@
     "@middy/http-cors": "^5.5.0",
     "@middy/http-error-handler": "^5.5.0",
     "@middy/http-multipart-body-parser": "^5.5.0",
+    "@sentry/react": "^10.32.1",
     "archiver": "^7.0.1",
     "axios": "^1.13.2",
     "firebase": "^12.7.0",

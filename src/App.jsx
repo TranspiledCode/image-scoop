@@ -5,6 +5,7 @@ import ContextProvider from './context/GlobalProvider';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { ThemeProvider } from '@emotion/react';
 import theme from './style/theme';
@@ -18,25 +19,27 @@ import ResetPassword from 'pages/ResetPassword';
 
 const App = () => {
   return (
-    <ContextProvider>
-      <ThemeProvider theme={theme}>
-        <AuthProvider>
-          <ToastProvider position="bottom-right">
-            <Router>
-              <Header />
-              <Routes>
-                <Route path="/" element={<Marketing />} />
-                <Route path="/process" element={<Process />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-              </Routes>
-            </Router>
-          </ToastProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </ContextProvider>
+    <ErrorBoundary>
+      <ContextProvider>
+        <ThemeProvider theme={theme}>
+          <AuthProvider>
+            <ToastProvider position="bottom-right">
+              <Router>
+                <Header />
+                <Routes>
+                  <Route path="/" element={<Marketing />} />
+                  <Route path="/process" element={<Process />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                </Routes>
+              </Router>
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </ContextProvider>
+    </ErrorBoundary>
   );
 };
 
