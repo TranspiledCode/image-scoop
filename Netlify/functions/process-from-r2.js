@@ -221,10 +221,19 @@ export const handler = async (event) => {
       archive.on('error', reject);
     });
 
+    // Calculate total size of largest variants only (for compression savings metric)
+    let totalProcessedSize = 0;
+    
     for (const file of processedFiles) {
       const baseName = file.originalName.replace(/\.[^/.]+$/, '');
 
+      // Find the largest variant (typically xxl)
+      let largestSize = 0;
       for (const [sizeName, buffer] of Object.entries(file.sizes)) {
+        if (buffer.length > largestSize) {
+          largestSize = buffer.length;
+        }
+        
         // Conditionally include or omit filename based on option
         const filename = omitFilename
           ? `${sizeName}.${format}`
@@ -233,6 +242,8 @@ export const handler = async (event) => {
         const folderPath = `${baseName}/${filename}`;
         archive.append(buffer, { name: folderPath });
       }
+      
+      totalProcessedSize += largestSize;
     }
 
     archive.finalize();
@@ -250,6 +261,7 @@ export const handler = async (event) => {
         success: true,
         downloadUrl,
         filesProcessed: processedFiles.length,
+        size: totalProcessedSize,
       }),
     };
   } catch (error) {
