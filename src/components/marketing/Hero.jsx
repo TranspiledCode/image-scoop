@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Zap, FileText } from 'lucide-react';
 import InteractiveDemo from './InteractiveDemo';
@@ -96,7 +95,7 @@ const CTAButtons = styled.div`
   }
 `;
 
-const CTAButton = styled(Link)`
+const CTAButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -111,6 +110,9 @@ const CTAButton = styled(Link)`
   box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
   transition: all 0.2s;
   white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 
   &:hover {
     transform: translateY(-2px);
@@ -137,6 +139,7 @@ const CTAButtonSecondary = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+  text-decoration: none;
   white-space: nowrap;
 
   &:hover {
@@ -179,6 +182,13 @@ const HeroFeature = styled.div`
 `;
 
 const Hero = () => {
+  const handleScrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <HeroSection>
       <BackgroundPattern />
@@ -194,10 +204,14 @@ const Hero = () => {
           </HeroDescription>
 
           <CTAButtons>
-            <CTAButton to="/process">Try it Free</CTAButton>
-            <CTAButtonSecondary as={Link} to="/#pricing">
-              View Pricing
+            <CTAButtonSecondary
+              onClick={() => handleScrollToSection('how-it-works')}
+            >
+              How It Works
             </CTAButtonSecondary>
+            <CTAButton onClick={() => handleScrollToSection('what-you-get')}>
+              What You Get
+            </CTAButton>
           </CTAButtons>
 
           <HeroFeatures>

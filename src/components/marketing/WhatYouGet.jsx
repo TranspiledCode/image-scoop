@@ -261,7 +261,7 @@ const benefits = [
 
 const WhatYouGet = () => {
   return (
-    <Section>
+    <Section id="what-you-get">
       <Container>
         <Header>
           <Badge>What You Get</Badge>

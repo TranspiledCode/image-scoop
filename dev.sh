@@ -29,7 +29,7 @@ get_local_ip() {
 
 LOCAL_IP=$(get_local_ip)
 LOCALHOST="localhost"
-PORT=8888
+PORT=9500
 
 # Display header with enhanced styling
 echo ""
