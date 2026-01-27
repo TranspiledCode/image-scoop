@@ -756,6 +756,28 @@ const InteractiveDemo = () => {
     document.body.removeChild(link);
 
     addToast('Images downloaded successfully!', 'success');
+
+    // Reset demo after download with a brief delay
+    setTimeout(() => {
+      // Clean up object URL to prevent memory leaks
+      if (processedData.url) {
+        URL.revokeObjectURL(processedData.url);
+      }
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+
+      // Reset all state
+      setFile(null);
+      setPreview(null);
+      setProcessedData(null);
+      setError(null);
+      setCustomFilename('');
+      setIsProcessing(false);
+
+      // Show ready message
+      addToast('Ready for another image!', 'info');
+    }, 1500);
   };
 
   const handleShowTutorial = () => {

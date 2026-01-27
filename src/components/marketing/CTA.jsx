@@ -53,11 +53,8 @@ const Button = styled.button`
   }
 `;
 
-
-
 const CTA = () => {
-
-    const scrollToSection = (sectionId) => {
+  const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
       const offset = 0;
@@ -71,7 +68,6 @@ const CTA = () => {
     }
   };
 
-
   return (
     <Section>
       <Content>
@@ -82,7 +78,9 @@ const CTA = () => {
           Join thousands of creators and developers who trust Image Scoop for
           their image optimization needs.
         </Description>
-        <Button onClick={() => scrollToSection('hero')}>Start Optimizing — It&apos;s Free</Button>
+        <Button onClick={() => scrollToSection('hero')}>
+          Start Optimizing — It&apos;s Free
+        </Button>
       </Content>
     </Section>
   );
