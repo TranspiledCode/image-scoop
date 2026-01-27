@@ -788,14 +788,6 @@ const InteractiveDemo = () => {
     tutorialTimerRef.current = setTimeout(() => setShowTutorial(false), 5000);
   };
 
-  const handleShowTutorial = () => {
-    if (tutorialTimerRef.current) {
-      clearTimeout(tutorialTimerRef.current);
-    }
-    setShowTutorial(true);
-    tutorialTimerRef.current = setTimeout(() => setShowTutorial(false), 5000);
-  };
-
   const formatBytes = (bytes) => {
     if (bytes === 0) return '0 B';
     const k = 1024;

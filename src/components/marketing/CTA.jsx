@@ -53,8 +53,6 @@ const Button = styled.button`
   }
 `;
 
-
-
 const CTA = () => {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
