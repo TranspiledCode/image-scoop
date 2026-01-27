@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 const Section = styled.section`
@@ -54,8 +53,24 @@ const Button = styled.button`
   }
 `;
 
+
+
 const CTA = () => {
-  const navigate = useNavigate();
+
+    const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const offset = 0;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
+    }
+  };
+
 
   return (
     <Section>
@@ -67,9 +82,7 @@ const CTA = () => {
           Join thousands of creators and developers who trust Image Scoop for
           their image optimization needs.
         </Description>
-        <Button onClick={() => navigate('/process')}>
-          Start Optimizing — It&apos;s Free
-        </Button>
+        <Button onClick={() => scrollToSection('hero')}>Start Optimizing — It&apos;s Free</Button>
       </Content>
     </Section>
   );

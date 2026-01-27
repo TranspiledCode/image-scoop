@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Zap, FileText } from 'lucide-react';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import InteractiveDemo from './InteractiveDemo';
 
 const HeroSection = styled.section`
@@ -23,10 +24,8 @@ const HeroSection = styled.section`
 const BackgroundPattern = styled.div`
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(
-      rgba(255, 255, 255, 0.03) 1px,
-      transparent 1px
-    ),
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 60px 60px;
   pointer-events: none;
@@ -111,6 +110,9 @@ const CTAButton = styled(Link)`
   box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
   transition: all 0.2s;
   white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 
   &:hover {
     transform: translateY(-2px);
@@ -179,8 +181,36 @@ const HeroFeature = styled.div`
 `;
 
 const Hero = () => {
+  const isDemoMode = useDemoMode();
+
+  const scrollToHowItWorks = () => {
+    const element = document.getElementById('how-it-works');
+    if (element) {
+      const offset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const scrollToPricing = () => {
+    const element = document.getElementById('pricing');
+    if (element) {
+      const offset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   return (
-    <HeroSection>
+    <HeroSection id="hero">
       <BackgroundPattern />
 
       <HeroContent>
@@ -194,10 +224,18 @@ const Hero = () => {
           </HeroDescription>
 
           <CTAButtons>
-            <CTAButton to="/process">Try it Free</CTAButton>
-            <CTAButtonSecondary as={Link} to="/#pricing">
-              View Pricing
-            </CTAButtonSecondary>
+            {isDemoMode ? (
+              <CTAButton as="button" onClick={scrollToHowItWorks}>
+                How It Works
+              </CTAButton>
+            ) : (
+              <CTAButton to="/process">Try it Free</CTAButton>
+            )}
+            {!isDemoMode && (
+              <CTAButtonSecondary onClick={scrollToPricing}>
+                View Pricing
+              </CTAButtonSecondary>
+            )}
           </CTAButtons>
 
           <HeroFeatures>
