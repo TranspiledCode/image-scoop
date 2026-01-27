@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/TranspiledCode/image-scoop/compare/v1.1.0...v1.2.0) (2026-01-27)
+
+
+### Features
+
+* **analytics:** implement Google Analytics 4 tracking ([7f6e0f5](https://github.com/TranspiledCode/image-scoop/commit/7f6e0f54f2f17f52d15c46750e939be917bfcc5d)), closes [#33](https://github.com/TranspiledCode/image-scoop/issues/33)
+* **auth:** protect /process route with authentication ([b511ef0](https://github.com/TranspiledCode/image-scoop/commit/b511ef0cd00f277659f97148c6d445e95454578b)), closes [#74](https://github.com/TranspiledCode/image-scoop/issues/74)
+* **dev:** add enhanced dev.sh script with improved DX ([5cf6867](https://github.com/TranspiledCode/image-scoop/commit/5cf68674538ef1dbce059fb3ee9afc0e1ec57779)), closes [#51](https://github.com/TranspiledCode/image-scoop/issues/51)
+* **error-handling:** add React Error Boundaries with Sentry ([7177678](https://github.com/TranspiledCode/image-scoop/commit/7177678eb39423d66ca89235f2f9d8c82f2c41e5)), closes [#4](https://github.com/TranspiledCode/image-scoop/issues/4)
+* **error-handling:** add React Error Boundaries with Sentry ([f58bec5](https://github.com/TranspiledCode/image-scoop/commit/f58bec5dfa8c585e80d878e8268511ab270d66c5)), closes [#4](https://github.com/TranspiledCode/image-scoop/issues/4)
+* **marketing:** add How It Works and What You Get sections ([5db9f0d](https://github.com/TranspiledCode/image-scoop/commit/5db9f0dd800c0f9bd47f89f4e494759d4e6369ea)), closes [#53](https://github.com/TranspiledCode/image-scoop/issues/53)
+* **marketing:** add real-time usage statistics ([1cb1986](https://github.com/TranspiledCode/image-scoop/commit/1cb19869670659690b3691ae8802dbcd6d2aadfa)), closes [#63](https://github.com/TranspiledCode/image-scoop/issues/63)
+* **site:** add demo mode for homepage-only production deployment ([fbd1596](https://github.com/TranspiledCode/image-scoop/commit/fbd15962c13233531ccaaf2ec87b8e0723ae388a)), closes [#91](https://github.com/TranspiledCode/image-scoop/issues/91)
+* **tutorial:** enhance animated arrows with synchronized heads ([de67df9](https://github.com/TranspiledCode/image-scoop/commit/de67df923529f2de7c602b3b56d10499fa33b0fe))
+
+
+### Bug Fixes
+
+* **dev:** use netlify dev for proper function support ([b30ccdd](https://github.com/TranspiledCode/image-scoop/commit/b30ccdd678cac16498bf7bce6986c3dcbbc466f5)), closes [#71](https://github.com/TranspiledCode/image-scoop/issues/71)
+
+
+### Code Refactoring
+
+* **auth:** use ProtectedRoute wrapper instead of component redirect ([b3b760e](https://github.com/TranspiledCode/image-scoop/commit/b3b760ef6a54af206502208c80150b3a0a59aee9)), closes [#74](https://github.com/TranspiledCode/image-scoop/issues/74)
+
+
+### Maintenance
+
+* ignore and remove .claude directory from tracking ([a28c2c1](https://github.com/TranspiledCode/image-scoop/commit/a28c2c138a6c54e3229ee77e33ce01c462d35ef1))
+
 ## 1.1.0 (2025-12-29)
 
 
