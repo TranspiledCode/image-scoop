@@ -139,7 +139,7 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <Section>
+    <Section id="how-it-works">
       <Container>
         <Header>
           <Badge>How It Works</Badge>

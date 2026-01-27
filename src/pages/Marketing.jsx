@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { useDemoMode } from '../hooks/useDemoMode';
 import Hero from '../components/marketing/Hero';
 import Features from '../components/marketing/Features';
 import HowItWorks from '../components/marketing/HowItWorks';
@@ -18,6 +19,8 @@ const MarketingPage = styled.div`
 `;
 
 const Marketing = () => {
+  const isDemoMode = useDemoMode();
+
   return (
     <MarketingPage>
       <Hero />
@@ -25,8 +28,8 @@ const Marketing = () => {
       <HowItWorks />
       <WhatYouGet />
       <Comparison />
-      <ApiSection />
-      <Pricing />
+      {!isDemoMode && <ApiSection />}
+      {!isDemoMode && <Pricing />}
       <Stats />
       <FAQ />
       <CTA />
