@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useDemoMode } from '../../hooks/useDemoMode';
 
 const MobileMenuOverlay = styled.div`
   position: fixed;
@@ -102,6 +103,8 @@ const MobileCTAButton = styled(Link)`
 `;
 
 const MobileMenu = ({ isOpen, onClose, currentUser, onNavigate, onLogout }) => {
+  const isDemoMode = useDemoMode();
+
   if (!isOpen) return null;
 
   const handleNavClick = (sectionId) => {
@@ -126,31 +129,38 @@ const MobileMenu = ({ isOpen, onClose, currentUser, onNavigate, onLogout }) => {
       <MobileNavLink onClick={() => handleNavClick('features')}>
         Features
       </MobileNavLink>
-      <MobileNavLink onClick={() => handleNavClick('pricing')}>
-        Pricing
-      </MobileNavLink>
-      <MobileNavLink onClick={() => handleNavClick('api')}>API</MobileNavLink>
-      <MobileNavLink onClick={() => handleNavClick('faq')}>FAQ</MobileNavLink>
-
-      {currentUser ? (
+      {!isDemoMode && (
         <>
-          <MobileNavLink onClick={() => handleNavClick('/process')}>
-            Process Images
+          <MobileNavLink onClick={() => handleNavClick('pricing')}>
+            Pricing
           </MobileNavLink>
-          <MobileCTAButton as="button" onClick={handleLogoutClick}>
-            Logout
-          </MobileCTAButton>
-        </>
-      ) : (
-        <>
-          <MobileCTAButton to="/login" onClick={onClose}>
-            Login
-          </MobileCTAButton>
-          <MobileCTAButton to="/signup" onClick={onClose}>
-            Sign Up
-          </MobileCTAButton>
+          <MobileNavLink onClick={() => handleNavClick('api')}>
+            API
+          </MobileNavLink>
         </>
       )}
+      <MobileNavLink onClick={() => handleNavClick('faq')}>FAQ</MobileNavLink>
+
+      {!isDemoMode &&
+        (currentUser ? (
+          <>
+            <MobileNavLink onClick={() => handleNavClick('/process')}>
+              Process Images
+            </MobileNavLink>
+            <MobileCTAButton as="button" onClick={handleLogoutClick}>
+              Logout
+            </MobileCTAButton>
+          </>
+        ) : (
+          <>
+            <MobileCTAButton to="/login" onClick={onClose}>
+              Login
+            </MobileCTAButton>
+            <MobileCTAButton to="/signup" onClick={onClose}>
+              Sign Up
+            </MobileCTAButton>
+          </>
+        ))}
     </MobileMenuOverlay>
   );
 };
