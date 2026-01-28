@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/TranspiledCode/image-scoop/compare/v1.2.0...v1.3.0) (2026-01-27)
+
+
+### Features
+
+* **demo:** auto-reset interactive demo after download completes ([ddc0d31](https://github.com/TranspiledCode/image-scoop/commit/ddc0d31934793f50b99ec499d4d44fd4f81372c2)), closes [#94](https://github.com/TranspiledCode/image-scoop/issues/94)
+
 ## [1.2.0](https://github.com/TranspiledCode/image-scoop/compare/v1.1.0...v1.2.0) (2026-01-27)
 
 
