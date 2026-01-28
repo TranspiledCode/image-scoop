@@ -27,6 +27,16 @@ const HeaderContainer = styled.header`
   border-bottom: ${({ scrolled }) =>
     scrolled ? '1px solid rgba(0, 0, 0, 0.05)' : '1px solid transparent'};
   transition: all 0.3s ease;
+
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+    height: 70px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 0.75rem;
+    height: 60px;
+  }
 `;
 
 const HeaderTitle = styled.h1`
@@ -41,6 +51,16 @@ const HeaderTitle = styled.h1`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+    gap: 0.4rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+    gap: 0.3rem;
+  }
 `;
 
 const LogoIcon = styled(IceCream)`
@@ -130,10 +150,12 @@ const LogoLink = styled(Link)`
 const MenuButton = styled.button`
   background: none;
   border: none;
-  color: #1f2937;
+  color: ${({ scrolled }) => (scrolled ? '#1f2937' : 'white')};
   cursor: pointer;
   padding: 0.5rem;
   display: none;
+  transition: color 0.3s ease;
+
   @media (max-width: 968px) {
     display: block;
   }
@@ -151,7 +173,7 @@ const Header = () => {
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 50);
+      setIsScrolled(scrollPosition > 20);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -244,7 +266,11 @@ const Header = () => {
             ))}
         </NavLinks>
 
-        <MenuButton onClick={() => setIsMenuOpen(true)} aria-label="Open menu">
+        <MenuButton
+          onClick={() => setIsMenuOpen(true)}
+          aria-label="Open menu"
+          scrolled={isScrolled}
+        >
           <Menu size={24} />
         </MenuButton>
       </HeaderContainer>
