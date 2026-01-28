@@ -1,14 +1,13 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { useDemoMode } from '../hooks/useDemoMode';
 import Hero from '../components/marketing/Hero';
 import Features from '../components/marketing/Features';
 import HowItWorks from '../components/marketing/HowItWorks';
 import WhatYouGet from '../components/marketing/WhatYouGet';
-import Comparison from '../components/marketing/Comparison';
-import ApiSection from '../components/marketing/ApiSection';
-import Pricing from '../components/marketing/Pricing';
-import Stats from '../components/marketing/Testimonials';
+// import Comparison from '../components/marketing/Comparison';
+// import ApiSection from '../components/marketing/ApiSection';
+// import Pricing from '../components/marketing/Pricing';
+import Stats from '../components/marketing/StatsSection';
 import FAQ from '../components/marketing/FAQ';
 import CTA from '../components/marketing/CTA';
 import Footer from '../components/marketing/Footer';
@@ -19,17 +18,15 @@ const MarketingPage = styled.div`
 `;
 
 const Marketing = () => {
-  const isDemoMode = useDemoMode();
-
   return (
     <MarketingPage>
       <Hero />
       <Features />
       <HowItWorks />
       <WhatYouGet />
-      <Comparison />
-      {!isDemoMode && <ApiSection />}
-      {!isDemoMode && <Pricing />}
+      {/* <Comparison /> */}
+      {/* <ApiSection /> */}
+      {/* <Pricing /> */}
       <Stats />
       <FAQ />
       <CTA />

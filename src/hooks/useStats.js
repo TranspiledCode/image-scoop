@@ -9,6 +9,7 @@ const useStats = () => {
     totalStorageSaved: 0,
     uptime: 99.9,
     loading: true,
+    error: null,
   });
 
   useEffect(() => {
@@ -25,6 +26,7 @@ const useStats = () => {
             totalStorageSaved: data.totalStorageSaved || 0,
             uptime: 99.9,
             loading: false,
+            error: null,
           });
         } else {
           setStats({
@@ -33,12 +35,13 @@ const useStats = () => {
             totalStorageSaved: 0,
             uptime: 99.9,
             loading: false,
+            error: null,
           });
         }
       },
       (error) => {
         console.error('Error fetching stats:', error);
-        setStats((prev) => ({ ...prev, loading: false }));
+        setStats((prev) => ({ ...prev, loading: false, error }));
       },
     );
 
