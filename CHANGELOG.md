@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/TranspiledCode/image-scoop/compare/v1.3.0...v1.4.0) (2026-01-28)
+
+
+### Features
+
+* **analytics:** implement Google Analytics 4 tracking ([bb04e3b](https://github.com/TranspiledCode/image-scoop/commit/bb04e3b3ee2f3b895287faf4f768bf048cbd3a87)), closes [#33](https://github.com/TranspiledCode/image-scoop/issues/33)
+* **auth:** protect /process route with authentication ([f745c5c](https://github.com/TranspiledCode/image-scoop/commit/f745c5c3b3b6fb0dd29213e64d30d261133a6086)), closes [#74](https://github.com/TranspiledCode/image-scoop/issues/74)
+* **dev:** add enhanced dev.sh script with improved DX ([31c57a2](https://github.com/TranspiledCode/image-scoop/commit/31c57a20dc72cbe423cd6f43e34e76a41e910b29)), closes [#51](https://github.com/TranspiledCode/image-scoop/issues/51)
+* **error-handling:** add React Error Boundaries with Sentry ([cbde0e9](https://github.com/TranspiledCode/image-scoop/commit/cbde0e9888f74cfc4dc531c454848412adb61744)), closes [#4](https://github.com/TranspiledCode/image-scoop/issues/4)
+* **error-handling:** add React Error Boundaries with Sentry ([e7ddd3f](https://github.com/TranspiledCode/image-scoop/commit/e7ddd3fba041f16d10b458ea2b0693dcdf43bd01)), closes [#4](https://github.com/TranspiledCode/image-scoop/issues/4)
+* **marketing:** add How It Works and What You Get sections ([cd7d200](https://github.com/TranspiledCode/image-scoop/commit/cd7d2007db37efee2be76e7259705e5ecf530e76)), closes [#53](https://github.com/TranspiledCode/image-scoop/issues/53)
+* **marketing:** add real-time usage statistics ([4673358](https://github.com/TranspiledCode/image-scoop/commit/46733587a55b8e0f809daf4e094539ce4c8acfcc)), closes [#63](https://github.com/TranspiledCode/image-scoop/issues/63)
+* **marketing:** clean up and enhance stats section ([a0fa215](https://github.com/TranspiledCode/image-scoop/commit/a0fa215a073f294afa781667b5c2826e8410f6ec)), closes [#98](https://github.com/TranspiledCode/image-scoop/issues/98)
+* **site:** add demo mode for homepage-only production deployment ([31063ff](https://github.com/TranspiledCode/image-scoop/commit/31063ff53a25d80abbc60133c46a16bb12c3f11c)), closes [#91](https://github.com/TranspiledCode/image-scoop/issues/91)
+* **tutorial:** enhance animated arrows with synchronized heads ([5fb6cd3](https://github.com/TranspiledCode/image-scoop/commit/5fb6cd30221c9dcf4160444c45af90f31a3a2309))
+* **ui:** implement interactive product tour with Driver.js and improve mobile UX ([a413a29](https://github.com/TranspiledCode/image-scoop/commit/a413a29c0ebf058390867050dcf567a1e969a39a)), closes [#100](https://github.com/TranspiledCode/image-scoop/issues/100)
+
+
+### Bug Fixes
+
+* **dev:** use netlify dev for proper function support ([25ae814](https://github.com/TranspiledCode/image-scoop/commit/25ae814978c905a56f4a57e092750a3c8b437a6a)), closes [#71](https://github.com/TranspiledCode/image-scoop/issues/71)
+* remove duplicate handleShowTutorial function and extra whitespace ([67993bc](https://github.com/TranspiledCode/image-scoop/commit/67993bcfac89e0d91f66387cfab411350a958234))
+
+
+### Code Refactoring
+
+* **auth:** use ProtectedRoute wrapper instead of component redirect ([17d4789](https://github.com/TranspiledCode/image-scoop/commit/17d4789aaa3e4454cdcadc1a3bbfa133643933a4)), closes [#74](https://github.com/TranspiledCode/image-scoop/issues/74)
+
+
+### Maintenance
+
+* ignore and remove .claude directory from tracking ([c53f40e](https://github.com/TranspiledCode/image-scoop/commit/c53f40e7f4a540bb9ee6442e6c3344dd343aec06))
+* **release:** 1.2.0 ([d56e1d0](https://github.com/TranspiledCode/image-scoop/commit/d56e1d025859bb609ab67395db574d0e67959e4b))
+
 ## [1.3.0](https://github.com/TranspiledCode/image-scoop/compare/v1.2.0...v1.3.0) (2026-01-27)
 
 
