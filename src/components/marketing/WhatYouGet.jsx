@@ -239,14 +239,14 @@ const stats = [
   {
     icon: Zap,
     gradient: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)',
-    value: '3x',
-    label: 'Faster page load times',
+    value: 'Instant',
+    label: 'Processing speed',
   },
   {
     icon: TrendingUp,
     gradient: 'linear-gradient(135deg, #eab308 0%, #84cc16 100%)',
-    value: '100%',
-    label: 'Better Core Web Vitals',
+    value: 'WebP/AVIF',
+    label: 'Next-gen format support',
   },
 ];
 

@@ -203,8 +203,8 @@ const AboutSection = () => {
         </TipTitle>
         <TipText>
           Smaller image files mean faster page loads, better user experience,
-          and improved SEO. Modern formats like WebP can reduce file size by up
-          to 30% compared to traditional formats!
+          and improved SEO. Our optimization can reduce file sizes by up to 70%
+          while maintaining visual quality!
         </TipText>
       </TipBox>
 
