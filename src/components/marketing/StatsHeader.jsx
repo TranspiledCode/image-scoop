@@ -40,12 +40,12 @@ const Subtitle = styled.p`
 const getDynamicTitle = (userCount) => {
   if (userCount >= 1000000) {
     return 'Trusted by millions worldwide';
-  } else if (userCount >= 1000) {
+  } else if (userCount >= 10000) {
     return 'Trusted by thousands worldwide';
-  } else if (userCount >= 100) {
+  } else if (userCount >= 500) {
     return 'Trusted by hundreds worldwide';
   } else {
-    return 'Trusted by users worldwide';
+    return 'Growing community of users worldwide';
   }
 };
 
