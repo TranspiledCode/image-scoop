@@ -9,11 +9,11 @@ import React, {
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from 'context/ToastContext';
-import WizardContainer from './WizardContainer';
-import UploadStep from './wizard/UploadStep';
-import ReviewStep from './wizard/ReviewStep';
-import ProcessingStep from './wizard/ProcessingStep';
-import SuccessStep from './wizard/SuccessStep';
+import DropZone from './process/DropZone';
+import FileGrid from './process/FileGrid';
+import ConfigureSection from './process/ConfigureSection';
+import ProcessingModal from './process/ProcessingModal';
+import SuccessSection from './process/SuccessSection';
 import useR2Upload from '../hooks/useR2Upload';
 import { MAX_FILES_PER_BATCH, humanFileSize } from 'shared/uploadLimits';
 
@@ -21,17 +21,17 @@ const PER_FILE_LIMIT_BYTES = 10 * 1024 * 1024;
 const TOTAL_BATCH_LIMIT_BYTES = 100 * 1024 * 1024;
 
 const UploadFormWizard = ({ preUploadedFiles = [] }) => {
-  const [currentStep, setCurrentStep] = useState(1);
   const [files, setFiles] = useState([]);
   const [fileStatuses, setFileStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exportType, setExportType] = useState('webp');
-  const [omitFilename, setOmitFilename] = useState(false);
+  const [omitFilename, setOmitFilename] = useState(true);
   const [processPhase, setProcessPhase] = useState(null);
-  const [processedCount, setProcessedCount] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [completedFiles, setCompletedFiles] = useState([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState(null);
   const renamedFilesRef = useRef({});
 
   const { addToast } = useToast();
@@ -56,7 +56,6 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
 
       setFiles(newFiles);
       setFileStatuses(newStatuses);
-      setCurrentStep(2); // Auto-scroll to settings step
     }
   }, [preUploadedFiles]);
 
@@ -120,25 +119,11 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
         ...newFileStatuses,
         ...rejectedStatuses,
       ]);
-
-      if (validFiles.length > 0) {
-        // If already on step 2, force a scroll by briefly changing step
-        if (currentStep === 2) {
-          setCurrentStep(1);
-          setTimeout(() => {
-            setCurrentStep(2);
-          }, 50);
-        } else {
-          setTimeout(() => {
-            setCurrentStep(2);
-          }, 100);
-        }
-      }
     },
-    [files, addToast, currentStep],
+    [files, addToast],
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'image/jpeg': ['.jpg', '.jpeg'],
@@ -147,7 +132,13 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
     },
     multiple: true,
     disabled: loading,
+    noClick: true, // Disable click on the root element
+    noKeyboard: true, // Disable keyboard events on root
   });
+
+  const handleBrowseClick = () => {
+    open();
+  };
 
   const handleRemoveFile = useCallback((index) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
@@ -171,7 +162,6 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
     setLoading(true);
     setProcessPhase('uploading');
     setStartTime(Date.now());
-    setCurrentStep(3);
 
     try {
       const currentStatuses = fileStatuses.filter(
@@ -210,28 +200,20 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
 
       setEndTime(Date.now());
       setProcessPhase('complete');
-      setProcessedCount(uploadedFiles.length);
       setCompletedFiles(uploadedFiles.map((f) => f.originalName));
+      setDownloadUrl(result.downloadUrl);
 
-      const link = document.createElement('a');
-      link.href = result.downloadUrl;
-      const timestamp = new Date()
-        .toISOString()
-        .slice(0, 16)
-        .replace('T', '-')
-        .replace(/:/g, '');
-      link.download = `ImageScoop-${timestamp}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Show success section
+      setTimeout(() => {
+        setShowSuccess(true);
+        setProcessPhase(null);
+      }, 1000);
 
-      setCurrentStep(4);
       addToast('Images processed successfully!', 'success');
     } catch (error) {
       console.error('Processing error:', error);
       addToast(error.message || 'Failed to process images', 'danger');
       setProcessPhase(null);
-      setCurrentStep(2);
     } finally {
       setLoading(false);
     }
@@ -249,23 +231,36 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
     setFileStatuses([]);
     setFiles([]);
     setProcessPhase(null);
-    setCurrentStep(1);
     addToast('Processing cancelled', 'warning');
   }, [addToast]);
 
   const handleDownload = useCallback(() => {
-    addToast('Download started', 'success');
-  }, [addToast]);
+    if (!downloadUrl) return;
+
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    const timestamp = new Date()
+      .toISOString()
+      .slice(0, 16)
+      .replace('T', '-')
+      .replace(/:/g, '');
+    link.download = `ImageScoop-${timestamp}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    addToast('Download started!', 'success');
+  }, [downloadUrl, addToast]);
 
   const handleReset = useCallback(() => {
     setFiles([]);
     setFileStatuses([]);
     setProcessPhase(null);
-    setProcessedCount(0);
     setStartTime(null);
     setEndTime(null);
     setCompletedFiles([]);
-    setCurrentStep(1);
+    setShowSuccess(false);
+    setDownloadUrl(null);
     renamedFilesRef.current = {};
   }, []);
 
@@ -276,47 +271,78 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
     return 0;
   }, [startTime, endTime]);
 
+  const progress = useMemo(() => {
+    if (processPhase === 'uploading') {
+      return (
+        Math.round((uploadProgress?.loaded / uploadProgress?.total) * 100) || 0
+      );
+    }
+    if (processPhase === 'processing') {
+      return 75;
+    }
+    if (processPhase === 'complete') {
+      return 100;
+    }
+    return 0;
+  }, [processPhase, uploadProgress]);
+
   return (
-    <WizardContainer currentStep={currentStep} onStepChange={setCurrentStep}>
-      {/* Step 1: Upload */}
-      <UploadStep
-        getRootProps={getRootProps}
-        getInputProps={getInputProps}
-        isDragActive={isDragActive}
-      />
+    <div {...getRootProps()} style={{ minHeight: '400px' }}>
+      {/* Drop Zone - Shows empty state or drag overlay */}
+      {!showSuccess && (
+        <DropZone
+          getInputProps={getInputProps}
+          isDragActive={isDragActive}
+          hasFiles={files.length > 0}
+          onBrowseClick={handleBrowseClick}
+        />
+      )}
 
-      {/* Step 2: Review & Configure */}
-      <ReviewStep
-        fileStatuses={fileStatuses}
-        handleRemoveFile={handleRemoveFile}
-        handleRenameFile={handleRenameFile}
-        exportType={exportType}
-        setExportType={setExportType}
-        omitFilename={omitFilename}
-        setOmitFilename={setOmitFilename}
-        onOptimize={handleOptimize}
-      />
+      {/* Upload Section - Always visible unless success is shown */}
+      {!showSuccess && files.length > 0 && (
+        <>
+          {/* File Grid */}
+          <FileGrid
+            fileStatuses={fileStatuses}
+            onRemove={handleRemoveFile}
+            onRename={handleRenameFile}
+          />
 
-      {/* Step 3: Processing */}
-      <ProcessingStep
-        phase={processPhase}
-        uploadProgress={uploadProgress}
-        filesCount={files.length}
-        processedCount={processedCount}
-        startTime={startTime}
-        onCancel={handleCancel}
-      />
+          {/* Configure Section - Show when files are present */}
+          <ConfigureSection
+            exportType={exportType}
+            setExportType={setExportType}
+            omitFilename={omitFilename}
+            setOmitFilename={setOmitFilename}
+            onOptimize={handleOptimize}
+            filesCount={files.length}
+          />
+        </>
+      )}
 
-      {/* Step 4: Success */}
-      <SuccessStep
-        totalSize={totalSize}
-        optimizedSize={totalSize * 0.3}
-        processingTime={processingTime}
-        completedFiles={completedFiles}
-        onDownload={handleDownload}
-        onReset={handleReset}
-      />
-    </WizardContainer>
+      {/* Processing Modal */}
+      {processPhase && (
+        <ProcessingModal
+          phase={processPhase}
+          progress={progress}
+          onCancel={processPhase !== 'complete' ? handleCancel : null}
+        />
+      )}
+
+      {/* Success Section */}
+      {showSuccess && (
+        <SuccessSection
+          totalSize={totalSize}
+          optimizedSize={totalSize * 0.3}
+          processingTime={processingTime}
+          completedFiles={completedFiles}
+          processedFiles={files}
+          fileCount={files.length}
+          onDownload={handleDownload}
+          onReset={handleReset}
+        />
+      )}
+    </div>
   );
 };
 
