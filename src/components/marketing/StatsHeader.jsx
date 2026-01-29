@@ -62,8 +62,7 @@ const StatsHeader = ({ totalUsers, loading }) => {
       </Badge>
       <Title>{title}</Title>
       <Subtitle>
-        Join the growing community of creators and developers optimizing
-        millions of images every month.
+        Join the growing community of creators and developers optimizing images.
       </Subtitle>
     </Header>
   );
