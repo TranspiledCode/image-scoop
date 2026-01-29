@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/TranspiledCode/image-scoop/compare/v1.4.0...v1.5.0) (2026-01-29)
+
+
+### Features
+
+* **marketing:** clean up and enhance stats section ([af784e3](https://github.com/TranspiledCode/image-scoop/commit/af784e3a06593bda04ea7c86eb1243cf104d9cd1)), closes [#98](https://github.com/TranspiledCode/image-scoop/issues/98)
+* **marketing:** update copy for consistency and accuracy across sections ([6d401be](https://github.com/TranspiledCode/image-scoop/commit/6d401be7a9d88a1b05cdc8aa09e3cd47b21537b6)), closes [#105](https://github.com/TranspiledCode/image-scoop/issues/105)
+* **marketing:** update Features section with balanced messaging ([739a43d](https://github.com/TranspiledCode/image-scoop/commit/739a43d390e05c49648be130d38473f7115f7e82)), closes [#101](https://github.com/TranspiledCode/image-scoop/issues/101)
+* **ui:** implement interactive product tour with Driver.js and improve mobile UX ([65c59a4](https://github.com/TranspiledCode/image-scoop/commit/65c59a4b40191fc06e66153e225c4b937e2a6159)), closes [#100](https://github.com/TranspiledCode/image-scoop/issues/100)
+
+
+### Maintenance
+
+* **release:** 1.4.0 ([1fc1ca1](https://github.com/TranspiledCode/image-scoop/commit/1fc1ca1fd33954bdb76b87608358b4380058691d))
+
 ## [1.4.0](https://github.com/TranspiledCode/image-scoop/compare/v1.3.0...v1.4.0) (2026-01-28)
 
 
