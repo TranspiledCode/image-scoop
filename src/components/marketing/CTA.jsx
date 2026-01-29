@@ -75,8 +75,8 @@ const CTA = () => {
           Ready to <span>optimize</span>?
         </Title>
         <Description>
-          Join all the creators and developers who trust Image Scoop for their
-          image optimization needs.
+          Join the growing community of creators and developers optimizing
+          images with Image Scoop.
         </Description>
         <Button onClick={() => scrollToSection('hero')}>
           Start Optimizing — It&apos;s Free

@@ -129,22 +129,22 @@ const faqs = [
   {
     question: 'Is my data secure and private?',
     answer:
-      'Absolutely. All images are processed securely using encrypted connections. We automatically delete all uploaded images after 24 hours, and we never share or use your images for any other purpose.',
+      'Absolutely. All images are processed securely using encrypted connections. We automatically delete all uploaded images immediately after processing, and we never share or use your images for any other purpose.',
   },
   {
     question: 'Can I use this for commercial projects?',
     answer:
-      'Yes! All our plans, including the free tier, can be used for commercial projects. For high-volume commercial use, we recommend our Pro or Enterprise plans for better performance and support.',
+      'Yes! Image Scoop is free to use for personal and commercial projects. Process and optimize as many images as you need for your websites, applications, and client work.',
   },
   {
-    question: 'Do you offer an API for developers?',
+    question: 'How many images can I process?',
     answer:
-      'Yes, our Pro and Enterprise plans include full API access with comprehensive documentation. You can integrate image optimization directly into your applications and workflows.',
+      'You can currently process up to 5 images at a time through the web interface. Each image can be optimized in multiple formats and sizes to suit your needs.',
   },
   {
-    question: 'What happens if I exceed my plan limits?',
+    question: 'Do I need to create an account?',
     answer:
-      'On the free plan, you will need to wait until the next day to process more images. On paid plans, you can upgrade anytime or contact us for custom limits. We never charge overage fees without your consent.',
+      'No account required! Simply upload your images and start optimizing. We believe in keeping things simple and accessible for everyone.',
   },
 ];
 
