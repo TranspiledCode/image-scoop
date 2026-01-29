@@ -100,8 +100,7 @@ const ErrorFallback = () => (
       </Badge>
       <Title>Trusted by users worldwide</Title>
       <Subtitle>
-        Join the growing community of creators and developers optimizing
-        millions of images every month.
+        Join the growing community of creators and developers optimizing images.
       </Subtitle>
     </Header>
     <StatsGrid>
