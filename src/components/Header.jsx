@@ -4,7 +4,6 @@ import { IceCream, Menu } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { useDemoMode } from '../hooks/useDemoMode';
 import UserMenu from './header/UserMenu';
 import MobileMenu from './header/MobileMenu';
 
@@ -168,7 +167,6 @@ const Header = () => {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
   const { addToast } = useToast();
-  const isDemoMode = useDemoMode();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -246,24 +244,16 @@ const Header = () => {
           <NavLink onClick={() => scrollToSection('how-it-works')}>
             How It Works
           </NavLink>
-          {!isDemoMode && (
+          <NavLink onClick={() => scrollToSection('pricing')}>Pricing</NavLink>
+          <NavLink onClick={() => scrollToSection('faq')}>FAQ</NavLink>
+          {currentUser ? (
+            <UserMenu />
+          ) : (
             <>
-              <NavLink onClick={() => scrollToSection('pricing')}>
-                Pricing
-              </NavLink>
-              <NavLink onClick={() => scrollToSection('api')}>API</NavLink>
+              <LoginLink to="/login">Login</LoginLink>
+              <SignUpButton to="/signup">Sign Up</SignUpButton>
             </>
           )}
-          <NavLink onClick={() => scrollToSection('faq')}>FAQ</NavLink>
-          {!isDemoMode &&
-            (currentUser ? (
-              <UserMenu />
-            ) : (
-              <>
-                <LoginLink to="/login">Login</LoginLink>
-                <SignUpButton to="/signup">Sign Up</SignUpButton>
-              </>
-            ))}
         </NavLinks>
 
         <MenuButton

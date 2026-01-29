@@ -10,7 +10,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import { ThemeProvider } from '@emotion/react';
 import theme from './style/theme';
-import DemoRouteGuard from './components/DemoRouteGuard';
 
 import Marketing from 'pages/Marketing';
 import Process from 'pages/Process';
@@ -33,45 +32,15 @@ const App = () => {
                   <Route
                     path="/process"
                     element={
-                      <DemoRouteGuard>
-                        <ProtectedRoute>
-                          <Process />
-                        </ProtectedRoute>
-                      </DemoRouteGuard>
+                      <ProtectedRoute>
+                        <Process />
+                      </ProtectedRoute>
                     }
                   />
-                  <Route
-                    path="/about"
-                    element={
-                      <DemoRouteGuard>
-                        <About />
-                      </DemoRouteGuard>
-                    }
-                  />
-                  <Route
-                    path="/login"
-                    element={
-                      <DemoRouteGuard>
-                        <Login />
-                      </DemoRouteGuard>
-                    }
-                  />
-                  <Route
-                    path="/signup"
-                    element={
-                      <DemoRouteGuard>
-                        <SignUp />
-                      </DemoRouteGuard>
-                    }
-                  />
-                  <Route
-                    path="/reset-password"
-                    element={
-                      <DemoRouteGuard>
-                        <ResetPassword />
-                      </DemoRouteGuard>
-                    }
-                  />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                 </Routes>
               </Router>
             </ToastProvider>

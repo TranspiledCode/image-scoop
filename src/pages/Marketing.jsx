@@ -6,7 +6,7 @@ import HowItWorks from '../components/marketing/HowItWorks';
 import WhatYouGet from '../components/marketing/WhatYouGet';
 // import Comparison from '../components/marketing/Comparison';
 // import ApiSection from '../components/marketing/ApiSection';
-// import Pricing from '../components/marketing/Pricing';
+import Pricing from '../components/marketing/Pricing';
 import Stats from '../components/marketing/StatsSection';
 import FAQ from '../components/marketing/FAQ';
 import CTA from '../components/marketing/CTA';
@@ -25,8 +25,8 @@ const Marketing = () => {
       <HowItWorks />
       <WhatYouGet />
       {/* <Comparison /> */}
+      <Pricing />
       {/* <ApiSection /> */}
-      {/* <Pricing /> */}
       <Stats />
       <FAQ />
       <CTA />
