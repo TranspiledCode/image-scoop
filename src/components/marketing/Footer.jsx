@@ -2,7 +2,6 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { IceCream } from 'lucide-react';
-import { useDemoMode } from '../../hooks/useDemoMode';
 
 const FooterSection = styled.footer`
   background: #111827;
@@ -146,8 +145,6 @@ const TranspiledLogo = styled.img`
 `;
 
 const Footer = () => {
-  const isDemoMode = useDemoMode();
-
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -173,9 +170,8 @@ const Footer = () => {
                 <LogoText>Image Scoop</LogoText>
               </Logo>
               <Description>
-                Optimize, compress, and convert your images with smart
-                AI-powered optimization. No quality loss, just smaller files
-                that load faster.
+                Optimize, compress, and convert your images. No quality loss,
+                just smaller files that load faster.
               </Description>
             </FooterBrand>
           </FooterColumn>
@@ -185,16 +181,16 @@ const Footer = () => {
             <FooterLink to="/" onClick={() => scrollToSection('features')}>
               Features
             </FooterLink>
-            {!isDemoMode && (
-              <>
-                <FooterLink to="/" onClick={() => scrollToSection('pricing')}>
-                  Pricing
-                </FooterLink>
-                <FooterLink to="/" onClick={() => scrollToSection('api')}>
-                  API
-                </FooterLink>
-              </>
-            )}
+            <FooterLink to="/" onClick={() => scrollToSection('how-it-works')}>
+              How it works
+            </FooterLink>
+
+            {/* <FooterLink to="/" onClick={() => scrollToSection('pricing')}>
+              Pricing
+            </FooterLink> */}
+            {/* <FooterLink to="/" onClick={() => scrollToSection('api')}>
+              API
+            </FooterLink> */}
             <FooterLink to="/" onClick={() => scrollToSection('faq')}>
               FAQ
             </FooterLink>
@@ -202,7 +198,7 @@ const Footer = () => {
 
           <FooterColumn>
             <ColumnTitle>Company</ColumnTitle>
-            {!isDemoMode && <FooterLink to="/about">About</FooterLink>}
+            <FooterLink to="/about">About</FooterLink>
             <ExternalLink
               href="https://transpiled.com"
               target="_blank"
@@ -212,14 +208,12 @@ const Footer = () => {
             </ExternalLink>
           </FooterColumn>
 
-          {!isDemoMode && (
-            <FooterColumn>
-              <ColumnTitle>Account</ColumnTitle>
-              <FooterLink to="/login">Login</FooterLink>
-              <FooterLink to="/signup">Sign Up</FooterLink>
-              <FooterLink to="/process">Get Started</FooterLink>
-            </FooterColumn>
-          )}
+          <FooterColumn>
+            <ColumnTitle>Account</ColumnTitle>
+            <FooterLink to="/login">Login</FooterLink>
+            {/* <FooterLink to="/signup">Sign Up</FooterLink> */}
+            {/* <FooterLink to="/process">Get Started</FooterLink> */}
+          </FooterColumn>
         </FooterGrid>
 
         <FooterBottom>

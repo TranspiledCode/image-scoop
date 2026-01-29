@@ -115,42 +115,42 @@ const features = [
     gradient: 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)',
     title: 'Lightning Fast Processing',
     description:
-      'Process thousands of images in seconds with our optimized compression engine. No waiting, just results.',
+      'Optimize images instantly with our advanced compression engine. Process single images or entire batches with ease.',
   },
   {
     icon: TrendingDown,
     gradient: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)',
     title: 'Smart Compression',
     description:
-      'Reduce file sizes by up to 70% while maintaining visual quality. Our AI knows exactly how much to compress.',
+      'Reduce file sizes by up to 70% while preserving visual quality. Intelligent algorithms maintain image clarity.',
   },
   {
     icon: Layers,
     gradient: 'linear-gradient(135deg, #eab308 0%, #84cc16 100%)',
-    title: 'Batch Processing',
+    title: 'Scalable Processing',
     description:
-      'Upload and process up to 50 images at once. Perfect for photographers and content creators.',
+      'Built for scale with powerful batch processing capabilities. Optimize multiple images at once with our robust architecture.',
   },
   {
     icon: Globe,
     gradient: 'linear-gradient(135deg, #84cc16 0%, #10b981 100%)',
-    title: 'Universal Format Support',
+    title: 'Modern Format Support',
     description:
-      'Convert between WebP, JPEG, PNG, GIF, and more. All modern formats supported out of the box.',
+      'Support for next-gen image formats optimized for web performance. Convert between WebP, AVIF, JPEG, and PNG formats.',
   },
   {
     icon: Shield,
     gradient: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
     title: 'Privacy First',
     description:
-      'Your images are processed securely and deleted after 24 hours. We never store or share your data.',
+      'Your images are processed securely and immediately deleted after optimization. We never store or share your data without explicit consent.',
   },
   {
     icon: Code,
     gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',
-    title: 'Developer API',
+    title: 'Developer Tools',
     description:
-      'Integrate image optimization into your workflow with our simple REST API. Full documentation included.',
+      'Comprehensive API integration coming soon. Build image optimization directly into your applications and workflows.',
   },
 ];
 
@@ -163,10 +163,10 @@ const Features = () => {
             <Zap size={16} />
             Features
           </Badge>
-          <Title>Everything you need to optimize</Title>
+          <Title>Advanced image optimization platform</Title>
           <Subtitle>
-            Powerful features designed for creators, developers, and businesses
-            who demand the best.
+            Powerful compression technology designed for modern web
+            applications. Fast, secure, and built to scale with your needs.
           </Subtitle>
         </Header>
 
