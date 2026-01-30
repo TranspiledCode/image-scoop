@@ -8,6 +8,7 @@ import {
   Settings,
   ChevronDown,
 } from 'lucide-react';
+import { useUserSubscription } from '../../hooks/useUserSubscription';
 
 const DropdownMenu = styled.div`
   position: absolute;
@@ -270,6 +271,9 @@ const UserDropdown = ({
   onMenuItemClick,
   onLogout,
 }) => {
+  const { subscription } = useUserSubscription();
+  const planName = subscription?.planName || 'Free';
+
   return (
     <DropdownMenu className={isOpen ? 'open' : ''}>
       <DropdownHeader>
@@ -278,7 +282,7 @@ const UserDropdown = ({
         <DropdownEmail>{currentUser.email}</DropdownEmail>
         <PlanBadge>
           <PlanDot />
-          Pro Plan
+          {planName} Plan
         </PlanBadge>
       </DropdownHeader>
       <DropdownUsage>

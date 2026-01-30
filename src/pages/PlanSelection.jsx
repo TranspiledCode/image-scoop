@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 import { Check, Zap } from 'lucide-react';
-import { usePricing } from '../../hooks/usePricing';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
-const Section = styled.section`
+const PageContainer = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fef3f3 0%, #fdf4e3 50%, #f0fdf4 100%);
   padding: 100px 48px;
-  background: white;
 `;
 
 const Container = styled.div`
@@ -45,61 +46,16 @@ const Subtitle = styled.p`
   font-size: 18px;
   color: #6b7280;
   max-width: 600px;
-  margin: 0 auto 32px;
+  margin: 0 auto;
   line-height: 1.6;
-`;
-
-const Toggle = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 48px;
-`;
-
-const ToggleLabel = styled.span`
-  font-size: 15px;
-  font-weight: 600;
-  color: ${({ active }) => (active ? '#1f2937' : '#9ca3af')};
-  transition: color 0.2s;
-`;
-
-const ToggleSwitch = styled.button`
-  width: 56px;
-  height: 32px;
-  background: ${({ active }) =>
-    active ? 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)' : '#e5e7eb'};
-  border: none;
-  border-radius: 100px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.3s;
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    background: white;
-    border-radius: 50%;
-    top: 4px;
-    left: ${({ active }) => (active ? '28px' : '4px')};
-    transition: left 0.3s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
 `;
 
 const PricingGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 32px;
-  }
-
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     grid-template-columns: 1fr;
     max-width: 500px;
     margin: 0 auto;
@@ -131,10 +87,6 @@ const PricingCard = styled.div`
       featured
         ? '0 24px 48px rgba(236, 72, 153, 0.3)'
         : '0 12px 32px rgba(0, 0, 0, 0.08)'};
-  }
-
-  @media (max-width: 768px) {
-    padding: 32px 24px;
   }
 `;
 
@@ -221,6 +173,11 @@ const CTAButton = styled.button`
       color: #ec4899;
     }
   `}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const FeatureList = styled.ul`
@@ -245,8 +202,7 @@ const Feature = styled.li`
   svg {
     width: 18px;
     height: 18px;
-    color: ${({ featured }) =>
-      featured ? '#10b981' : ({ theme }) => theme.colors.tertiary};
+    color: ${({ featured }) => (featured ? '#10b981' : '#10b981')};
     flex-shrink: 0;
     margin-top: 1px;
   }
@@ -254,6 +210,7 @@ const Feature = styled.li`
 
 const plans = [
   {
+    id: 'free',
     name: 'Free',
     description: 'Perfect for personal use',
     price: 0,
@@ -268,24 +225,7 @@ const plans = [
     ],
   },
   {
-    name: 'Pay As You Go',
-    description: 'Buy scoops when you need them',
-    price: 5,
-    period: 'Starting at',
-    cta: 'Buy Scoops',
-    payAsYouGo: true,
-    features: [
-      '100 scoops for $5 (5¢ each)',
-      '250 scoops for $10 (4¢ each)',
-      '600 scoops for $20 (3.3¢ each)',
-      'Scoops never expire',
-      '6 variants (xs, s, m, l, xl, xxl)',
-      'WebP, JPEG, PNG, AVIF formats',
-      'Up to 20MB per file',
-      'Single image processing',
-    ],
-  },
-  {
+    id: 'plus',
     name: 'Plus',
     description: 'For creators & small businesses',
     price: 5,
@@ -293,6 +233,7 @@ const plans = [
     cta: 'Start Free Trial',
     featured: true,
     features: [
+      '14-day free trial',
       '100 images per day (~3,000/month)',
       '6 variants (xs, s, m, l, xl, xxl)',
       'WebP, JPEG, PNG, AVIF formats',
@@ -302,12 +243,14 @@ const plans = [
     ],
   },
   {
+    id: 'pro',
     name: 'Pro',
     description: 'For professionals & developers',
     price: 10,
     period: 'per month',
     cta: 'Start Free Trial',
     features: [
+      '14-day free trial',
       'Unlimited images',
       'All variants + App icons',
       'All formats + advanced options',
@@ -320,92 +263,55 @@ const plans = [
   },
 ];
 
-const Pricing = () => {
-  const [isAnnual, setIsAnnual] = useState(false);
-  const { pricing, loading, error } = usePricing();
+const PlanSelection = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { createUserSubscription, currentUser } = useAuth();
+  const { addToast } = useToast();
 
-  // Use fallback plans if pricing data is not loaded yet
-  const plansToDisplay = pricing?.plans || plans;
-  const annualDiscount = pricing?.metadata?.annualDiscount || 0.2;
+  const handlePlanSelect = async (plan) => {
+    if (!currentUser) {
+      addToast('Please sign up first', 'error');
+      navigate('/signup');
+      return;
+    }
 
-  const handlePlanCTAClick = (plan) => {
-    if (currentUser) {
-      if (plan.payAsYouGo) {
-        navigate('/checkout?plan=payAsYouGo');
-      } else if (plan.name === 'Free') {
+    setIsLoading(true);
+
+    try {
+      if (plan.id === 'free') {
+        await createUserSubscription(currentUser.uid, 'free', null);
+        addToast('Welcome to Image Scoop!', 'success');
         navigate('/process');
       } else {
-        const planId = plan.name.toLowerCase();
-        const billing = isAnnual ? 'annual' : 'monthly';
-        navigate(`/checkout?plan=${planId}&billing=${billing}`);
+        navigate(`/checkout?plan=${plan.id}&billing=monthly`);
       }
-    } else {
-      if (plan.payAsYouGo) {
-        navigate('/signup?plan=payAsYouGo');
-      } else {
-        const planId = plan.name.toLowerCase();
-        const billing = isAnnual ? 'annual' : 'monthly';
-        navigate(`/signup?plan=${planId}&billing=${billing}`);
-      }
+    } catch (error) {
+      console.error('Error selecting plan:', error);
+      addToast('Failed to select plan. Please try again.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <Section id="pricing">
-        <Container>
-          <Header>
-            <Badge>
-              <Zap size={16} />
-              Pricing
-            </Badge>
-            <Title>Simple, transparent pricing</Title>
-            <Subtitle>Loading pricing information...</Subtitle>
-          </Header>
-        </Container>
-      </Section>
-    );
-  }
-
-  if (error) {
-    console.error('Pricing error:', error);
-    // Continue with fallback data
-  }
-
   return (
-    <Section id="pricing">
+    <PageContainer>
       <Container>
         <Header>
           <Badge>
             <Zap size={16} />
-            Pricing
+            Choose Your Plan
           </Badge>
-          <Title>Simple, transparent pricing</Title>
+          <Title>Select the plan that fits your needs</Title>
           <Subtitle>
-            Choose the plan that fits your needs. All plans include a 14-day
-            free trial.
+            Start with the Free plan or unlock more features with Plus or Pro.
+            Paid plans include a 14-day free trial.
           </Subtitle>
-
-          <Toggle>
-            <ToggleLabel active={!isAnnual}>Monthly</ToggleLabel>
-            <ToggleSwitch
-              active={isAnnual}
-              onClick={() => setIsAnnual(!isAnnual)}
-            />
-            <ToggleLabel active={isAnnual}>
-              Annual{' '}
-              <span style={{ color: '#10b981' }}>
-                (Save {annualDiscount * 100}%)
-              </span>
-            </ToggleLabel>
-          </Toggle>
         </Header>
 
         <PricingGrid>
-          {plansToDisplay.map((plan, index) => (
-            <PricingCard key={index} featured={plan.featured}>
+          {plans.map((plan) => (
+            <PricingCard key={plan.id} featured={plan.featured}>
               {plan.featured && <PopularBadge>Most Popular</PopularBadge>}
 
               <PlanName featured={plan.featured}>{plan.name}</PlanName>
@@ -415,27 +321,19 @@ const Pricing = () => {
 
               <Price>
                 <PriceAmount featured={plan.featured}>
-                  $
-                  {plan.payAsYouGo
-                    ? plan.price
-                    : isAnnual && plan.price > 0
-                      ? plan.price * 12 * (1 - annualDiscount)
-                      : plan.price}
+                  ${plan.price}
                 </PriceAmount>
                 <PricePeriod featured={plan.featured}>
-                  {plan.payAsYouGo
-                    ? plan.period
-                    : isAnnual && plan.price > 0
-                      ? `per year ($${plan.price * (1 - annualDiscount)}/mo)`
-                      : plan.period}
+                  {plan.period}
                 </PricePeriod>
               </Price>
 
               <CTAButton
                 featured={plan.featured}
-                onClick={() => handlePlanCTAClick(plan)}
+                onClick={() => handlePlanSelect(plan)}
+                disabled={isLoading}
               >
-                {plan.cta}
+                {isLoading ? 'Loading...' : plan.cta}
               </CTAButton>
 
               <FeatureList>
@@ -450,8 +348,8 @@ const Pricing = () => {
           ))}
         </PricingGrid>
       </Container>
-    </Section>
+    </PageContainer>
   );
 };
 
-export default Pricing;
+export default PlanSelection;

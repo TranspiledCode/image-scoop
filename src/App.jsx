@@ -17,6 +17,8 @@ import About from 'pages/About';
 import Login from 'pages/Login';
 import SignUp from 'pages/SignUp';
 import ResetPassword from 'pages/ResetPassword';
+import PlanSelection from 'pages/PlanSelection';
+import Checkout from 'pages/Checkout';
 
 const App = () => {
   return (
@@ -34,6 +36,22 @@ const App = () => {
                     element={
                       <ProtectedRoute>
                         <Process />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/plan-selection"
+                    element={
+                      <ProtectedRoute>
+                        <PlanSelection />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/checkout"
+                    element={
+                      <ProtectedRoute>
+                        <Checkout />
                       </ProtectedRoute>
                     }
                   />
