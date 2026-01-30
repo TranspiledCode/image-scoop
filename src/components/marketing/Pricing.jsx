@@ -88,13 +88,19 @@ const ToggleSwitch = styled.button`
 
 const PricingGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
     max-width: 500px;
     margin: 0 auto;
+    gap: 32px;
   }
 `;
 
@@ -103,8 +109,8 @@ const PricingCard = styled.div`
     featured ? 'linear-gradient(135deg, #1f2937 0%, #111827 100%)' : 'white'};
   border: ${({ featured }) =>
     featured ? 'none' : '2px solid rgba(0, 0, 0, 0.06)'};
-  border-radius: 24px;
-  padding: 40px;
+  border-radius: 20px;
+  padding: 32px 24px;
   position: relative;
   transition: all 0.3s;
 
@@ -122,6 +128,10 @@ const PricingCard = styled.div`
       featured
         ? '0 24px 48px rgba(236, 72, 153, 0.3)'
         : '0 12px 32px rgba(0, 0, 0, 0.08)'};
+  }
+
+  @media (max-width: 768px) {
+    padding: 32px 24px;
   }
 `;
 
@@ -142,50 +152,51 @@ const PopularBadge = styled.div`
 `;
 
 const PlanName = styled.h3`
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: ${({ featured }) => (featured ? 'white' : '#1f2937')};
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 `;
 
 const PlanDescription = styled.p`
-  font-size: 14px;
+  font-size: 13px;
   color: ${({ featured }) => (featured ? '#9ca3af' : '#6b7280')};
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  line-height: 1.4;
 `;
 
 const Price = styled.div`
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 `;
 
 const PriceAmount = styled.div`
-  font-size: 48px;
+  font-size: 40px;
   font-weight: 800;
   color: ${({ featured }) => (featured ? 'white' : '#1f2937')};
   line-height: 1;
 
   span {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: ${({ featured }) => (featured ? '#9ca3af' : '#6b7280')};
   }
 `;
 
 const PricePeriod = styled.div`
-  font-size: 14px;
+  font-size: 13px;
   color: ${({ featured }) => (featured ? '#9ca3af' : '#6b7280')};
   margin-top: 4px;
 `;
 
 const CTAButton = styled.button`
   width: 100%;
-  padding: 14px 24px;
-  border-radius: 12px;
-  font-size: 15px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 
   ${({ featured }) =>
     featured
@@ -218,68 +229,90 @@ const FeatureList = styled.ul`
 const Feature = styled.li`
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 16px;
-  font-size: 14px;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
   color: ${({ featured }) => (featured ? '#d1d5db' : '#6b7280')};
+  line-height: 1.4;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     color: ${({ featured }) =>
       featured ? '#10b981' : ({ theme }) => theme.colors.tertiary};
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 1px;
   }
 `;
 
 const plans = [
   {
     name: 'Free',
-    description: 'Perfect for trying out',
+    description: 'Perfect for personal use',
     price: 0,
     period: 'Forever free',
     cta: 'Get Started',
     features: [
-      '10 images per day',
-      'Basic compression',
-      'WebP & JPEG formats',
-      'Up to 5MB per file',
-      'Standard processing speed',
+      '20 images per day (~600/month)',
+      '4 variants (s, m, l, xl)',
+      'WebP, JPEG, PNG formats',
+      'Up to 10MB per file',
+      'Single image processing',
     ],
   },
   {
-    name: 'Pro',
-    description: 'For professionals',
-    price: 19,
+    name: 'Pay As You Go',
+    description: 'Buy scoops when you need them',
+    price: 5,
+    period: 'Starting at',
+    cta: 'Buy Scoops',
+    payAsYouGo: true,
+    features: [
+      '100 scoops for $5 (5¢ each)',
+      '250 scoops for $10 (4¢ each)',
+      '600 scoops for $20 (3.3¢ each)',
+      'Scoops never expire',
+      '6 variants (xs, s, m, l, xl, xxl)',
+      'WebP, JPEG, PNG, AVIF formats',
+      'Up to 20MB per file',
+      'Single image processing',
+    ],
+  },
+  {
+    name: 'Plus',
+    description: 'For creators & small businesses',
+    price: 5,
     period: 'per month',
     cta: 'Start Free Trial',
     featured: true,
     features: [
-      'Unlimited images',
-      'Advanced AI compression',
-      'All formats supported',
-      'Up to 50MB per file',
-      'Priority processing',
-      'Batch processing (50 files)',
-      'API access',
-      'Priority support',
+      '100 images per day (~3,000/month)',
+      '6 variants (xs, s, m, l, xl, xxl)',
+      'WebP, JPEG, PNG, AVIF formats',
+      'Up to 20MB per file',
+      'Batch processing (10 files)',
+      '7-day history & re-download',
     ],
   },
   {
-    name: 'Enterprise',
-    description: 'For teams & businesses',
-    price: 99,
+    name: 'Pro',
+    description: 'For professionals & developers',
+    price: 10,
     period: 'per month',
-    cta: 'Contact Sales',
+    cta: 'Start Free Trial',
     features: [
-      'Everything in Pro',
-      'Unlimited team members',
-      'Custom API limits',
-      'Dedicated support',
-      'SLA guarantee',
-      'Custom integrations',
-      'Volume discounts',
+      'Unlimited images',
+      'All variants + App icons',
+      'All formats + advanced options',
+      'Up to 50MB per file',
+      'Batch processing (25 files)',
+      'API access (coming soon)',
+      '30-day history & re-download',
+      'Priority email support',
     ],
   },
 ];
@@ -326,13 +359,18 @@ const Pricing = () => {
               <Price>
                 <PriceAmount featured={plan.featured}>
                   $
-                  {isAnnual && plan.price > 0
-                    ? plan.price * 12 * 0.8
-                    : plan.price}
-                  {plan.price > 0 && <span>/mo</span>}
+                  {plan.payAsYouGo
+                    ? plan.price
+                    : isAnnual && plan.price > 0
+                      ? plan.price * 12 * 0.8
+                      : plan.price}
                 </PriceAmount>
                 <PricePeriod featured={plan.featured}>
-                  {isAnnual && plan.price > 0 ? 'Billed annually' : plan.period}
+                  {plan.payAsYouGo
+                    ? plan.period
+                    : isAnnual && plan.price > 0
+                      ? `per year ($${plan.price * 0.8}/mo)`
+                      : plan.period}
                 </PricePeriod>
               </Price>
 
