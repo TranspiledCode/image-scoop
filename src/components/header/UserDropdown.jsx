@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import {
+  User,
   IceCream,
   LogOut,
   Key,
@@ -297,6 +298,16 @@ const UserDropdown = ({
         </ProgressBar>
       </DropdownUsage>
       <DropdownMenuItems>
+        <MenuItem onClick={() => onMenuItemClick('/profile')}>
+          <MenuItemIcon background="#dbeafe" color="#3b82f6">
+            <User size={18} />
+          </MenuItemIcon>
+          <MenuItemText>
+            <span>My Profile</span>
+            <small>View and edit account</small>
+          </MenuItemText>
+          <MenuItemArrow size={16} />
+        </MenuItem>
         <MenuItem onClick={() => onMenuItemClick('/process')}>
           <MenuItemIcon background="#fce7f3" color="#ec4899">
             <IceCream size={18} />
