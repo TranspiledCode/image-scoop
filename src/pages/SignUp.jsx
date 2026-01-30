@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+
+const VALID_PLANS = ['free', 'payAsYouGo', 'plus', 'pro'];
+const VALID_BILLING = ['monthly', 'annual'];
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -214,6 +217,19 @@ const SignUp = () => {
   const { currentUser, signup, loginWithGoogle } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const planParam = searchParams.get('plan');
+  const billingParam = searchParams.get('billing') || 'monthly';
+
+  useEffect(() => {
+    if (planParam && !VALID_PLANS.includes(planParam)) {
+      console.warn('Invalid plan parameter:', planParam);
+    }
+    if (billingParam && !VALID_BILLING.includes(billingParam)) {
+      console.warn('Invalid billing parameter:', billingParam);
+    }
+  }, [planParam, billingParam]);
 
   useEffect(() => {
     if (currentUser) {
@@ -252,7 +268,15 @@ const SignUp = () => {
     try {
       await signup(email, password, displayName);
       addToast('Account created successfully!', 'success');
-      navigate('/');
+
+      if (!planParam || planParam === 'free') {
+        navigate('/plan-selection');
+      } else {
+        const validBilling = VALID_BILLING.includes(billingParam)
+          ? billingParam
+          : 'monthly';
+        navigate(`/checkout?plan=${planParam}&billing=${validBilling}`);
+      }
     } catch (err) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {
@@ -266,7 +290,15 @@ const SignUp = () => {
     try {
       await loginWithGoogle();
       addToast('Successfully signed up with Google!', 'success');
-      navigate('/');
+
+      if (!planParam || planParam === 'free') {
+        navigate('/plan-selection');
+      } else {
+        const validBilling = VALID_BILLING.includes(billingParam)
+          ? billingParam
+          : 'monthly';
+        navigate(`/checkout?plan=${planParam}&billing=${validBilling}`);
+      }
     } catch (err) {
       setError(err.message || 'Failed to sign up with Google.');
     } finally {

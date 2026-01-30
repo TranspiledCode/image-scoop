@@ -27,6 +27,33 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const createUserSubscription = async (
+    uid,
+    planId = 'free',
+    billingCycle = null,
+  ) => {
+    const now = Date.now();
+    const isTrial = ['plus', 'pro'].includes(planId);
+    const fourteenDaysInMs = 14 * 24 * 60 * 60 * 1000;
+
+    const subscriptionData = {
+      planId,
+      planName: planId.charAt(0).toUpperCase() + planId.slice(1),
+      status:
+        planId === 'free' || planId === 'payAsYouGo' ? 'active' : 'trialing',
+      billingCycle,
+      startDate: now,
+      trialEndDate: isTrial ? now + fourteenDaysInMs : null,
+      currentPeriodEnd: isTrial ? now + fourteenDaysInMs : null,
+      payAsYouGoBalance: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await set(ref(database, `users/${uid}/subscription`), subscriptionData);
+    return subscriptionData;
+  };
+
   const signup = async (email, password, displayName) => {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -109,6 +136,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     resetPassword,
     updateUserProfile,
+    createUserSubscription,
   };
 
   return (
