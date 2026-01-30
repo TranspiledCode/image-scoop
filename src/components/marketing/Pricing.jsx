@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { Check, Zap } from 'lucide-react';
+import { usePricing } from '../../hooks/usePricing';
 
 const Section = styled.section`
   padding: 100px 48px;
@@ -319,6 +320,33 @@ const plans = [
 
 const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
+  const { pricing, loading, error } = usePricing();
+
+  // Use fallback plans if pricing data is not loaded yet
+  const plansToDisplay = pricing?.plans || plans;
+  const annualDiscount = pricing?.metadata?.annualDiscount || 0.2;
+
+  if (loading) {
+    return (
+      <Section id="pricing">
+        <Container>
+          <Header>
+            <Badge>
+              <Zap size={16} />
+              Pricing
+            </Badge>
+            <Title>Simple, transparent pricing</Title>
+            <Subtitle>Loading pricing information...</Subtitle>
+          </Header>
+        </Container>
+      </Section>
+    );
+  }
+
+  if (error) {
+    console.error('Pricing error:', error);
+    // Continue with fallback data
+  }
 
   return (
     <Section id="pricing">
@@ -341,13 +369,16 @@ const Pricing = () => {
               onClick={() => setIsAnnual(!isAnnual)}
             />
             <ToggleLabel active={isAnnual}>
-              Annual <span style={{ color: '#10b981' }}>(Save 20%)</span>
+              Annual{' '}
+              <span style={{ color: '#10b981' }}>
+                (Save {annualDiscount * 100}%)
+              </span>
             </ToggleLabel>
           </Toggle>
         </Header>
 
         <PricingGrid>
-          {plans.map((plan, index) => (
+          {plansToDisplay.map((plan, index) => (
             <PricingCard key={index} featured={plan.featured}>
               {plan.featured && <PopularBadge>Most Popular</PopularBadge>}
 
@@ -362,14 +393,14 @@ const Pricing = () => {
                   {plan.payAsYouGo
                     ? plan.price
                     : isAnnual && plan.price > 0
-                      ? plan.price * 12 * 0.8
+                      ? plan.price * 12 * (1 - annualDiscount)
                       : plan.price}
                 </PriceAmount>
                 <PricePeriod featured={plan.featured}>
                   {plan.payAsYouGo
                     ? plan.period
                     : isAnnual && plan.price > 0
-                      ? `per year ($${plan.price * 0.8}/mo)`
+                      ? `per year ($${plan.price * (1 - annualDiscount)}/mo)`
                       : plan.period}
                 </PricePeriod>
               </Price>
