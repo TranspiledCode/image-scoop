@@ -19,6 +19,7 @@ import SignUp from 'pages/SignUp';
 import ResetPassword from 'pages/ResetPassword';
 import PlanSelection from 'pages/PlanSelection';
 import Checkout from 'pages/Checkout';
+import Profile from 'pages/Profile';
 
 const App = () => {
   return (
@@ -52,6 +53,22 @@ const App = () => {
                     element={
                       <ProtectedRoute>
                         <Checkout />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile/:section"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
                       </ProtectedRoute>
                     }
                   />
