@@ -31,7 +31,7 @@ class ImageProcessor {
   async validateImage(buffer) {
     try {
       await sharp(buffer).metadata();
-      console.log('Image validated successfully.');
+      console.info('Image validated successfully.');
       return true;
     } catch (err) {
       console.error('Validation failed:', err);
@@ -43,7 +43,7 @@ class ImageProcessor {
     try {
       let image = sharp(buffer);
       const metadata = await image.metadata();
-      console.log(`Processing image (${metadata.width}x${metadata.height}).`);
+      console.info(`Processing image (${metadata.width}x${metadata.height}).`);
 
       if (
         metadata.width > CONFIG.MAX_IMAGE_DIMENSION ||
@@ -70,7 +70,7 @@ class ImageProcessor {
 
   async resizeAndOptimize(image, size, format) {
     const [width, height] = size;
-    console.log(`Resizing to ${width}x${height} (${format}).`);
+    console.info(`Resizing to ${width}x${height} (${format}).`);
     const options = {
       jpeg: { quality: CONFIG.JPEG_QUALITY, progressive: true },
       png: { compressionLevel: CONFIG.PNG_COMPRESSION },
@@ -88,7 +88,7 @@ class ImageProcessor {
 }
 
 const processImages = async (event) => {
-  console.log('Received event:', {
+  console.info('Received event:', {
     headers: event.headers,
     bodyKeys: Object.keys(event.body || {}),
   });
@@ -104,7 +104,7 @@ const processImages = async (event) => {
     const images = Array.isArray(event.body.images)
       ? event.body.images
       : [event.body.images];
-    console.log(`Processing ${images.length} image(s).`);
+    console.info(`Processing ${images.length} image(s).`);
 
     const exportType = (event.body['Export-Type'] || 'webp').toLowerCase();
     const validFormats = ['png', 'webp', 'jpeg'];
@@ -124,7 +124,7 @@ const processImages = async (event) => {
     archive.pipe(output);
 
     const processImagePromises = images.map(async (imageFile) => {
-      console.log(`Starting processing for file: ${imageFile.filename}`);
+      console.info(`Starting processing for file: ${imageFile.filename}`);
       const buffer = Buffer.from(imageFile.content, 'binary');
       if (!(await processor.validateImage(buffer))) {
         throw new Error(`Invalid image: ${imageFile.filename}`);
@@ -142,14 +142,14 @@ const processImages = async (event) => {
           );
           const outputBuffer = await resizedImage.toBuffer();
           const filepath = `${filename}/${sizeName}.${exportType}`;
-          console.log(`Appending ${filepath} to archive.`);
+          console.info(`Appending ${filepath} to archive.`);
           archive.append(outputBuffer, { name: filepath });
         }),
       );
     });
 
     await Promise.all(processImagePromises);
-    console.log('All images processed. Finalizing archive.');
+    console.info('All images processed. Finalizing archive.');
     await archive.finalize();
 
     // Collect the zip output
@@ -159,7 +159,7 @@ const processImages = async (event) => {
     }
     const zipBuffer = Buffer.concat(chunks);
 
-    console.log('Archive created successfully.');
+    console.info('Archive created successfully.');
     return {
       statusCode: 200,
       headers: {

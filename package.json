@@ -6,7 +6,7 @@
     "dev": "./dev.sh",
     "build": "parcel build public/index.html",
     "format": "prettier --write \"src/**/*.{js,jsx}\"",
-    "lint": "eslint \"src/**/*.{js,jsx}\"",
+    "lint": "eslint \"**/*.{js,mjs,cjs,jsx}\"",
     "release": "standard-version",
     "release:patch": "standard-version --release-as patch",
     "release:minor": "standard-version --release-as minor",
