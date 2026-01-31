@@ -65,11 +65,89 @@ export const useUserSubscription = () => {
     }
   };
 
+  const scheduleDowngrade = async (toPlanId, toPlanName, effectiveDate) => {
+    if (!currentUser) {
+      throw new Error('User must be authenticated to schedule downgrade');
+    }
+
+    try {
+      await set(
+        ref(
+          database,
+          `users/${currentUser.uid}/subscription/scheduledDowngrade`,
+        ),
+        {
+          toPlanId,
+          toPlanName,
+          effectiveDate,
+          scheduledAt: Date.now(),
+        },
+      );
+    } catch (err) {
+      console.error('Error scheduling downgrade:', err);
+      throw err;
+    }
+  };
+
+  const cancelScheduledDowngrade = async () => {
+    if (!currentUser) {
+      throw new Error(
+        'User must be authenticated to cancel scheduled downgrade',
+      );
+    }
+
+    try {
+      await set(
+        ref(
+          database,
+          `users/${currentUser.uid}/subscription/scheduledDowngrade`,
+        ),
+        null,
+      );
+    } catch (err) {
+      console.error('Error canceling scheduled downgrade:', err);
+      throw err;
+    }
+  };
+
+  const upgradeSubscription = async (newPlanData) => {
+    if (!currentUser) {
+      throw new Error('User must be authenticated to upgrade subscription');
+    }
+
+    try {
+      const now = Date.now();
+      const updatedSubscription = {
+        ...subscription,
+        ...newPlanData,
+        // Only set status to active if not explicitly provided (preserves trial status)
+        status: newPlanData.status || 'active',
+        startDate: now,
+        // Only clear trial if status is changing to active
+        trialEndDate:
+          newPlanData.status === 'trialing' ? newPlanData.trialEndDate : null,
+        scheduledDowngrade: null, // Clear any scheduled downgrades
+        updatedAt: now,
+      };
+
+      await set(
+        ref(database, `users/${currentUser.uid}/subscription`),
+        updatedSubscription,
+      );
+    } catch (err) {
+      console.error('Error upgrading subscription:', err);
+      throw err;
+    }
+  };
+
   return {
     subscription,
     loading,
     error,
     updateSubscription,
+    scheduleDowngrade,
+    cancelScheduledDowngrade,
+    upgradeSubscription,
     isFreeTier: subscription?.planId === 'free',
     isPayAsYouGo: subscription?.planId === 'payAsYouGo',
     isPaid: ['plus', 'pro'].includes(subscription?.planId),

@@ -168,10 +168,10 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
   const handleOptimize = useCallback(async () => {
     // Check limits before processing
     const fileSizes = files.map((f) => f.size);
-    const { allowed, reason, limit } = canProcess(files.length, fileSizes);
+    const limitCheck = canProcess(files.length, fileSizes);
 
-    if (!allowed) {
-      setLimitError({ reason, limit });
+    if (!limitCheck.allowed) {
+      setLimitError({ reason: limitCheck.reason, limit: limitCheck.limit });
       setShowLimitModal(true);
       return;
     }
@@ -217,11 +217,11 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
 
       const imageCount = uploadedFiles.length;
 
-      // Update usage after successful processing
+      // Update usage after successful processing (for daily tracking)
       await incrementUsage(imageCount);
 
-      // Deduct scoops if PAYG
-      if (planLimits.useScoops) {
+      // Deduct scoops only if using scoop-based limit (PAYG or Plus/Pro fallback)
+      if (limitCheck.limit === 'scoops') {
         await deductScoops(imageCount);
       }
 

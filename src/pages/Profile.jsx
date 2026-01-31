@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   User,
   CreditCard,
@@ -211,7 +211,18 @@ const sections = [
 const Profile = () => {
   const { section } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeSection, setActiveSection] = useState(section || 'profile');
+
+  // Handle hash navigation (e.g., /profile#subscription)
+  useEffect(() => {
+    if (location.hash) {
+      const hashSection = location.hash.replace('#', '');
+      if (sections.find((s) => s.id === hashSection)) {
+        setActiveSection(hashSection);
+      }
+    }
+  }, [location.hash]);
 
   const handleSectionChange = (sectionId) => {
     setActiveSection(sectionId);

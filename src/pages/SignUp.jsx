@@ -214,7 +214,8 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { currentUser, signup, loginWithGoogle } = useAuth();
+  const { currentUser, signup, loginWithGoogle, createUserSubscription } =
+    useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -266,12 +267,18 @@ const SignUp = () => {
 
     setIsLoading(true);
     try {
-      await signup(email, password, displayName);
+      const userCredential = await signup(email, password, displayName);
       addToast('Account created successfully!', 'success');
 
-      if (!planParam || planParam === 'free') {
+      if (!planParam) {
+        // No plan param → Show plan selection
         navigate('/plan-selection');
+      } else if (planParam === 'free') {
+        // Free plan selected → Go directly to process
+        await createUserSubscription(userCredential.user.uid, 'free', null);
+        navigate('/process');
       } else {
+        // Paid plan → Go to checkout
         const validBilling = VALID_BILLING.includes(billingParam)
           ? billingParam
           : 'monthly';
@@ -288,12 +295,18 @@ const SignUp = () => {
     setError('');
     setIsLoading(true);
     try {
-      await loginWithGoogle();
+      const userCredential = await loginWithGoogle();
       addToast('Successfully signed up with Google!', 'success');
 
-      if (!planParam || planParam === 'free') {
+      if (!planParam) {
+        // No plan param → Show plan selection
         navigate('/plan-selection');
+      } else if (planParam === 'free') {
+        // Free plan selected → Go directly to process
+        await createUserSubscription(userCredential.user.uid, 'free', null);
+        navigate('/process');
       } else {
+        // Paid plan → Go to checkout
         const validBilling = VALID_BILLING.includes(billingParam)
           ? billingParam
           : 'monthly';

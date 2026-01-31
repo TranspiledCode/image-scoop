@@ -166,6 +166,60 @@ const TrialText = styled.div`
   }
 `;
 
+const ScheduledChangeBanner = styled.div`
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+
+  svg {
+    color: #d97706;
+    flex-shrink: 0;
+  }
+`;
+
+const ScheduledChangeText = styled.div`
+  flex: 1;
+  font-size: 14px;
+  color: #92400e;
+  line-height: 1.5;
+
+  strong {
+    font-weight: 700;
+  }
+`;
+
+const CanceledBanner = styled.div`
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #fca5a5;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+
+  svg {
+    color: #dc2626;
+    flex-shrink: 0;
+  }
+`;
+
+const CanceledText = styled.div`
+  flex: 1;
+  font-size: 14px;
+  color: #991b1b;
+  line-height: 1.5;
+
+  strong {
+    font-weight: 700;
+  }
+`;
+
 const Actions = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -287,12 +341,34 @@ const SubscriptionSection = () => {
     return Math.max(0, days);
   };
 
-  const handleUpgrade = (planId, billing = 'monthly') => {
-    navigate(`/checkout?plan=${planId}&billing=${billing}`);
+  const handleUpgradePlan = () => {
+    const currentPlan = subscription?.planId || 'free';
+    navigate(`/plan-selection?context=upgrade&from=${currentPlan}`);
+  };
+
+  const handleChangePlan = () => {
+    const currentPlan = subscription?.planId;
+    navigate(`/plan-selection?context=downgrade&from=${currentPlan}`);
   };
 
   const handleBuyScoops = () => {
     navigate('/checkout?plan=payAsYouGo');
+  };
+
+  const handleCancelScheduledChange = async () => {
+    try {
+      await set(
+        ref(
+          database,
+          `users/${currentUser.uid}/subscription/scheduledDowngrade`,
+        ),
+        null,
+      );
+      addToast('Scheduled plan change canceled', 'success');
+    } catch (error) {
+      console.error('Error canceling scheduled change:', error);
+      addToast('Failed to cancel scheduled change', 'error');
+    }
   };
 
   const handleCancelSubscription = async () => {
@@ -317,10 +393,30 @@ const SubscriptionSection = () => {
     }
   };
 
+  const handleReactivate = async () => {
+    try {
+      const newStatus =
+        subscription?.trialEndDate && subscription.trialEndDate > Date.now()
+          ? 'trialing'
+          : 'active';
+      await set(
+        ref(database, `users/${currentUser.uid}/subscription/status`),
+        newStatus,
+      );
+      addToast('Subscription reactivated!', 'success');
+    } catch (error) {
+      console.error('Error reactivating subscription:', error);
+      addToast('Failed to reactivate subscription', 'error');
+    }
+  };
+
   const isFreePlan = subscription?.planId === 'free';
   const isPayAsYouGo = subscription?.planId === 'payAsYouGo';
+  const isPlusPlan = subscription?.planId === 'plus';
+  const isProPlan = subscription?.planId === 'pro';
   const isTrialing = subscription?.status === 'trialing';
   const isCanceled = subscription?.status === 'canceled';
+  const hasScheduledDowngrade = !!subscription?.scheduledDowngrade;
   const trialDaysRemaining = getDaysRemaining(subscription?.trialEndDate);
 
   return (
@@ -342,6 +438,17 @@ const SubscriptionSection = () => {
           </PlanInfo>
         </PlanHeader>
 
+        {isCanceled && subscription?.currentPeriodEnd && (
+          <CanceledBanner>
+            <XCircle size={20} />
+            <CanceledText>
+              <strong>Subscription Canceled.</strong> You still have access to{' '}
+              {subscription?.planName} features until{' '}
+              {formatDate(subscription?.currentPeriodEnd)}.
+            </CanceledText>
+          </CanceledBanner>
+        )}
+
         {isTrialing && trialDaysRemaining > 0 && (
           <TrialBanner>
             <AlertCircle size={20} />
@@ -351,6 +458,17 @@ const SubscriptionSection = () => {
               .
             </TrialText>
           </TrialBanner>
+        )}
+
+        {hasScheduledDowngrade && (
+          <ScheduledChangeBanner>
+            <AlertCircle size={20} />
+            <ScheduledChangeText>
+              <strong>Scheduled Plan Change:</strong> Your plan will change to{' '}
+              {subscription.scheduledDowngrade.toPlanName} on{' '}
+              {formatDate(subscription.scheduledDowngrade.effectiveDate)}.
+            </ScheduledChangeText>
+          </ScheduledChangeBanner>
         )}
 
         <PlanDetails>
@@ -370,7 +488,7 @@ const SubscriptionSection = () => {
             </DetailItem>
           )}
 
-          {subscription?.currentPeriodEnd && (
+          {subscription?.currentPeriodEnd && !isCanceled && (
             <DetailItem>
               <DetailIcon background="rgba(59, 130, 246, 0.1)" color="#3b82f6">
                 <Calendar />
@@ -386,13 +504,15 @@ const SubscriptionSection = () => {
             </DetailItem>
           )}
 
-          {isPayAsYouGo && (
+          {(subscription?.payAsYouGoBalance || 0) > 0 && (
             <DetailItem>
               <DetailIcon background="rgba(236, 72, 153, 0.1)" color="#ec4899">
                 <Zap />
               </DetailIcon>
               <DetailContent>
-                <DetailLabel>Scoop Balance</DetailLabel>
+                <DetailLabel>
+                  {isPayAsYouGo ? 'Scoop Balance' : 'Backup Scoop Balance'}
+                </DetailLabel>
                 <DetailValue>
                   {subscription?.payAsYouGoBalance || 0} scoops
                 </DetailValue>
@@ -404,23 +524,13 @@ const SubscriptionSection = () => {
         <Actions>
           {isFreePlan && (
             <>
-              <ActionButton
-                variant="primary"
-                onClick={() => handleUpgrade('plus')}
-              >
+              <ActionButton variant="primary" onClick={handleUpgradePlan}>
                 <ArrowUpCircle />
-                Upgrade to Plus
-              </ActionButton>
-              <ActionButton
-                variant="secondary"
-                onClick={() => handleUpgrade('pro')}
-              >
-                <ArrowUpCircle />
-                Upgrade to Pro
+                Upgrade Plan
               </ActionButton>
               <ActionButton variant="secondary" onClick={handleBuyScoops}>
                 <ShoppingCart />
-                Buy Scoops
+                Buy Scoops (PAYG)
               </ActionButton>
             </>
           )}
@@ -431,25 +541,44 @@ const SubscriptionSection = () => {
                 <ShoppingCart />
                 Buy More Scoops
               </ActionButton>
-              <ActionButton
-                variant="secondary"
-                onClick={() => handleUpgrade('plus')}
-              >
+              <ActionButton variant="secondary" onClick={handleUpgradePlan}>
                 <ArrowUpCircle />
-                Upgrade to Plus
+                Upgrade to Plus/Pro
               </ActionButton>
             </>
           )}
 
-          {!isFreePlan && !isPayAsYouGo && !isCanceled && (
+          {isPlusPlan && !isCanceled && (
             <>
-              {subscription?.planId === 'plus' && (
+              {!hasScheduledDowngrade && (
+                <>
+                  <ActionButton
+                    variant="primary"
+                    onClick={() =>
+                      navigate(
+                        '/checkout?plan=pro&billing=monthly&context=upgrade&from=plus',
+                      )
+                    }
+                  >
+                    <ArrowUpCircle />
+                    Upgrade to Pro
+                  </ActionButton>
+                  <ActionButton variant="secondary" onClick={handleChangePlan}>
+                    Change Plan
+                  </ActionButton>
+                  <ActionButton variant="secondary" onClick={handleBuyScoops}>
+                    <ShoppingCart />
+                    Buy Backup Scoops
+                  </ActionButton>
+                </>
+              )}
+              {hasScheduledDowngrade && (
                 <ActionButton
                   variant="secondary"
-                  onClick={() => handleUpgrade('pro')}
+                  onClick={handleCancelScheduledChange}
                 >
-                  <ArrowUpCircle />
-                  Upgrade to Pro
+                  <XCircle />
+                  Cancel Scheduled Change
                 </ActionButton>
               )}
               <ActionButton
@@ -460,6 +589,39 @@ const SubscriptionSection = () => {
                 Cancel Subscription
               </ActionButton>
             </>
+          )}
+
+          {isProPlan && !isCanceled && (
+            <>
+              {!hasScheduledDowngrade && (
+                <ActionButton variant="secondary" onClick={handleChangePlan}>
+                  Change Plan
+                </ActionButton>
+              )}
+              {hasScheduledDowngrade && (
+                <ActionButton
+                  variant="secondary"
+                  onClick={handleCancelScheduledChange}
+                >
+                  <XCircle />
+                  Cancel Scheduled Change
+                </ActionButton>
+              )}
+              <ActionButton
+                variant="danger"
+                onClick={() => setShowCancelModal(true)}
+              >
+                <XCircle />
+                Cancel Subscription
+              </ActionButton>
+            </>
+          )}
+
+          {isCanceled && subscription?.currentPeriodEnd > Date.now() && (
+            <ActionButton variant="primary" onClick={handleReactivate}>
+              <ArrowUpCircle />
+              Reactivate Subscription
+            </ActionButton>
           )}
         </Actions>
       </Card>

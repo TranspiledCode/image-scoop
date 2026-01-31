@@ -182,8 +182,10 @@ const ProcessHero = () => {
     useProcessingLimits();
 
   const showDailyLimit = !planLimits.unlimited && planLimits.dailyLimit;
-  const showScoopBalance = planLimits.useScoops;
+  const showScoopBalance =
+    planLimits.useScoops || (scoopBalance > 0 && !planLimits.unlimited);
   const showUnlimited = planLimits.unlimited;
+  const hasBackupScoops = scoopBalance > 0 && !planLimits.useScoops;
 
   return (
     <HeroSection>
@@ -209,7 +211,10 @@ const ProcessHero = () => {
           {showScoopBalance && (
             <LimitBadge>
               <Coins />
-              <span>{scoopBalance} scoops available</span>
+              <span>
+                {scoopBalance} {hasBackupScoops ? 'backup ' : ''}scoop
+                {scoopBalance !== 1 ? 's' : ''} available
+              </span>
             </LimitBadge>
           )}
 
@@ -225,11 +230,23 @@ const ProcessHero = () => {
               <AlertTriangle />
               <WarningText>
                 You&apos;re running low on images! {dailyRemaining} remaining
-                today.
+                today
+                {hasBackupScoops && scoopBalance > 0
+                  ? `, plus ${scoopBalance} backup scoop${scoopBalance !== 1 ? 's' : ''}`
+                  : ''}
+                .
               </WarningText>
-              <UpgradeButton onClick={() => navigate('/plan-selection')}>
-                Upgrade
-              </UpgradeButton>
+              {!hasBackupScoops ? (
+                <UpgradeButton onClick={() => navigate('/plan-selection')}>
+                  Upgrade
+                </UpgradeButton>
+              ) : (
+                <UpgradeButton
+                  onClick={() => navigate('/checkout?plan=payAsYouGo')}
+                >
+                  Buy More Scoops
+                </UpgradeButton>
+              )}
             </WarningBanner>
           )}
 
