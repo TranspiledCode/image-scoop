@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import * as Sentry from '@sentry/react';
 import styled from '@emotion/styled';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
@@ -137,8 +136,6 @@ const ActionButton = styled.button`
   }
 `;
 
-const ErrorBoundary = Sentry.ErrorBoundary;
-
 const ErrorFallback = ({ error, resetError }) => {
   const handleGoHome = () => {
     window.location.href = '/';
@@ -185,27 +182,49 @@ ErrorFallback.propTypes = {
   resetError: PropTypes.func.isRequired,
 };
 
-const AppErrorBoundary = ({ children }) => {
-  return (
-    <ErrorBoundary
-      fallback={ErrorFallback}
-      showDialog={false}
-      beforeCapture={(scope) => {
-        scope.setTag('component', 'AppErrorBoundary');
-        scope.setLevel('error');
-        scope.setContext('errorBoundary', {
-          caught: true,
-          component: 'AppErrorBoundary',
-        });
-      }}
-      onError={() => {
-        // Error is automatically sent to Sentry
-      }}
-    >
-      {children}
-    </ErrorBoundary>
-  );
-};
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+    this.resetError = this.resetError.bind(this);
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // Log to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error caught by boundary:', error, errorInfo);
+    }
+
+    // Try to send to Sentry if it's loaded
+    if (window.Sentry) {
+      window.Sentry.captureException(error, {
+        contexts: {
+          errorBoundary: {
+            componentStack: errorInfo.componentStack,
+          },
+        },
+      });
+    }
+  }
+
+  resetError() {
+    this.setState({ hasError: false, error: null });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <ErrorFallback error={this.state.error} resetError={this.resetError} />
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 AppErrorBoundary.propTypes = {
   children: PropTypes.node.isRequired,
