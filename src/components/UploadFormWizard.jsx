@@ -14,7 +14,9 @@ import FileGrid from './process/FileGrid';
 import ConfigureSection from './process/ConfigureSection';
 import ProcessingModal from './process/ProcessingModal';
 import SuccessSection from './process/SuccessSection';
+import LimitErrorModal from './process/LimitErrorModal';
 import useR2Upload from '../hooks/useR2Upload';
+import { useProcessingLimits } from '../hooks/useProcessingLimits';
 import { MAX_FILES_PER_BATCH, humanFileSize } from 'shared/uploadLimits';
 
 const PER_FILE_LIMIT_BYTES = 10 * 1024 * 1024;
@@ -32,10 +34,15 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
   const [completedFiles, setCompletedFiles] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitError, setLimitError] = useState(null);
+  const [processedImageCount, setProcessedImageCount] = useState(0);
   const renamedFilesRef = useRef({});
 
   const { addToast } = useToast();
   const { uploadProgress, uploadFiles, processFromR2 } = useR2Upload();
+  const { canProcess, incrementUsage, deductScoops, planLimits } =
+    useProcessingLimits();
 
   const totalSize = useMemo(() => {
     return files.reduce((sum, file) => sum + file.size, 0);
@@ -159,6 +166,16 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
   }, []);
 
   const handleOptimize = useCallback(async () => {
+    // Check limits before processing
+    const fileSizes = files.map((f) => f.size);
+    const { allowed, reason, limit } = canProcess(files.length, fileSizes);
+
+    if (!allowed) {
+      setLimitError({ reason, limit });
+      setShowLimitModal(true);
+      return;
+    }
+
     setLoading(true);
     setProcessPhase('uploading');
     setStartTime(Date.now());
@@ -198,6 +215,17 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
         omitFilename,
       );
 
+      const imageCount = uploadedFiles.length;
+
+      // Update usage after successful processing
+      await incrementUsage(imageCount);
+
+      // Deduct scoops if PAYG
+      if (planLimits.useScoops) {
+        await deductScoops(imageCount);
+      }
+
+      setProcessedImageCount(imageCount);
       setEndTime(Date.now());
       setProcessPhase('complete');
       setCompletedFiles(uploadedFiles.map((f) => f.originalName));
@@ -218,12 +246,17 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
       setLoading(false);
     }
   }, [
+    files,
     fileStatuses,
     exportType,
     omitFilename,
     uploadFiles,
     processFromR2,
     addToast,
+    canProcess,
+    incrementUsage,
+    deductScoops,
+    planLimits,
   ]);
 
   const handleCancel = useCallback(() => {
@@ -338,8 +371,18 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
           completedFiles={completedFiles}
           processedFiles={files}
           fileCount={files.length}
+          processedImageCount={processedImageCount}
           onDownload={handleDownload}
           onReset={handleReset}
+        />
+      )}
+
+      {/* Limit Error Modal */}
+      {showLimitModal && limitError && (
+        <LimitErrorModal
+          limitType={limitError.limit}
+          reason={limitError.reason}
+          onClose={() => setShowLimitModal(false)}
         />
       )}
     </div>

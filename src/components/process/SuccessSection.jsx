@@ -3,8 +3,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
-import { Download, RotateCcw, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Download,
+  RotateCcw,
+  CheckCircle,
+  Zap,
+  Coins,
+  Infinity as InfinityIcon,
+  ShoppingCart,
+} from 'lucide-react';
 import processTheme from '../../style/processTheme';
+import { useProcessingLimits } from '../../hooks/useProcessingLimits';
 
 const fadeIn = keyframes`
   from {
@@ -72,11 +82,53 @@ const Title = styled.h2`
   font-weight: 700;
   color: ${processTheme.textPrimary};
   text-align: center;
-  margin: 0 0 32px 0;
+  margin: 0 0 16px 0;
 
   @media (max-width: ${processTheme.breakpoints.mobile}) {
     font-size: 20px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
+  }
+`;
+
+const UsageFeedback = styled.div`
+  text-align: center;
+  margin-bottom: 32px;
+`;
+
+const UsageText = styled.p`
+  font-size: 14px;
+  color: ${processTheme.textSecondary};
+  margin: 0 0 12px 0;
+  line-height: 1.6;
+
+  strong {
+    color: ${processTheme.textPrimary};
+    font-weight: 700;
+  }
+`;
+
+const BuyMoreButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(236, 72, 153, 0.1);
+  color: #ec4899;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: rgba(236, 72, 153, 0.2);
+    border-color: rgba(236, 72, 153, 0.5);
   }
 `;
 
@@ -294,9 +346,13 @@ const SuccessSection = ({
   completedFiles,
   processedFiles,
   fileCount,
+  processedImageCount,
   onDownload,
   onReset,
 }) => {
+  const navigate = useNavigate();
+  const { planLimits, dailyRemaining, scoopBalance } = useProcessingLimits();
+
   const savings =
     totalSize > 0 ? ((1 - optimizedSize / totalSize) * 100).toFixed(1) : 0;
 
@@ -309,6 +365,8 @@ const SuccessSection = ({
     return fileName.split('.').slice(0, -1).join('.');
   };
 
+  const imageCount = processedImageCount || fileCount;
+
   return (
     <Section>
       <SuccessIcon>
@@ -316,6 +374,70 @@ const SuccessSection = ({
       </SuccessIcon>
 
       <Title>Images Processed Successfully!</Title>
+
+      <UsageFeedback>
+        {planLimits.useScoops && (
+          <>
+            <UsageText>
+              <Coins
+                style={{
+                  display: 'inline',
+                  width: 16,
+                  height: 16,
+                  marginRight: 4,
+                  verticalAlign: 'text-bottom',
+                }}
+              />
+              <strong>
+                {imageCount} scoop{imageCount !== 1 ? 's' : ''} used.
+              </strong>{' '}
+              {scoopBalance} scoop{scoopBalance !== 1 ? 's' : ''} remaining.
+            </UsageText>
+            {scoopBalance < 20 && (
+              <BuyMoreButton
+                onClick={() => navigate('/checkout?plan=payAsYouGo')}
+              >
+                <ShoppingCart />
+                Buy More Scoops
+              </BuyMoreButton>
+            )}
+          </>
+        )}
+
+        {!planLimits.unlimited && planLimits.dailyLimit && (
+          <UsageText>
+            <Zap
+              style={{
+                display: 'inline',
+                width: 16,
+                height: 16,
+                marginRight: 4,
+                verticalAlign: 'text-bottom',
+              }}
+            />
+            You have{' '}
+            <strong>
+              {dailyRemaining} image{dailyRemaining !== 1 ? 's' : ''} remaining
+            </strong>{' '}
+            today.
+          </UsageText>
+        )}
+
+        {planLimits.unlimited && (
+          <UsageText>
+            <InfinityIcon
+              style={{
+                display: 'inline',
+                width: 16,
+                height: 16,
+                marginRight: 4,
+                verticalAlign: 'text-bottom',
+              }}
+            />
+            <strong>Unlimited processing</strong> available.
+          </UsageText>
+        )}
+      </UsageFeedback>
 
       <StatsGrid>
         <StatCard>
@@ -382,6 +504,7 @@ SuccessSection.propTypes = {
   completedFiles: PropTypes.arrayOf(PropTypes.string),
   processedFiles: PropTypes.arrayOf(PropTypes.object),
   fileCount: PropTypes.number.isRequired,
+  processedImageCount: PropTypes.number,
   onDownload: PropTypes.func.isRequired,
   onReset: PropTypes.func.isRequired,
 };

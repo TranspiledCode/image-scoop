@@ -332,8 +332,8 @@ const UsageSection = () => {
             <Zap size={20} />
             <UpgradeText>
               <strong>
-                You&apos;re using {dailyUsagePercentage.toFixed(0)}% of your daily
-                limit!
+                You&apos;re using {dailyUsagePercentage.toFixed(0)}% of your
+                daily limit!
               </strong>{' '}
               Upgrade to Plus or Pro for higher limits.
             </UpgradeText>
