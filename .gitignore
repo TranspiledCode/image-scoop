@@ -13,3 +13,4 @@ dist
 # Claude
 .claude
 deno.lock
+PLAN.md
