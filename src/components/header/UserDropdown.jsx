@@ -10,6 +10,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useUserSubscription } from '../../hooks/useUserSubscription';
+import PropTypes from 'prop-types';
 
 const DropdownMenu = styled.div`
   position: absolute;
@@ -357,6 +358,17 @@ const UserDropdown = ({
       </DropdownFooter>
     </DropdownMenu>
   );
+};
+
+UserDropdown.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  currentUser: PropTypes.shape({
+    displayName: PropTypes.string,
+    email: PropTypes.string,
+  }).isRequired,
+  getUserInitials: PropTypes.func.isRequired,
+  onMenuItemClick: PropTypes.func.isRequired,
+  onLogout: PropTypes.func.isRequired,
 };
 
 export default UserDropdown;

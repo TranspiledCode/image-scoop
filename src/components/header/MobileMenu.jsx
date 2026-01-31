@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 const MobileMenuOverlay = styled.div`
   position: fixed;
@@ -152,6 +153,14 @@ const MobileMenu = ({ isOpen, onClose, currentUser, onNavigate, onLogout }) => {
       )}
     </MobileMenuOverlay>
   );
+};
+
+MobileMenu.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  currentUser: PropTypes.object,
+  onNavigate: PropTypes.func.isRequired,
+  onLogout: PropTypes.func.isRequired,
 };
 
 export default MobileMenu;
