@@ -20,11 +20,12 @@ const HeroSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    min-height: auto;
+    min-height: 100vh;
     padding: 80px 20px 40px;
   }
 
   @media (max-width: 480px) {
+    min-height: 100vh;
     padding: 70px 16px 30px;
   }
 `;
@@ -95,7 +96,7 @@ const HeroTitle = styled.h1`
   @media (max-width: 480px) {
     font-size: clamp(28px, 8vw, 36px);
     line-height: 1.1;
-    margin-bottom: 20px;
+    margin-bottom: 32px;
   }
 `;
 
@@ -122,8 +123,8 @@ const HeroDescription = styled.p`
 
   @media (max-width: 480px) {
     font-size: 16px;
-    line-height: 1.5;
-    margin-bottom: 24px;
+    line-height: 1.6;
+    margin-bottom: 40px;
   }
 `;
 
@@ -141,6 +142,7 @@ const CTAButtons = styled.div`
     flex-direction: column;
     width: 100%;
     max-width: 400px;
+    margin: 0 auto;
     gap: 12px;
   }
 
@@ -253,8 +255,8 @@ const HeroFeatures = styled.div`
   }
 
   @media (max-width: 480px) {
-    gap: 16px;
-    margin-top: 16px;
+    gap: 24px;
+    margin-top: 40px;
     flex-direction: column;
     align-items: center;
   }
