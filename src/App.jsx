@@ -3,7 +3,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ContextProvider from './context/GlobalProvider';
 import { ToastProvider } from './context/ToastContext';
-import { AuthProvider } from './context/AuthContext';
+import { ConditionalAuthProvider } from './context/ConditionalAuthProvider';
 import Header from './components/Header';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -11,8 +11,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { ThemeProvider } from '@emotion/react';
 import theme from './style/theme';
 
-// Lazy loaded pages for code splitting
-const Marketing = lazy(() => import('./pages/Marketing'));
+// Lazy loaded pages for code splitting (excluding Marketing - it's the landing page)
 const Process = lazy(() => import('./pages/Process'));
 const About = lazy(() => import('./pages/About'));
 const Login = lazy(() => import('./pages/Login'));
@@ -21,6 +20,9 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const PlanSelection = lazy(() => import('./pages/PlanSelection'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const Profile = lazy(() => import('./pages/Profile'));
+
+// Marketing page stays in main bundle for initial load performance
+import Marketing from './pages/Marketing';
 
 // Loading component for lazy loading
 const PageLoader = () => (
@@ -43,19 +45,12 @@ const App = () => {
     <ErrorBoundary>
       <ContextProvider>
         <ThemeProvider theme={theme}>
-          <AuthProvider>
-            <ToastProvider position="bottom-right">
-              <Router>
+          <Router>
+            <ConditionalAuthProvider>
+              <ToastProvider position="bottom-right">
                 <Header />
                 <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <Suspense fallback={<PageLoader />}>
-                        <Marketing />
-                      </Suspense>
-                    }
-                  />
+                  <Route path="/" element={<Marketing />} />
                   <Route
                     path="/process"
                     element={
@@ -139,9 +134,9 @@ const App = () => {
                     }
                   />
                 </Routes>
-              </Router>
-            </ToastProvider>
-          </AuthProvider>
+              </ToastProvider>
+            </ConditionalAuthProvider>
+          </Router>
         </ThemeProvider>
       </ContextProvider>
     </ErrorBoundary>

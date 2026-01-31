@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { IceCream, Menu } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useSafeAuth } from '../hooks/useSafeAuth';
 import { useToast } from '../context/ToastContext';
 import UserMenu from './header/UserMenu';
 import MobileMenu from './header/MobileMenu';
@@ -165,7 +165,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout } = useSafeAuth();
   const { addToast } = useToast();
 
   useEffect(() => {

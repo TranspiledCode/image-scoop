@@ -6,40 +6,58 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Image Scoop</title>
+    <title>Image Scoop - Fast Image Processing & Format Conversion</title>
+    <meta name="description" content="Process and convert images instantly with Image Scoop. Support for WebP, JPEG, PNG, AVIF formats with multiple size variants. Fast, secure, and easy to use." />
 
     <!-- Performance optimizations -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;600;700&display=swap" as="style" />
-    <link rel="preconnect" href="https://www.googletagmanager.com" />
-    <link rel="preconnect" href="https://www.google-analytics.com" />
+    <link rel="preconnect" href="https://imagedelivery.net" />
+
+    <!-- Preload LCP image for faster initial render -->
+    <link rel="preload" as="image" href="https://imagedelivery.net/AjKAvtYVvwYZJx-5TwXk4w/image-scoop/backgrounds/mountains/small" fetchpriority="high" />
+
+    <!-- Preload critical CSS -->
     <link rel="preload" href="./reset.css" as="style" />
     <link rel="preload" href="./index.css" as="style" />
-    <link rel="preload" href="../src/index.jsx" as="script" />
+
+    <!-- Load fonts with display=swap for faster text rendering -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;600;700&display=swap"
+    />
 
     <link rel="stylesheet" href="./reset.css" />
     <link rel="stylesheet" href="./index.css" />
     <link rel="icon" href="./favicon.ico" />
-
-    <!-- Google Analytics 4 -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-P6JBLE0B5L"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      window.gtag = gtag;
-      gtag('js', new Date());
-      gtag('config', 'G-P6JBLE0B5L');
-    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script type="module" src="../src/index.jsx"></script>
+
+    <!-- Google Analytics 4 - Deferred to load after main content -->
+    <script>
+      // Defer GA initialization until after page load
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          // Load GA script dynamically
+          var script = document.createElement('script');
+          script.async = true;
+          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-P6JBLE0B5L';
+          document.head.appendChild(script);
+
+          // Initialize GA
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          window.gtag = gtag;
+          gtag('js', new Date());
+          gtag('config', 'G-P6JBLE0B5L');
+        }, 1000); // Delay by 1 second after load
+      });
+    </script>
   </body>
 </html>
