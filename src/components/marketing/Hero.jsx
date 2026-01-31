@@ -351,7 +351,7 @@ const Hero = () => {
           </HeroDescription>
 
           <CTAButtons>
-            <CTAButton to="/process">
+            <CTAButton to="/process?mode=demo">
               <Sparkles />
               Start Optimizing Free
             </CTAButton>

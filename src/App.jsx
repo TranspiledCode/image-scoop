@@ -54,11 +54,9 @@ const App = () => {
                   <Route
                     path="/process"
                     element={
-                      <ProtectedRoute>
-                        <Suspense fallback={<PageLoader />}>
-                          <Process />
-                        </Suspense>
-                      </ProtectedRoute>
+                      <Suspense fallback={<PageLoader />}>
+                        <Process />
+                      </Suspense>
                     }
                   />
                   <Route

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 const Section = styled.section`
@@ -33,7 +34,8 @@ const Description = styled.p`
   line-height: 1.6;
 `;
 
-const Button = styled.button`
+const Button = styled(Link)`
+  display: inline-block;
   background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
   color: white;
   border: none;
@@ -41,6 +43,7 @@ const Button = styled.button`
   border-radius: 12px;
   font-size: 15px;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
   transition:
     transform 0.2s,
@@ -54,20 +57,6 @@ const Button = styled.button`
 `;
 
 const CTA = () => {
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      const offset = 0;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      });
-    }
-  };
-
   return (
     <Section>
       <Content>
@@ -78,7 +67,7 @@ const CTA = () => {
           Join the growing community of creators and developers optimizing
           images with Image Scoop.
         </Description>
-        <Button onClick={() => scrollToSection('hero')}>
+        <Button to="/process?mode=demo">
           Start Optimizing — It&apos;s Free
         </Button>
       </Content>

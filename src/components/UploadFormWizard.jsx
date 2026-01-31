@@ -22,7 +22,10 @@ import { MAX_FILES_PER_BATCH, humanFileSize } from 'shared/uploadLimits';
 const PER_FILE_LIMIT_BYTES = 10 * 1024 * 1024;
 const TOTAL_BATCH_LIMIT_BYTES = 100 * 1024 * 1024;
 
-const UploadFormWizard = ({ preUploadedFiles = [] }) => {
+const UploadFormWizard = ({
+  preUploadedFiles = [],
+  onDemoLimitReached = null,
+}) => {
   const [files, setFiles] = useState([]);
   const [fileStatuses, setFileStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -68,6 +71,31 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
 
   const onDrop = useCallback(
     (acceptedFiles, rejectedFiles) => {
+      // Check limits BEFORE allowing file upload
+      const fileSizes = acceptedFiles.map((f) => f.size);
+      const limitCheck = canProcess(acceptedFiles.length, fileSizes);
+
+      if (!limitCheck.allowed) {
+        // Show appropriate error based on limit type
+        if (limitCheck.isDemo && onDemoLimitReached) {
+          // Demo limit reached - trigger conversion modal in parent
+          onDemoLimitReached();
+          return;
+        } else if (limitCheck.isDemo) {
+          // Demo limit but no handler - show toast
+          addToast(limitCheck.reason, 'danger');
+          return;
+        } else {
+          // Other limits - show limit error modal
+          setLimitError({
+            reason: limitCheck.reason,
+            limit: limitCheck.limit,
+          });
+          setShowLimitModal(true);
+          return;
+        }
+      }
+
       const currentFileCount = files.length;
       const newFileCount = acceptedFiles.length;
       const totalFileCount = currentFileCount + newFileCount;
@@ -127,7 +155,7 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
         ...rejectedStatuses,
       ]);
     },
-    [files, addToast],
+    [files, addToast, canProcess, onDemoLimitReached],
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -391,6 +419,7 @@ const UploadFormWizard = ({ preUploadedFiles = [] }) => {
 
 UploadFormWizard.propTypes = {
   preUploadedFiles: PropTypes.arrayOf(PropTypes.object),
+  onDemoLimitReached: PropTypes.func,
 };
 
 export default UploadFormWizard;

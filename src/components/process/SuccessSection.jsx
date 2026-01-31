@@ -351,7 +351,14 @@ const SuccessSection = ({
   onReset,
 }) => {
   const navigate = useNavigate();
-  const { planLimits, dailyRemaining, scoopBalance } = useProcessingLimits();
+  const {
+    planLimits,
+    dailyRemaining,
+    scoopBalance,
+    isDemo,
+    demoRemaining,
+    demoLimit,
+  } = useProcessingLimits();
 
   const savings =
     totalSize > 0 ? ((1 - optimizedSize / totalSize) * 100).toFixed(1) : 0;
@@ -376,7 +383,23 @@ const SuccessSection = ({
       <Title>Images Processed Successfully!</Title>
 
       <UsageFeedback>
-        {planLimits.useScoops && (
+        {isDemo && (
+          <UsageText>
+            <Zap
+              style={{
+                display: 'inline',
+                width: 16,
+                height: 16,
+                marginRight: 4,
+                verticalAlign: 'text-bottom',
+              }}
+            />
+            Demo: <strong>{demoRemaining}</strong> of {demoLimit} remaining.
+            Sign up free for 20 images/day!
+          </UsageText>
+        )}
+
+        {!isDemo && planLimits.useScoops && (
           <>
             <UsageText>
               <Coins
@@ -404,7 +427,7 @@ const SuccessSection = ({
           </>
         )}
 
-        {!planLimits.unlimited && planLimits.dailyLimit && (
+        {!isDemo && !planLimits.unlimited && planLimits.dailyLimit && (
           <UsageText>
             <Zap
               style={{
@@ -423,7 +446,7 @@ const SuccessSection = ({
           </UsageText>
         )}
 
-        {planLimits.unlimited && (
+        {!isDemo && planLimits.unlimited && (
           <UsageText>
             <InfinityIcon
               style={{

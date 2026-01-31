@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { AlertCircle } from 'lucide-react';
 import UploadFormWizard from '../components/UploadFormWizard';
 import ProcessHero from '../components/process/ProcessHero';
+import DemoConversionModal from '../components/process/DemoConversionModal';
 import processTheme from '../style/processTheme';
 import { useUserSubscription } from '../hooks/useUserSubscription';
+import { useProcessingLimits } from '../hooks/useProcessingLimits';
 
 const ProcessPage = styled.div`
   min-height: 100vh;
@@ -107,9 +109,22 @@ const Process = () => {
   const navigate = useNavigate();
   const preUploadedFiles = location.state?.files || [];
   const { subscription, loading } = useUserSubscription();
+  const { isDemo, isDemoLimitReached, demoRemaining, demoLimit } =
+    useProcessingLimits();
+
+  const [showConversionModal, setShowConversionModal] = useState(false);
 
   const showIncompleteBanner =
-    !loading && (!subscription || subscription.status === 'incomplete');
+    !loading &&
+    !isDemo &&
+    (!subscription || subscription.status === 'incomplete');
+
+  // Show conversion modal if demo limit reached
+  useEffect(() => {
+    if (isDemoLimitReached) {
+      setShowConversionModal(true);
+    }
+  }, [isDemoLimitReached]);
 
   return (
     <ProcessPage>
@@ -132,9 +147,18 @@ const Process = () => {
           </IncompleteBanner>
         )}
         <ProcessContent>
-          <UploadFormWizard preUploadedFiles={preUploadedFiles} />
+          <UploadFormWizard
+            preUploadedFiles={preUploadedFiles}
+            onDemoLimitReached={() => setShowConversionModal(true)}
+          />
         </ProcessContent>
       </PageContent>
+
+      <DemoConversionModal
+        show={showConversionModal}
+        onClose={() => setShowConversionModal(false)}
+        imagesProcessed={demoLimit - demoRemaining}
+      />
     </ProcessPage>
   );
 };

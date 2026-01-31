@@ -7,6 +7,7 @@ import {
   Coins,
   Infinity as InfinityIcon,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 import processTheme from '../../style/processTheme';
 import { useProcessingLimits } from '../../hooks/useProcessingLimits';
@@ -121,6 +122,35 @@ const UnlimitedBadge = styled.div`
   }
 `;
 
+const DemoBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.25) 0%,
+    rgba(147, 51, 234, 0.25) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(59, 130, 246, 0.5);
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  @media (max-width: ${processTheme.breakpoints.mobile}) {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+`;
+
 const WarningBanner = styled.div`
   display: flex;
   align-items: center;
@@ -178,13 +208,22 @@ const UpgradeButton = styled.button`
 
 const ProcessHero = () => {
   const navigate = useNavigate();
-  const { planLimits, dailyRemaining, scoopBalance, isNearLimit } =
-    useProcessingLimits();
+  const {
+    planLimits,
+    dailyRemaining,
+    scoopBalance,
+    isNearLimit,
+    isDemo,
+    demoRemaining,
+    demoLimit,
+  } = useProcessingLimits();
 
-  const showDailyLimit = !planLimits.unlimited && planLimits.dailyLimit;
+  const showDailyLimit =
+    !isDemo && !planLimits.unlimited && planLimits.dailyLimit;
   const showScoopBalance =
-    planLimits.useScoops || (scoopBalance > 0 && !planLimits.unlimited);
-  const showUnlimited = planLimits.unlimited;
+    !isDemo &&
+    (planLimits.useScoops || (scoopBalance > 0 && !planLimits.unlimited));
+  const showUnlimited = !isDemo && planLimits.unlimited;
   const hasBackupScoops = scoopBalance > 0 && !planLimits.useScoops;
 
   return (
@@ -199,6 +238,15 @@ const ProcessHero = () => {
         </HeroDescription>
 
         <LimitContainer>
+          {isDemo && (
+            <DemoBadge>
+              <Sparkles />
+              <span>
+                Demo Mode - {demoRemaining} of {demoLimit} remaining
+              </span>
+            </DemoBadge>
+          )}
+
           {showDailyLimit && (
             <LimitBadge>
               <Zap />
