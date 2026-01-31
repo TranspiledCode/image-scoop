@@ -9,6 +9,7 @@ import {
   ArrowUpCircle,
   XCircle,
   ShoppingCart,
+  Check,
 } from 'lucide-react';
 import { useUserSubscription } from '../../hooks/useUserSubscription';
 import { useToast } from '../../context/ToastContext';
@@ -53,6 +54,32 @@ const PlanHeader = styled.div`
 `;
 
 const PlanInfo = styled.div``;
+
+const PlanBenefits = styled.div`
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+`;
+
+const BenefitItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+    color: #10b981;
+    flex-shrink: 0;
+  }
+`;
 
 const PlanName = styled.div`
   font-size: 24px;
@@ -322,6 +349,34 @@ const SubscriptionSection = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
 
+  const getPlanFeatures = (planId) => {
+    const features = {
+      free: [
+        '20 images per day (~600/month)',
+        '4 variants (s, m, l, xl)',
+        'WebP, JPEG, PNG formats',
+      ],
+      payAsYouGo: [
+        '100 scoops for $5 (5¢ each)',
+        '250 scoops for $10 (4¢ each)',
+        '600 scoops for $20 (3.3¢ each)',
+      ],
+      plus: [
+        '100 images per day (~3,000/month)',
+        '6 variants (xs, s, m, l, xl, xxl)',
+        'WebP, JPEG, PNG, AVIF formats',
+        'Priority processing',
+      ],
+      pro: [
+        'Unlimited images',
+        'All variants + App icons',
+        'All formats + advanced options',
+        'API access & priority support',
+      ],
+    };
+    return features[planId] || [];
+  };
+
   if (loading) {
     return <div>Loading subscription...</div>;
   }
@@ -435,6 +490,16 @@ const SubscriptionSection = () => {
                   ? 'Canceled'
                   : 'Active'}
             </PlanStatus>
+            <PlanBenefits>
+              {getPlanFeatures(subscription?.planId || 'free').map(
+                (feature, idx) => (
+                  <BenefitItem key={idx}>
+                    <Check />
+                    <span>{feature}</span>
+                  </BenefitItem>
+                ),
+              )}
+            </PlanBenefits>
           </PlanInfo>
         </PlanHeader>
 
