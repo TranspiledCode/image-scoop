@@ -1,10 +1,17 @@
 import { useUserSubscription } from './useUserSubscription';
 import { useUserUsage } from './useUserUsage';
 import { useAuth } from '../context/AuthContext';
+import { useDemoUsage } from './useDemoUsage';
 import { ref, runTransaction } from 'firebase/database';
 import { database } from '../config/firebase';
 
 const PLAN_LIMITS = {
+  demo: {
+    dailyLimit: 3, // Total limit, not daily
+    batchSize: 1,
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    unlimited: false,
+  },
   free: {
     dailyLimit: 20,
     batchSize: 1,
@@ -36,6 +43,10 @@ export const useProcessingLimits = () => {
   const { currentUser } = useAuth();
   const { subscription } = useUserSubscription();
   const { imagesProcessedToday } = useUserUsage();
+  const demoUsage = useDemoUsage();
+
+  // If unauthenticated, use demo mode
+  const isDemo = !currentUser;
 
   const planLimits = PLAN_LIMITS[subscription?.planId] || PLAN_LIMITS.free;
 
@@ -70,7 +81,49 @@ export const useProcessingLimits = () => {
   };
 
   const canProcess = (fileCount, fileSizes = []) => {
-    // Check subscription status first
+    // Demo mode (unauthenticated users)
+    if (isDemo) {
+      // Check batch size limit (demo = 1 image at a time)
+      if (fileCount > PLAN_LIMITS.demo.batchSize) {
+        return {
+          allowed: false,
+          reason: `Demo mode allows processing ${PLAN_LIMITS.demo.batchSize} image at a time. Sign up free to process more!`,
+          limit: 'batch',
+          isDemo: true,
+        };
+      }
+
+      // Check if demo limit reached
+      if (demoUsage.isDemoLimitReached) {
+        return {
+          allowed: false,
+          reason: `Demo limit reached. Sign up free to get 20 images per day!`,
+          limit: 'demo',
+          isDemo: true,
+        };
+      }
+
+      // Check if requested count exceeds remaining
+      if (!demoUsage.canProcessDemo(fileCount)) {
+        const remaining = demoUsage.remaining;
+        return {
+          allowed: false,
+          reason: `Demo allows ${demoUsage.limit} total images. You have ${remaining} remaining. Sign up free for 20 images/day!`,
+          limit: 'demo',
+          isDemo: true,
+        };
+      }
+
+      // Demo: Allow processing, single file only
+      return {
+        allowed: true,
+        limit: 'demo',
+        remaining: demoUsage.remaining,
+        isDemo: true,
+      };
+    }
+
+    // Authenticated users: Check subscription status first
     const statusCheck = validateSubscriptionStatus();
     if (!statusCheck.valid) {
       return {
@@ -156,6 +209,12 @@ export const useProcessingLimits = () => {
   };
 
   const incrementUsage = async (imageCount) => {
+    // Demo mode: increment demo usage
+    if (isDemo) {
+      demoUsage.incrementDemo(imageCount);
+      return;
+    }
+
     if (!currentUser) return;
 
     const today = new Date().toISOString().split('T')[0];
@@ -217,6 +276,10 @@ export const useProcessingLimits = () => {
     dailyRemaining,
     scoopBalance: subscription?.payAsYouGoBalance || 0,
     isNearLimit,
+    isDemo,
+    demoRemaining: isDemo ? demoUsage.remaining : null,
+    demoLimit: isDemo ? demoUsage.limit : null,
+    isDemoLimitReached: isDemo ? demoUsage.isDemoLimitReached : false,
   };
 };
 
