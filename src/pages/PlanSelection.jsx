@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useUserSubscription } from '../hooks/useUserSubscription';
+import DowngradeConfirmationModal from '../components/profile/DowngradeConfirmationModal';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -104,6 +106,22 @@ const PopularBadge = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+`;
+
+const CurrentPlanBadge = styled.div`
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 `;
 
 const PlanName = styled.h3`
@@ -265,9 +283,50 @@ const plans = [
 
 const PlanSelection = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showDowngradeModal, setShowDowngradeModal] = useState(false);
+  const [selectedDowngrade, setSelectedDowngrade] = useState(null);
+  const [isScheduling, setIsScheduling] = useState(false);
+
   const navigate = useNavigate();
+  const location = useLocation();
   const { createUserSubscription, currentUser } = useAuth();
   const { addToast } = useToast();
+  const { subscription, scheduleDowngrade } = useUserSubscription();
+
+  const searchParams = new URLSearchParams(location.search);
+  const context = searchParams.get('context'); // 'upgrade' or 'downgrade'
+  const fromPlan = searchParams.get('from'); // 'free', 'plus', 'pro', 'payAsYouGo'
+
+  const currentPlanId = subscription?.planId || fromPlan || 'free';
+
+  const getPlanOrder = (planId) => {
+    const order = { free: 0, payAsYouGo: 0, plus: 1, pro: 2 };
+    return order[planId] || 0;
+  };
+
+  const isUpgrade = (targetPlanId) => {
+    return getPlanOrder(targetPlanId) > getPlanOrder(currentPlanId);
+  };
+
+  const isDowngrade = (targetPlanId) => {
+    return getPlanOrder(targetPlanId) < getPlanOrder(currentPlanId);
+  };
+
+  const getButtonText = (plan) => {
+    if (plan.id === currentPlanId) {
+      return 'Current Plan';
+    }
+
+    if (context === 'upgrade' && isUpgrade(plan.id)) {
+      return 'Upgrade';
+    }
+
+    if (context === 'downgrade' && isDowngrade(plan.id)) {
+      return 'Downgrade';
+    }
+
+    return plan.cta;
+  };
 
   const handlePlanSelect = async (plan) => {
     if (!currentUser) {
@@ -276,6 +335,19 @@ const PlanSelection = () => {
       return;
     }
 
+    // Can't select current plan
+    if (plan.id === currentPlanId) {
+      return;
+    }
+
+    // Handle downgrade
+    if (context === 'downgrade' && isDowngrade(plan.id)) {
+      setSelectedDowngrade(plan);
+      setShowDowngradeModal(true);
+      return;
+    }
+
+    // Handle upgrade or new signup
     setIsLoading(true);
 
     try {
@@ -284,7 +356,9 @@ const PlanSelection = () => {
         addToast('Welcome to Image Scoop!', 'success');
         navigate('/process');
       } else {
-        navigate(`/checkout?plan=${plan.id}&billing=monthly`);
+        const upgradeParam =
+          context === 'upgrade' ? `&context=upgrade&from=${currentPlanId}` : '';
+        navigate(`/checkout?plan=${plan.id}&billing=monthly${upgradeParam}`);
       }
     } catch (error) {
       console.error('Error selecting plan:', error);
@@ -294,60 +368,123 @@ const PlanSelection = () => {
     }
   };
 
+  const handleConfirmDowngrade = async () => {
+    if (!selectedDowngrade || !subscription) return;
+
+    setIsScheduling(true);
+
+    try {
+      const effectiveDate =
+        subscription.currentPeriodEnd || Date.now() + 30 * 24 * 60 * 60 * 1000;
+
+      await scheduleDowngrade(
+        selectedDowngrade.id,
+        selectedDowngrade.name,
+        effectiveDate,
+      );
+
+      addToast(
+        `Plan will change to ${selectedDowngrade.name} on ${new Date(effectiveDate).toLocaleDateString()}`,
+        'success',
+      );
+
+      setShowDowngradeModal(false);
+      navigate('/profile#subscription');
+    } catch (error) {
+      console.error('Error scheduling downgrade:', error);
+      addToast('Failed to schedule downgrade. Please try again.', 'error');
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  const getSubtitle = () => {
+    if (context === 'upgrade') {
+      return 'Choose a higher tier plan to unlock more features and capacity.';
+    }
+    if (context === 'downgrade') {
+      return 'Select a lower tier plan. Your current plan will remain active until the end of the billing period.';
+    }
+    return 'Start with the Free plan or unlock more features with Plus or Pro. Paid plans include a 14-day free trial.';
+  };
+
   return (
     <PageContainer>
       <Container>
         <Header>
           <Badge>
             <Zap size={16} />
-            Choose Your Plan
+            {context === 'upgrade'
+              ? 'Upgrade Your Plan'
+              : context === 'downgrade'
+                ? 'Change Your Plan'
+                : 'Choose Your Plan'}
           </Badge>
           <Title>Select the plan that fits your needs</Title>
-          <Subtitle>
-            Start with the Free plan or unlock more features with Plus or Pro.
-            Paid plans include a 14-day free trial.
-          </Subtitle>
+          <Subtitle>{getSubtitle()}</Subtitle>
         </Header>
 
         <PricingGrid>
-          {plans.map((plan) => (
-            <PricingCard key={plan.id} featured={plan.featured}>
-              {plan.featured && <PopularBadge>Most Popular</PopularBadge>}
+          {plans.map((plan) => {
+            const isCurrent = plan.id === currentPlanId;
 
-              <PlanName featured={plan.featured}>{plan.name}</PlanName>
-              <PlanDescription featured={plan.featured}>
-                {plan.description}
-              </PlanDescription>
+            return (
+              <PricingCard key={plan.id} featured={plan.featured && !isCurrent}>
+                {isCurrent && <CurrentPlanBadge>Current Plan</CurrentPlanBadge>}
+                {!isCurrent && plan.featured && !context && (
+                  <PopularBadge>Most Popular</PopularBadge>
+                )}
 
-              <Price>
-                <PriceAmount featured={plan.featured}>
-                  ${plan.price}
-                </PriceAmount>
-                <PricePeriod featured={plan.featured}>
-                  {plan.period}
-                </PricePeriod>
-              </Price>
+                <PlanName featured={plan.featured}>{plan.name}</PlanName>
+                <PlanDescription featured={plan.featured}>
+                  {plan.description}
+                </PlanDescription>
 
-              <CTAButton
-                featured={plan.featured}
-                onClick={() => handlePlanSelect(plan)}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Loading...' : plan.cta}
-              </CTAButton>
+                <Price>
+                  <PriceAmount featured={plan.featured}>
+                    ${plan.price}
+                  </PriceAmount>
+                  <PricePeriod featured={plan.featured}>
+                    {plan.period}
+                  </PricePeriod>
+                </Price>
 
-              <FeatureList>
-                {plan.features.map((feature, idx) => (
-                  <Feature key={idx} featured={plan.featured}>
-                    <Check />
-                    <span>{feature}</span>
-                  </Feature>
-                ))}
-              </FeatureList>
-            </PricingCard>
-          ))}
+                <CTAButton
+                  featured={plan.featured && !isCurrent}
+                  onClick={() => handlePlanSelect(plan)}
+                  disabled={isLoading || isCurrent}
+                >
+                  {isLoading ? 'Loading...' : getButtonText(plan)}
+                </CTAButton>
+
+                <FeatureList>
+                  {plan.features.map((feature, idx) => (
+                    <Feature key={idx} featured={plan.featured}>
+                      <Check />
+                      <span>{feature}</span>
+                    </Feature>
+                  ))}
+                </FeatureList>
+              </PricingCard>
+            );
+          })}
         </PricingGrid>
       </Container>
+
+      {selectedDowngrade && (
+        <DowngradeConfirmationModal
+          isOpen={showDowngradeModal}
+          onClose={() => setShowDowngradeModal(false)}
+          onConfirm={handleConfirmDowngrade}
+          currentPlan={subscription?.planName || 'Current'}
+          newPlan={selectedDowngrade.name}
+          effectiveDate={
+            subscription?.currentPeriodEnd ||
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          }
+          isProcessing={isScheduling}
+        />
+      )}
     </PageContainer>
   );
 };

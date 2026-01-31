@@ -102,7 +102,7 @@ export const useProcessingLimits = () => {
       };
     }
 
-    // Check PAYG scoop balance
+    // Check PAYG scoop balance (primary for PAYG users)
     if (planLimits.useScoops) {
       const scoopBalance = subscription?.payAsYouGoBalance || 0;
       if (scoopBalance < fileCount) {
@@ -115,17 +115,40 @@ export const useProcessingLimits = () => {
       return { allowed: true, limit: 'scoops', remaining: scoopBalance };
     }
 
-    // Check daily limit (if not unlimited)
+    // Check daily limit (for Plus users, with scoop fallback)
     if (!planLimits.unlimited && planLimits.dailyLimit) {
       const remaining = planLimits.dailyLimit - imagesProcessedToday;
-      if (remaining < fileCount) {
+
+      if (remaining >= fileCount) {
+        // Have enough daily limit remaining
+        return { allowed: true, limit: 'daily', remaining };
+      }
+
+      // Daily limit exhausted or insufficient - check for scoop fallback
+      const scoopBalance = subscription?.payAsYouGoBalance || 0;
+      if (scoopBalance >= fileCount) {
+        return {
+          allowed: true,
+          limit: 'scoops',
+          remaining: scoopBalance,
+          usingFallback: true,
+        };
+      }
+
+      // Neither daily limit nor scoops available
+      if (scoopBalance > 0) {
         return {
           allowed: false,
-          reason: `Daily limit reached. You have ${remaining} image(s) remaining today.`,
+          reason: `Daily limit reached (${remaining} remaining). You have ${scoopBalance} backup scoop(s), but need ${fileCount}.`,
           limit: 'daily',
         };
       }
-      return { allowed: true, limit: 'daily', remaining };
+
+      return {
+        allowed: false,
+        reason: `Daily limit reached. You have ${remaining} image(s) remaining today. Consider buying backup scoops!`,
+        limit: 'daily',
+      };
     }
 
     // Pro unlimited
@@ -163,7 +186,7 @@ export const useProcessingLimits = () => {
   };
 
   const deductScoops = async (imageCount) => {
-    if (!currentUser || !planLimits.useScoops) return;
+    if (!currentUser) return;
 
     const balanceRef = ref(
       database,
@@ -171,7 +194,7 @@ export const useProcessingLimits = () => {
     );
 
     await runTransaction(balanceRef, (currentBalance) => {
-      if (currentBalance === null) return 0;
+      if (currentBalance === null || currentBalance === 0) return 0;
       return Math.max(0, currentBalance - imageCount);
     });
   };

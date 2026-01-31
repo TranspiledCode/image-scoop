@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CreditCard, Lock, CheckCircle2 } from 'lucide-react';
+import { CreditCard, Lock, CheckCircle2, ArrowUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { ref, set } from 'firebase/database';
+import { useUserSubscription } from '../hooks/useUserSubscription';
+import { ref, set, runTransaction } from 'firebase/database';
 import { database } from '../config/firebase';
 
 const PageContainer = styled.div`
@@ -63,6 +64,32 @@ const InfoBanner = styled.div`
   svg {
     flex-shrink: 0;
     color: #3b82f6;
+  }
+`;
+
+const UpgradeBanner = styled.div`
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.1) 0%,
+    rgba(251, 146, 60, 0.1) 100%
+  );
+  border: 1px solid rgba(236, 72, 153, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #be185d;
+
+  svg {
+    flex-shrink: 0;
+    color: #ec4899;
+  }
+
+  strong {
+    font-weight: 700;
   }
 `;
 
@@ -292,9 +319,12 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { currentUser, createUserSubscription } = useAuth();
   const { addToast } = useToast();
+  const { subscription, upgradeSubscription } = useUserSubscription();
 
   const [planParam, setPlanParam] = useState(null);
   const [billingParam, setBillingParam] = useState('monthly');
+  const [contextParam, setContextParam] = useState(null);
+  const [fromPlanParam, setFromPlanParam] = useState(null);
   const [selectedPack, setSelectedPack] = useState(PAYG_PACKS[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -311,6 +341,8 @@ const Checkout = () => {
 
     const plan = searchParams.get('plan');
     const billing = searchParams.get('billing') || 'monthly';
+    const context = searchParams.get('context'); // 'upgrade', 'reactivate', 'trial-convert'
+    const fromPlan = searchParams.get('from');
 
     if (!plan || !VALID_PLANS.includes(plan)) {
       addToast('Invalid plan selected', 'error');
@@ -325,6 +357,8 @@ const Checkout = () => {
     }
 
     setPlanParam(plan);
+    setContextParam(context);
+    setFromPlanParam(fromPlan);
   }, [searchParams, currentUser, navigate, addToast]);
 
   const useTestCard = (type) => {
@@ -381,28 +415,102 @@ const Checkout = () => {
       );
 
       if (planParam === 'payAsYouGo') {
-        await createUserSubscription(currentUser.uid, 'payAsYouGo', null);
-        await set(
-          ref(
+        const isExistingUser = subscription?.planId !== undefined;
+
+        if (isExistingUser) {
+          // Existing user buying scoops - just add to balance, don't change plan
+          const balanceRef = ref(
             database,
             `users/${currentUser.uid}/subscription/payAsYouGoBalance`,
-          ),
-          selectedPack.scoops,
-        );
-        addToast(
-          `Successfully purchased ${selectedPack.scoops} scoops!`,
-          'success',
-        );
+          );
+          await runTransaction(balanceRef, (currentBalance) => {
+            const current = currentBalance || 0;
+            return current + selectedPack.scoops;
+          });
+
+          addToast(
+            `Successfully added ${selectedPack.scoops} backup scoops!`,
+            'success',
+          );
+        } else {
+          // New user signing up with PAYG
+          await createUserSubscription(currentUser.uid, 'payAsYouGo', null);
+          await set(
+            ref(
+              database,
+              `users/${currentUser.uid}/subscription/payAsYouGoBalance`,
+            ),
+            selectedPack.scoops,
+          );
+          addToast(
+            `Successfully purchased ${selectedPack.scoops} scoops!`,
+            'success',
+          );
+        }
       } else {
-        await createUserSubscription(currentUser.uid, planParam, billingParam);
+        const isUpgrade = contextParam === 'upgrade';
         const planName = PLAN_DETAILS[planParam].name;
-        addToast(
-          `Welcome to ${planName}! Your 14-day trial has started.`,
-          'success',
-        );
+
+        if (isUpgrade) {
+          // Always preserve scoop balance (backup scoops for Free/Plus users)
+          const balanceToPreserve = subscription?.payAsYouGoBalance || 0;
+
+          // Preserve trial if currently in trial
+          const isInTrial =
+            subscription?.status === 'trialing' &&
+            subscription?.trialEndDate > Date.now();
+          const upgradeData = {
+            planId: planParam,
+            planName: planName,
+            billingCycle: billingParam,
+            payAsYouGoBalance: balanceToPreserve,
+          };
+
+          if (isInTrial) {
+            // Keep trial status and dates
+            upgradeData.status = 'trialing';
+            upgradeData.trialEndDate = subscription.trialEndDate;
+            upgradeData.currentPeriodEnd = subscription.currentPeriodEnd;
+          } else {
+            // New period for non-trial upgrades
+            upgradeData.currentPeriodEnd =
+              Date.now() + 30 * 24 * 60 * 60 * 1000;
+          }
+
+          await upgradeSubscription(upgradeData);
+
+          // Reset daily usage counter to give full benefit of new plan
+          const usageRef = ref(database, `users/${currentUser.uid}/usage`);
+          await runTransaction(usageRef, (current) => {
+            if (!current) return current;
+            return {
+              ...current,
+              imagesProcessedToday: 0, // Reset to 0 on upgrade
+            };
+          });
+
+          addToast(`Successfully upgraded to ${planName}!`, 'success');
+        } else {
+          await createUserSubscription(
+            currentUser.uid,
+            planParam,
+            billingParam,
+          );
+          addToast(
+            `Welcome to ${planName}! Your 14-day trial has started.`,
+            'success',
+          );
+        }
       }
 
-      navigate('/process');
+      // Navigate based on context
+      if (contextParam === 'upgrade' || planParam === 'payAsYouGo') {
+        // Upgrades and scoop purchases go to profile subscription section
+        navigate('/profile#subscription');
+      } else {
+        // New signups go to process page
+        navigate('/process');
+      }
     } catch (err) {
       console.error('Error processing payment:', err);
       setError('An error occurred. Please try again.');
@@ -435,6 +543,18 @@ const Checkout = () => {
                 real charges will be made.
               </div>
             </InfoBanner>
+
+            {contextParam === 'upgrade' && fromPlanParam && (
+              <UpgradeBanner>
+                <ArrowUp size={20} />
+                <div>
+                  <strong>Upgrading:</strong>{' '}
+                  {fromPlanParam.charAt(0).toUpperCase() +
+                    fromPlanParam.slice(1)}{' '}
+                  → {planDetails.name}
+                </div>
+              </UpgradeBanner>
+            )}
 
             {error && <ErrorMessage>{error}</ErrorMessage>}
 
