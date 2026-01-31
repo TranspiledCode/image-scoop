@@ -1,5 +1,7 @@
 /* index.css */
 
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;600;700&display=swap');
+
 html {
   box-sizing: border-box;
   font-family: 'Ubuntu', sans-serif;

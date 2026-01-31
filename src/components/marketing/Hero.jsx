@@ -1,8 +1,28 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Zap, FileText } from 'lucide-react';
-import InteractiveDemo from './InteractiveDemo';
+
+const InteractiveDemo = lazy(() => import('./InteractiveDemo'));
+
+// Loading component for demo
+const DemoLoader = () => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '400px',
+      background: 'rgba(255, 255, 255, 0.05)',
+      border: '2px dashed rgba(255, 255, 255, 0.2)',
+      borderRadius: '16px',
+      color: '#9ca3af',
+      fontSize: '16px',
+    }}
+  >
+    Loading demo...
+  </div>
+);
 
 const HeroSection = styled.section`
   min-height: 100vh;
@@ -382,7 +402,9 @@ const Hero = () => {
           </HeroFeatures>
         </HeroText>
 
-        <InteractiveDemo />
+        <Suspense fallback={<DemoLoader />}>
+          <InteractiveDemo />
+        </Suspense>
       </HeroContent>
     </HeroSection>
   );

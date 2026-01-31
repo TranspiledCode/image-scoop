@@ -1,5 +1,5 @@
 // App.jsx (with container styles)
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ContextProvider from './context/GlobalProvider';
 import { ToastProvider } from './context/ToastContext';
@@ -11,15 +11,32 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { ThemeProvider } from '@emotion/react';
 import theme from './style/theme';
 
-import Marketing from 'pages/Marketing';
-import Process from 'pages/Process';
-import About from 'pages/About';
-import Login from 'pages/Login';
-import SignUp from 'pages/SignUp';
-import ResetPassword from 'pages/ResetPassword';
-import PlanSelection from 'pages/PlanSelection';
-import Checkout from 'pages/Checkout';
-import Profile from 'pages/Profile';
+// Lazy loaded pages for code splitting
+const Marketing = lazy(() => import('./pages/Marketing'));
+const Process = lazy(() => import('./pages/Process'));
+const About = lazy(() => import('./pages/About'));
+const Login = lazy(() => import('./pages/Login'));
+const SignUp = lazy(() => import('./pages/SignUp'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const PlanSelection = lazy(() => import('./pages/PlanSelection'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Profile = lazy(() => import('./pages/Profile'));
+
+// Loading component for lazy loading
+const PageLoader = () => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '50vh',
+      fontSize: '18px',
+      color: '#666',
+    }}
+  >
+    Loading...
+  </div>
+);
 
 const App = () => {
   return (
@@ -31,12 +48,21 @@ const App = () => {
               <Router>
                 <Header />
                 <Routes>
-                  <Route path="/" element={<Marketing />} />
+                  <Route
+                    path="/"
+                    element={
+                      <Suspense fallback={<PageLoader />}>
+                        <Marketing />
+                      </Suspense>
+                    }
+                  />
                   <Route
                     path="/process"
                     element={
                       <ProtectedRoute>
-                        <Process />
+                        <Suspense fallback={<PageLoader />}>
+                          <Process />
+                        </Suspense>
                       </ProtectedRoute>
                     }
                   />
@@ -44,7 +70,9 @@ const App = () => {
                     path="/plan-selection"
                     element={
                       <ProtectedRoute>
-                        <PlanSelection />
+                        <Suspense fallback={<PageLoader />}>
+                          <PlanSelection />
+                        </Suspense>
                       </ProtectedRoute>
                     }
                   />
@@ -52,7 +80,9 @@ const App = () => {
                     path="/checkout"
                     element={
                       <ProtectedRoute>
-                        <Checkout />
+                        <Suspense fallback={<PageLoader />}>
+                          <Checkout />
+                        </Suspense>
                       </ProtectedRoute>
                     }
                   />
@@ -60,7 +90,9 @@ const App = () => {
                     path="/profile"
                     element={
                       <ProtectedRoute>
-                        <Profile />
+                        <Suspense fallback={<PageLoader />}>
+                          <Profile />
+                        </Suspense>
                       </ProtectedRoute>
                     }
                   />
@@ -68,14 +100,44 @@ const App = () => {
                     path="/profile/:section"
                     element={
                       <ProtectedRoute>
-                        <Profile />
+                        <Suspense fallback={<PageLoader />}>
+                          <Profile />
+                        </Suspense>
                       </ProtectedRoute>
                     }
                   />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route
+                    path="/about"
+                    element={
+                      <Suspense fallback={<PageLoader />}>
+                        <About />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="/login"
+                    element={
+                      <Suspense fallback={<PageLoader />}>
+                        <Login />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="/signup"
+                    element={
+                      <Suspense fallback={<PageLoader />}>
+                        <SignUp />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="/reset-password"
+                    element={
+                      <Suspense fallback={<PageLoader />}>
+                        <ResetPassword />
+                      </Suspense>
+                    }
+                  />
                 </Routes>
               </Router>
             </ToastProvider>
