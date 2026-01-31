@@ -1,7 +1,15 @@
 // src/components/process/ProcessHero.jsx
 import React from 'react';
 import styled from '@emotion/styled';
+import { useNavigate } from 'react-router-dom';
+import {
+  Zap,
+  Coins,
+  Infinity as InfinityIcon,
+  AlertTriangle,
+} from 'lucide-react';
 import processTheme from '../../style/processTheme';
+import { useProcessingLimits } from '../../hooks/useProcessingLimits';
 
 const HeroSection = styled.section`
   position: relative;
@@ -62,7 +70,121 @@ const HeroDescription = styled.p`
   }
 `;
 
+const LimitContainer = styled.div`
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+`;
+
+const LimitBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${processTheme.textPrimary};
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: #f472b6;
+  }
+`;
+
+const UnlimitedBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.2) 0%,
+    rgba(52, 211, 153, 0.2) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #10b981;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const WarningBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(251, 146, 60, 0.15) 0%,
+    rgba(251, 191, 36, 0.15) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  border-radius: 12px;
+  max-width: 500px;
+  margin: 0 auto;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    color: #fb923c;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: ${processTheme.breakpoints.mobile}) {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+`;
+
+const WarningText = styled.div`
+  flex: 1;
+  font-size: 13px;
+  color: ${processTheme.textPrimary};
+  line-height: 1.5;
+`;
+
+const UpgradeButton = styled.button`
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+  }
+`;
+
 const ProcessHero = () => {
+  const navigate = useNavigate();
+  const { planLimits, dailyRemaining, scoopBalance, isNearLimit } =
+    useProcessingLimits();
+
+  const showDailyLimit = !planLimits.unlimited && planLimits.dailyLimit;
+  const showScoopBalance = planLimits.useScoops;
+  const showUnlimited = planLimits.unlimited;
+
   return (
     <HeroSection>
       <HeroContent>
@@ -73,6 +195,58 @@ const ProcessHero = () => {
           Upload, optimize, and download your images in seconds. Fast, secure,
           and privacy-focused.
         </HeroDescription>
+
+        <LimitContainer>
+          {showDailyLimit && (
+            <LimitBadge>
+              <Zap />
+              <span>
+                {dailyRemaining} / {planLimits.dailyLimit} images today
+              </span>
+            </LimitBadge>
+          )}
+
+          {showScoopBalance && (
+            <LimitBadge>
+              <Coins />
+              <span>{scoopBalance} scoops available</span>
+            </LimitBadge>
+          )}
+
+          {showUnlimited && (
+            <UnlimitedBadge>
+              <InfinityIcon />
+              <span>Unlimited Processing</span>
+            </UnlimitedBadge>
+          )}
+
+          {isNearLimit && !showUnlimited && (
+            <WarningBanner>
+              <AlertTriangle />
+              <WarningText>
+                You&apos;re running low on images! {dailyRemaining} remaining
+                today.
+              </WarningText>
+              <UpgradeButton onClick={() => navigate('/plan-selection')}>
+                Upgrade
+              </UpgradeButton>
+            </WarningBanner>
+          )}
+
+          {showScoopBalance && scoopBalance < 10 && (
+            <WarningBanner>
+              <AlertTriangle />
+              <WarningText>
+                Running low on scoops! Only {scoopBalance} remaining.
+              </WarningText>
+              <UpgradeButton
+                onClick={() => navigate('/checkout?plan=payAsYouGo')}
+              >
+                Buy More
+              </UpgradeButton>
+            </WarningBanner>
+          )}
+        </LimitContainer>
       </HeroContent>
     </HeroSection>
   );

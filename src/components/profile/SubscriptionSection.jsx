@@ -469,8 +469,8 @@ const SubscriptionSection = () => {
           <ModalContent onClick={(e) => e.stopPropagation()}>
             <ModalTitle>Cancel Subscription?</ModalTitle>
             <ModalText>
-              Are you sure you want to cancel your subscription? You&apos;ll continue
-              to have access to {subscription?.planName} features until{' '}
+              Are you sure you want to cancel your subscription? You&apos;ll
+              continue to have access to {subscription?.planName} features until{' '}
               {formatDate(subscription?.currentPeriodEnd)}.
             </ModalText>
             <ModalActions>
