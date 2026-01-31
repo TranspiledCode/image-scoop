@@ -1,28 +1,7 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { Zap, FileText } from 'lucide-react';
-
-const InteractiveDemo = lazy(() => import('./InteractiveDemo'));
-
-// Loading component for demo
-const DemoLoader = () => (
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '400px',
-      background: 'rgba(255, 255, 255, 0.05)',
-      border: '2px dashed rgba(255, 255, 255, 0.2)',
-      borderRadius: '16px',
-      color: '#9ca3af',
-      fontSize: '16px',
-    }}
-  >
-    Loading demo...
-  </div>
-);
+import { Zap, FileText, ImageIcon, Sparkles } from 'lucide-react';
 
 const HeroSection = styled.section`
   min-height: 100vh;
@@ -61,45 +40,39 @@ const BackgroundPattern = styled.div`
 `;
 
 const HeroContent = styled.div`
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
   padding-bottom: 80px;
   position: relative;
   z-index: 10;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: clamp(40px, 8vw, 80px);
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
 
   @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-    gap: clamp(32px, 6vw, 48px);
-    max-width: 900px;
+    max-width: 800px;
   }
 
   @media (max-width: 768px) {
-    gap: clamp(24px, 5vw, 36px);
     max-width: 100%;
-    overflow: hidden;
-  }
-
-  @media (max-width: 480px) {
-    gap: 20px;
   }
 `;
 
 const HeroText = styled.div`
-  text-align: left;
+  text-align: center;
+  width: 100%;
 `;
 
 const HeroTitle = styled.h1`
-  font-size: clamp(36px, 5vw, 52px);
+  font-size: clamp(40px, 6vw, 64px);
   font-weight: 800;
   color: white;
   line-height: 1.1;
-  margin-bottom: clamp(16px, 3vw, 24px);
+  margin-bottom: clamp(20px, 3vw, 32px);
   letter-spacing: -1px;
+  text-align: center;
 
   span {
     background: linear-gradient(135deg, #f472b6 0%, #fb923c 50%, #a3e635 100%);
@@ -109,80 +82,71 @@ const HeroTitle = styled.h1`
   }
 
   @media (max-width: 1024px) {
-    font-size: clamp(32px, 4.5vw, 48px);
-    line-height: 1.2;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.15;
   }
 
   @media (max-width: 768px) {
-    font-size: clamp(28px, 6vw, 36px);
-    line-height: 1.1;
-    margin-bottom: clamp(12px, 2.5vw, 20px);
-    text-align: center;
+    font-size: clamp(32px, 7vw, 44px);
+    line-height: 1.2;
+    margin-bottom: clamp(16px, 3vw, 24px);
   }
 
   @media (max-width: 480px) {
-    font-size: clamp(24px, 7vw, 32px);
-    line-height: 1;
-    margin-bottom: 16px;
-    text-align: center;
+    font-size: clamp(28px, 8vw, 36px);
+    line-height: 1.1;
+    margin-bottom: 20px;
   }
 `;
 
 const HeroDescription = styled.p`
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: clamp(18px, 2vw, 22px);
   color: #9ca3af;
-  max-width: 500px;
-  margin: 0 0 clamp(32px, 4vw, 40px) 0;
-  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto clamp(32px, 4vw, 48px);
+  line-height: 1.6;
   text-wrap: balance;
+  text-align: center;
 
   @media (max-width: 1024px) {
-    max-width: 600px;
-    font-size: clamp(15px, 2.2vw, 17px);
+    max-width: 650px;
+    font-size: clamp(17px, 2.2vw, 20px);
   }
 
   @media (max-width: 768px) {
     max-width: 100%;
-    font-size: clamp(14px, 3.5vw, 16px);
-    line-height: 1.6;
-    margin-bottom: clamp(16px, 3vw, 20px);
-    text-align: center;
+    font-size: clamp(16px, 3.5vw, 18px);
+    line-height: 1.5;
+    margin-bottom: clamp(24px, 3vw, 32px);
   }
 
   @media (max-width: 480px) {
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.5;
-    margin-bottom: 16px;
-    text-align: center;
+    margin-bottom: 24px;
   }
 `;
 
 const CTAButtons = styled.div`
   display: flex;
-  gap: clamp(12px, 2vw, 16px);
+  gap: clamp(12px, 2vw, 20px);
+  justify-content: center;
+  align-items: center;
 
   @media (max-width: 1024px) {
-    gap: clamp(10px, 1.5vw, 14px);
+    gap: clamp(10px, 1.5vw, 16px);
   }
 
   @media (max-width: 768px) {
     flex-direction: column;
     width: 100%;
+    max-width: 400px;
     gap: 12px;
-
-    /* Hide "How it works" button on mobile */
-    .how-it-works-btn {
-      display: none;
-    }
   }
 
   @media (max-width: 480px) {
     gap: 10px;
-
-    /* Hide "How it works" button on mobile */
-    .how-it-works-btn {
-      display: none;
-    }
+    max-width: 100%;
   }
 `;
 
@@ -274,25 +238,25 @@ const CTAButtonSecondary = styled.button`
 const HeroFeatures = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(16px, 3vw, 32px);
-  margin-top: clamp(20px, 4vw, 32px);
+  gap: clamp(20px, 3vw, 40px);
+  margin-top: clamp(24px, 4vw, 40px);
+  justify-content: center;
 
   @media (max-width: 1024px) {
-    gap: clamp(12px, 2.5vw, 24px);
-    margin-top: clamp(16px, 3vw, 28px);
+    gap: clamp(16px, 2.5vw, 32px);
+    margin-top: clamp(20px, 3vw, 32px);
   }
 
   @media (max-width: 768px) {
-    gap: clamp(8px, 2vw, 16px);
-    margin-top: 12px;
-    justify-content: center;
+    gap: clamp(12px, 2vw, 20px);
+    margin-top: 20px;
   }
 
   @media (max-width: 480px) {
-    gap: 12px;
-    margin-top: 8px;
-    flex-direction: row;
-    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+    flex-direction: column;
+    align-items: center;
   }
 `;
 
@@ -376,15 +340,19 @@ const Hero = () => {
       <HeroContent>
         <HeroText>
           <HeroTitle>
-            Optimize <span>in&nbsp;seconds</span>
+            Optimize images <span>in&nbsp;seconds</span>
           </HeroTitle>
           <HeroDescription>
             Compress, convert, and perfect your images with smart optimization.
-            No quality loss, just smaller files that load faster.
+            No quality loss, just smaller files that load faster. Try it free
+            with no signup required.
           </HeroDescription>
 
           <CTAButtons>
-            <CTAButton to="/process">Try it Free</CTAButton>
+            <CTAButton to="/process">
+              <Sparkles />
+              Start Optimizing Free
+            </CTAButton>
             <CTAButtonSecondary onClick={scrollToPricing}>
               View Pricing
             </CTAButtonSecondary>
@@ -393,18 +361,18 @@ const Hero = () => {
           <HeroFeatures>
             <HeroFeature>
               <Zap />
-              <span>Lightning fast</span>
+              <span>Lightning fast processing</span>
+            </HeroFeature>
+            <HeroFeature>
+              <ImageIcon />
+              <span>Multiple formats & sizes</span>
             </HeroFeature>
             <HeroFeature>
               <FileText />
-              <span>No sign-up required</span>
+              <span>Batch processing</span>
             </HeroFeature>
           </HeroFeatures>
         </HeroText>
-
-        <Suspense fallback={<DemoLoader />}>
-          <InteractiveDemo />
-        </Suspense>
       </HeroContent>
     </HeroSection>
   );
