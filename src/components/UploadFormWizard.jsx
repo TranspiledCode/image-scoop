@@ -41,6 +41,7 @@ const UploadFormWizard = ({
   const [limitError, setLimitError] = useState(null);
   const [processedImageCount, setProcessedImageCount] = useState(0);
   const renamedFilesRef = useRef({});
+  const fileGridRef = useRef(null);
 
   const { addToast } = useToast();
   const { uploadProgress, uploadFiles, processFromR2 } = useR2Upload();
@@ -68,6 +69,23 @@ const UploadFormWizard = ({
       setFileStatuses(newStatuses);
     }
   }, [preUploadedFiles]);
+
+  // Smooth scroll to file grid when files are added
+  useEffect(() => {
+    if (files.length > 0 && fileGridRef.current && !loading) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        const headerHeight = 80; // Approximate header height
+        const elementTop = fileGridRef.current.getBoundingClientRect().top;
+        const offsetPosition = elementTop + window.pageYOffset - headerHeight;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }, 100);
+    }
+  }, [files.length, loading]);
 
   const onDrop = useCallback(
     (acceptedFiles, rejectedFiles) => {
@@ -361,7 +379,7 @@ const UploadFormWizard = ({
 
       {/* Upload Section - Always visible unless success is shown */}
       {!showSuccess && files.length > 0 && (
-        <>
+        <div ref={fileGridRef}>
           {/* File Grid */}
           <FileGrid
             fileStatuses={fileStatuses}
@@ -378,7 +396,7 @@ const UploadFormWizard = ({
             onOptimize={handleOptimize}
             filesCount={files.length}
           />
-        </>
+        </div>
       )}
 
       {/* Processing Modal */}
