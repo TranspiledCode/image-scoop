@@ -1,17 +1,35 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
+// Console statements are intentional in this CLI script for user feedback
 
 const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 const fetch = require('node-fetch');
+const Sentry = require('@sentry/node');
 
 // Load environment variables
 require('dotenv').config();
+
+// Initialize Sentry for error tracking
+Sentry.init({
+  dsn: 'https://836ef0c8872d0abfc75188d0fb481f47@o4509055999541248.ingest.us.sentry.io/4510621343875072',
+  environment: process.env.NODE_ENV || 'development',
+  tracesSampleRate: 1.0,
+});
 
 const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || process.env.R2_ACCOUNT_ID;
 const CLOUDFLARE_API_KEY = process.env.CLOUDFLARE_API_KEY;
 
 if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_API_KEY) {
+  const error = new Error('Missing required environment variables: CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_KEY');
+  Sentry.captureException(error, {
+    tags: { script: 'upload-backgrounds' },
+    extra: {
+      hasAccountId: !!CLOUDFLARE_ACCOUNT_ID,
+      hasApiKey: !!CLOUDFLARE_API_KEY,
+    },
+  });
   console.error('❌ Missing required environment variables:');
   console.error('   CLOUDFLARE_ACCOUNT_ID (or R2_ACCOUNT_ID)');
   console.error('   CLOUDFLARE_API_KEY');
@@ -66,11 +84,32 @@ async function uploadImage(background) {
       console.log(`   URL: ${result.result.variants[0]}`);
       return result.result;
     } else {
+      const error = new Error(`Failed to upload ${background.name}`);
+      Sentry.captureException(error, {
+        tags: {
+          script: 'upload-backgrounds',
+          background: background.name,
+        },
+        extra: {
+          backgroundId: background.id,
+          cloudflareErrors: result.errors,
+        },
+      });
       console.error(`❌ Failed to upload ${background.name}:`);
       console.error(`   ${JSON.stringify(result.errors, null, 2)}`);
       return null;
     }
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: {
+        script: 'upload-backgrounds',
+        background: background.name,
+      },
+      extra: {
+        backgroundId: background.id,
+        backgroundFile: background.file,
+      },
+    });
     console.error(`❌ Error uploading ${background.name}:`, error.message);
     return null;
   }
@@ -120,4 +159,14 @@ async function main() {
   console.log('\n✅ Done!');
 }
 
-main().catch(console.error);
+main()
+  .catch((error) => {
+    Sentry.captureException(error, {
+      tags: { script: 'upload-backgrounds' },
+    });
+    console.error('❌ Fatal error:', error.message);
+    return Sentry.close(2000);
+  })
+  .then(() => {
+    return Sentry.close(2000);
+  });
