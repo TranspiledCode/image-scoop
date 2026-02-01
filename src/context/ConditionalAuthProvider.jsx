@@ -8,7 +8,7 @@ const AuthProvider = lazy(() =>
 );
 
 // Routes that don't need authentication at all
-const PUBLIC_ONLY_ROUTES = ['/', '/about'];
+const PUBLIC_ONLY_ROUTES = ['/about'];
 
 // Minimal loading fallback
 const AuthLoader = ({ children }) => <>{children}</>;
