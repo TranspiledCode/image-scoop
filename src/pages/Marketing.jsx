@@ -13,7 +13,7 @@ const FAQ = lazy(() => import('../components/marketing/FAQ'));
 const CTA = lazy(() => import('../components/marketing/CTA'));
 const Footer = lazy(() => import('../components/marketing/Footer'));
 
-const MarketingPage = styled.div`
+const MarketingPage = styled.main`
   width: 100%;
   overflow-x: hidden;
 `;

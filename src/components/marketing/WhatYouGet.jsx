@@ -33,8 +33,8 @@ const Badge = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(236, 72, 153, 0.1);
-  color: ${({ theme }) => theme.colors.primary};
+  background: rgba(236, 72, 153, 0.15);
+  color: #d91d5a;
   padding: 8px 16px;
   border-radius: 100px;
   font-size: 13px;

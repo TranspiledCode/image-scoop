@@ -115,7 +115,7 @@ const FooterBottom = styled.div`
 
 const Copyright = styled.p`
   font-size: 14px;
-  color: #6b7280;
+  color: #9ca3af;
   margin: 0;
 `;
 

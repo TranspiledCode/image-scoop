@@ -24,8 +24,8 @@ const Badge = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(236, 72, 153, 0.1);
-  color: ${({ theme }) => theme.colors.primary};
+  background: rgba(236, 72, 153, 0.15);
+  color: #d91d5a;
   padding: 8px 16px;
   border-radius: 100px;
   font-size: 13px;
@@ -60,7 +60,7 @@ const Toggle = styled.div`
 const ToggleLabel = styled.span`
   font-size: 15px;
   font-weight: 600;
-  color: ${({ active }) => (active ? '#1f2937' : '#9ca3af')};
+  color: ${({ active }) => (active ? '#1f2937' : '#6b7280')};
   transition: color 0.2s;
 `;
 
@@ -393,10 +393,12 @@ const Pricing = () => {
             <ToggleSwitch
               active={isAnnual}
               onClick={() => setIsAnnual(!isAnnual)}
+              aria-label={`Switch to ${isAnnual ? 'monthly' : 'annual'} billing`}
+              aria-pressed={isAnnual}
             />
             <ToggleLabel active={isAnnual}>
               Annual{' '}
-              <span style={{ color: '#10b981' }}>
+              <span style={{ color: '#059669' }}>
                 (Save {annualDiscount * 100}%)
               </span>
             </ToggleLabel>
