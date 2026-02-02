@@ -1,0 +1,210 @@
+{
+  "rules": {
+    "users": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        ".write": "auth != null && auth.uid === $userId",
+
+        "profile": {
+          "displayName": {
+            ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 100"
+          },
+          "email": {
+            ".validate": "newData.isString() && newData.val().matches(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$/i)"
+          },
+          "photoURL": {
+            ".validate": "newData.isString()"
+          },
+          "createdAt": {
+            ".validate": "newData.isNumber() && (!data.exists() || data.val() === newData.val())"
+          },
+          "lastLogin": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": true
+          }
+        },
+
+        "preferences": {
+          "defaultExportFormat": {
+            ".validate": "newData.isString() && (newData.val() === 'webp' || newData.val() === 'avif' || newData.val() === 'jpeg' || newData.val() === 'png')"
+          },
+          "defaultQuality": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100"
+          },
+          "omitFilename": {
+            ".validate": "newData.isBoolean()"
+          },
+          "omitFilenameFromOutput": {
+            ".validate": "newData.isBoolean()"
+          },
+          "emailNotifications": {
+            ".validate": "newData.isBoolean()"
+          },
+          "theme": {
+            ".validate": "newData.isString() && (newData.val() === 'light' || newData.val() === 'dark' || newData.val() === 'auto')"
+          },
+          "$other": {
+            ".validate": true
+          }
+        },
+
+        "subscription": {
+          ".read": "auth != null && auth.uid === $userId",
+          ".write": "auth != null && auth.uid === $userId",
+          "planId": {
+            ".validate": "newData.isString()"
+          },
+          "planName": {
+            ".validate": "newData.isString()"
+          },
+          "status": {
+            ".validate": "newData.isString()"
+          },
+          "billingCycle": {
+            ".validate": "newData.isString() || newData.val() === null"
+          },
+          "startDate": {
+            ".validate": "newData.isNumber() || newData.val() === null"
+          },
+          "trialEndDate": {
+            ".validate": "newData.isNumber() || newData.val() === null"
+          },
+          "currentPeriodEnd": {
+            ".validate": "newData.isNumber() || newData.val() === null"
+          },
+          "payAsYouGoBalance": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "updatedAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "scheduledDowngrade": {
+            "toPlanId": {
+              ".validate": "newData.isString()"
+            },
+            "toPlanName": {
+              ".validate": "newData.isString()"
+            },
+            "effectiveDate": {
+              ".validate": "newData.isNumber()"
+            },
+            "scheduledAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "stripeCustomerId": {
+            ".validate": "newData.isString()"
+          },
+          "stripeSubscriptionId": {
+            ".validate": "newData.isString()"
+          },
+          "$other": {
+            ".validate": true
+          }
+        },
+
+        "usage": {
+          ".read": "auth != null && auth.uid === $userId",
+          ".write": "auth != null && auth.uid === $userId",
+          "currentPeriodStart": {
+            ".validate": "newData.isNumber()"
+          },
+          "imagesProcessedToday": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "lastResetDate": {
+            ".validate": "newData.isString()"
+          },
+          "totalImagesProcessed": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "$other": {
+            ".validate": true
+          }
+        },
+
+        "history": {
+          ".read": "auth != null && auth.uid === $userId",
+          ".write": "auth != null && auth.uid === $userId",
+          ".indexOn": ["processedAt"],
+          "$historyId": {
+            ".validate": "newData.hasChildren()",
+            "$other": {
+              ".validate": true
+            }
+          }
+        },
+
+        "paymentHistory": {
+          "$paymentId": {
+            ".read": "auth != null && auth.uid === $userId",
+            ".write": "auth != null && auth.uid === $userId",
+            "$other": {
+              ".validate": true
+            }
+          }
+        },
+
+        "apiKeys": {
+          ".read": false,
+          ".write": false
+        },
+
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+
+    "pricing": {
+      ".read": true,
+      ".write": false,
+      "$planId": {
+        ".validate": "newData.hasChildren(['name', 'price', 'imagesPerMonth'])",
+        "name": {
+          ".validate": "newData.isString()"
+        },
+        "price": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "imagesPerMonth": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "features": {
+          ".validate": "newData.hasChildren()"
+        },
+        "$other": {
+          ".validate": true
+        }
+      }
+    },
+
+    "stats": {
+      ".read": true,
+      ".write": false,
+      "totalUsers": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "totalConversions": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "totalStorageSaved": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
+
+    "$other": {
+      ".read": false,
+      ".write": false,
+      ".validate": false
+    }
+  }
+}
