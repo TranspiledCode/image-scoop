@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import styled from '@emotion/styled';
+import SEO from '../components/SEO';
 import Hero from '../components/marketing/Hero';
 
 // Lazy load all below-the-fold sections for better initial performance
@@ -33,8 +34,62 @@ const SectionLoader = () => (
 );
 
 const Marketing = () => {
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        '@id': 'https://imagescoop.com/#webapp',
+        name: 'Image Scoop',
+        description:
+          'Fast, secure image processing and format conversion tool. Convert images to WebP, JPEG, PNG, and AVIF formats with multiple size variants in seconds.',
+        url: 'https://imagescoop.com',
+        applicationCategory: 'MultimediaApplication',
+        operatingSystem: 'Web Browser',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+          availability: 'https://schema.org/InStock',
+        },
+        featureList: [
+          'WebP, JPEG, PNG, AVIF format conversion',
+          'Multiple size variants (thumbnail to XXL)',
+          'Batch processing',
+          'Secure cloud processing',
+          'Instant download',
+        ],
+        screenshot: 'https://imagescoop.com/og-image.png',
+      },
+      {
+        '@type': 'Organization',
+        '@id': 'https://imagescoop.com/#organization',
+        name: 'Image Scoop',
+        url: 'https://imagescoop.com',
+        logo: 'https://imagescoop.com/logo.png',
+        sameAs: ['https://twitter.com/imagescoop'],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://imagescoop.com/#website',
+        url: 'https://imagescoop.com',
+        name: 'Image Scoop',
+        description: 'Fast image processing and format conversion',
+        publisher: {
+          '@id': 'https://imagescoop.com/#organization',
+        },
+      },
+    ],
+  };
+
   return (
     <MarketingPage>
+      <SEO
+        title="Image Scoop - Fast Image Processing & Format Conversion"
+        description="Process and convert images instantly with Image Scoop. Support for WebP, JPEG, PNG, AVIF formats with multiple size variants. Fast, secure, and easy to use. Try it free!"
+        canonical="https://imagescoop.com"
+        structuredData={structuredData}
+      />
       <Hero />
       <Suspense fallback={<SectionLoader />}>
         <Features />

@@ -1,0 +1,22 @@
+# robots.txt for Image Scoop
+# Allow all crawlers
+
+User-agent: *
+Allow: /
+
+# Important pages for indexing
+Allow: /process
+Allow: /about
+Allow: /plan-selection
+
+# Don't index authentication pages
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
+
+# Don't index user-specific pages
+Disallow: /profile
+Disallow: /checkout
+
+# Sitemap location
+Sitemap: https://imagescoop.com/sitemap.xml

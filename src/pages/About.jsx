@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import SEO from '../components/SEO';
 import TechnicalDetails from 'components/TechnicalDetails';
 
 const AboutContainer = styled.div`
@@ -137,94 +138,101 @@ const AboutSection = () => {
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   return (
-    <AboutContainer id="about-section">
-      <Title>
-        <IceCream size={28} />
-        How Image Scoop Works
-      </Title>
+    <>
+      <SEO
+        title="About Image Scoop - Fast Image Processing Tool"
+        description="Learn about Image Scoop, a powerful image processing and format conversion tool. Discover how we help developers and designers optimize images for the web with WebP, JPEG, PNG, and AVIF formats."
+        canonical="/about"
+      />
+      <AboutContainer id="about-section">
+        <Title>
+          <IceCream size={28} />
+          How Image Scoop Works
+        </Title>
 
-      <Description>
-        Image Scoop is a simple, fast tool for optimizing your images for the
-        web. It helps reduce file sizes while maintaining quality, making your
-        websites load faster.
-      </Description>
+        <Description>
+          Image Scoop is a simple, fast tool for optimizing your images for the
+          web. It helps reduce file sizes while maintaining quality, making your
+          websites load faster.
+        </Description>
 
-      <StepContainer>
-        <Step>
-          <StepNumber>1</StepNumber>
-          <StepContent>
-            <StepTitle>
-              <Upload size={22} />
-              Upload Your Images
-            </StepTitle>
-            <StepDescription>
-              Drag and drop your images into the upload area, or click to browse
-              your files. Supported formats: JPEG, PNG, WebP (up to 5 images at
-              once).
-            </StepDescription>
-          </StepContent>
-        </Step>
+        <StepContainer>
+          <Step>
+            <StepNumber>1</StepNumber>
+            <StepContent>
+              <StepTitle>
+                <Upload size={22} />
+                Upload Your Images
+              </StepTitle>
+              <StepDescription>
+                Drag and drop your images into the upload area, or click to
+                browse your files. Supported formats: JPEG, PNG, WebP (up to 5
+                images at once).
+              </StepDescription>
+            </StepContent>
+          </Step>
 
-        <Step>
-          <StepNumber>2</StepNumber>
-          <StepContent>
-            <StepTitle>
-              <ArrowRight size={22} />
-              Choose Your Output Format
-            </StepTitle>
-            <StepDescription>
-              Select the output format: WebP (best balance of size and quality),
-              PNG (for transparency), JPEG (widely compatible), or AVIF
-              (next-gen).
-            </StepDescription>
-          </StepContent>
-        </Step>
+          <Step>
+            <StepNumber>2</StepNumber>
+            <StepContent>
+              <StepTitle>
+                <ArrowRight size={22} />
+                Choose Your Output Format
+              </StepTitle>
+              <StepDescription>
+                Select the output format: WebP (best balance of size and
+                quality), PNG (for transparency), JPEG (widely compatible), or
+                AVIF (next-gen).
+              </StepDescription>
+            </StepContent>
+          </Step>
 
-        <Step>
-          <StepNumber>3</StepNumber>
-          <StepContent>
-            <StepTitle>
-              <Download size={22} />
-              Process and Download
-            </StepTitle>
-            <StepDescription>
-              Click Process Images to start the optimization. Once complete, the
-              optimized images will be available for download with smaller file
-              sizes.
-            </StepDescription>
-          </StepContent>
-        </Step>
-      </StepContainer>
+          <Step>
+            <StepNumber>3</StepNumber>
+            <StepContent>
+              <StepTitle>
+                <Download size={22} />
+                Process and Download
+              </StepTitle>
+              <StepDescription>
+                Click Process Images to start the optimization. Once complete,
+                the optimized images will be available for download with smaller
+                file sizes.
+              </StepDescription>
+            </StepContent>
+          </Step>
+        </StepContainer>
 
-      <TipBox>
-        <TipTitle>
-          <Gauge size={20} />
-          Why This Matters
-        </TipTitle>
-        <TipText>
-          Smaller image files mean faster page loads, better user experience,
-          and improved SEO. Our optimization can reduce file sizes by up to 70%
-          while maintaining visual quality!
-        </TipText>
-      </TipBox>
+        <TipBox>
+          <TipTitle>
+            <Gauge size={20} />
+            Why This Matters
+          </TipTitle>
+          <TipText>
+            Smaller image files mean faster page loads, better user experience,
+            and improved SEO. Our optimization can reduce file sizes by up to
+            70% while maintaining visual quality!
+          </TipText>
+        </TipBox>
 
-      <ToggleButton
-        onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-        aria-expanded={showTechnicalDetails}
-      >
-        {showTechnicalDetails ? (
-          <>
-            Hide Technical Details <ChevronUp size={18} />
-          </>
-        ) : (
-          <>
-            View Technical Details <ChevronDown size={18} />
-          </>
-        )}
-      </ToggleButton>
+        <ToggleButton
+          onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+          aria-expanded={showTechnicalDetails}
+        >
+          {showTechnicalDetails ? (
+            <>
+              Hide Technical Details <ChevronUp size={18} />
+            </>
+          ) : (
+            <>
+              View Technical Details <ChevronDown size={18} />
+            </>
+          )}
+        </ToggleButton>
 
-      {showTechnicalDetails && <TechnicalDetails />}
-    </AboutContainer>
+        {showTechnicalDetails && <TechnicalDetails />}
+      </AboutContainer>
+    </>
   );
 };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { AlertCircle } from 'lucide-react';
+import SEO from '../components/SEO';
 import UploadFormWizard from '../components/UploadFormWizard';
 import ProcessHero from '../components/process/ProcessHero';
 import DemoConversionModal from '../components/process/DemoConversionModal';
@@ -128,6 +129,12 @@ const Process = () => {
 
   return (
     <ProcessPage>
+      <SEO
+        title="Process Images - Image Scoop"
+        description="Convert and optimize your images instantly. Upload images and transform them into WebP, JPEG, PNG, or AVIF format with multiple size variants in seconds."
+        canonical="/process"
+        noindex={false}
+      />
       <BackgroundPattern />
       <PageContent>
         <ProcessHero />
