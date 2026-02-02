@@ -3,6 +3,37 @@ command = "npm run build"
 publish = "dist"
 functions = "Netlify/functions"
 
+# Netlify plugins
+[[plugins]]
+package = "netlify-plugin-cache"
+
+  [plugins.inputs]
+  paths = [
+    "node_modules",
+    ".parcel-cache",
+    ".cache"
+  ]
+
+[build.environment]
+# Enable build caching
+NODE_VERSION = "18"
+NPM_FLAGS = "--legacy-peer-deps"
+
+# Build optimization
+[build.processing]
+skip_processing = false
+
+[build.processing.css]
+bundle = true
+minify = true
+
+[build.processing.js]
+bundle = true
+minify = true
+
+[build.processing.images]
+compress = true
+
 [functions]
 node_bundler = "esbuild"
 
@@ -11,3 +42,77 @@ command = "parcel public/index.html --port 1234 --no-cache"  # Command to start 
 port = 8888  # Port where netlify dev serves the app - ALWAYS USE THIS PORT FOR DEVELOPMENT
 targetPort = 1234  # Port where Parcel is running (internal only, do not access directly)
 publish = "dist"  # Parcel's output directory (adjust if different)
+
+# Cache headers for optimal performance
+# Static assets with content hashes get long-term immutable caching
+# HTML files get short-term caching since they reference hashed assets
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.woff"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.jpeg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
