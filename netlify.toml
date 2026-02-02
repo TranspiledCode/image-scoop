@@ -16,7 +16,7 @@ package = "netlify-plugin-cache"
 
 [build.environment]
 # Enable build caching
-NODE_VERSION = "18"
+NODE_VERSION = "20"
 NPM_FLAGS = "--legacy-peer-deps"
 
 # Build optimization
