@@ -3,17 +3,6 @@ command = "npm run build"
 publish = "dist"
 functions = "Netlify/functions"
 
-# Netlify plugins
-[[plugins]]
-package = "netlify-plugin-cache"
-
-  [plugins.inputs]
-  paths = [
-    "node_modules",
-    ".parcel-cache",
-    ".cache"
-  ]
-
 [build.environment]
 # Enable build caching
 NODE_VERSION = "20"
