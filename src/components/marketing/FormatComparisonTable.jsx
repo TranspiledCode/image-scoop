@@ -57,7 +57,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${({ positive }) => (positive ? '#10b981' : '#6b7280')};
+  color: ${({ positive }) => (positive ? '#059669' : '#6b7280')};
 
   svg {
     width: 18px;
@@ -88,13 +88,13 @@ const Badge = styled.span`
   color: ${({ variant }) => {
     switch (variant) {
       case 'excellent':
-        return '#10b981';
+        return '#047857';
       case 'superior':
-        return '#ec4899';
+        return '#be185d';
       case 'good':
-        return '#3b82f6';
+        return '#1d4ed8';
       case 'moderate':
-        return '#fb923c';
+        return '#c2410c';
       default:
         return '#6b7280';
     }
