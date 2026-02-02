@@ -35,6 +35,20 @@ export const usePricing = () => {
           setLoading(false);
         } catch (err) {
           console.error('Error processing pricing data:', err);
+
+          // Capture Firebase error in Sentry
+          if (window.Sentry) {
+            window.Sentry.captureException(err, {
+              tags: {
+                operation: 'firebase_process_pricing',
+                collection: 'pricing',
+              },
+              extra: {
+                errorMessage: err.message,
+              },
+            });
+          }
+
           setError(err);
           setPricing(null);
           setLoading(false);
@@ -42,6 +56,20 @@ export const usePricing = () => {
       },
       (err) => {
         console.error('Error fetching pricing data:', err);
+
+        // Capture Firebase error in Sentry
+        if (window.Sentry) {
+          window.Sentry.captureException(err, {
+            tags: {
+              operation: 'firebase_fetch_pricing',
+              collection: 'pricing',
+            },
+            extra: {
+              errorMessage: err.message,
+            },
+          });
+        }
+
         setError(err);
         setPricing(null);
         setLoading(false);

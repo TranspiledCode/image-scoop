@@ -12,6 +12,7 @@ import {
   TOTAL_BATCH_LIMIT_BYTES,
   humanFileSize,
 } from '../../src/shared/uploadLimits.js';
+import { initSentry, captureError, setTag } from './utils/sentry.js';
 
 const CONFIG = {
   MAX_WORKERS: 4, // Adjust based on Netlify's environment
@@ -40,14 +41,19 @@ class ImageProcessor {
       return true;
     } catch (err) {
       console.error('Validation failed:', err);
+      captureError(err, {
+        tags: { operation: 'validate_image' },
+        extra: { bufferSize: buffer.length },
+      });
       return false;
     }
   }
 
   async processImage(buffer, format) {
+    let metadata;
     try {
       let image = sharp(buffer);
-      const metadata = await image.metadata();
+      metadata = await image.metadata();
 
       if (
         metadata.width > CONFIG.MAX_IMAGE_DIMENSION ||
@@ -68,6 +74,10 @@ class ImageProcessor {
       return image;
     } catch (error) {
       console.error('Error during processing:', error);
+      captureError(error, {
+        tags: { operation: 'process_image', format },
+        extra: { metadataAvailable: !!metadata },
+      });
       throw new Error(`Image processing failed: ${error.message}`);
     }
   }
@@ -91,10 +101,17 @@ class ImageProcessor {
 }
 
 const processImages = async (event) => {
+  // Initialize Sentry for error tracking
+  initSentry('process-image');
+
   console.warn('Received event:', {
     headers: event.headers,
     bodyKeys: Object.keys(event.body || {}),
   });
+
+  let images;
+  let totalBytes = 0;
+
   try {
     if (!event.body || !event.body.images) {
       console.error('No images provided in the request.');
@@ -104,7 +121,7 @@ const processImages = async (event) => {
       };
     }
 
-    const images = Array.isArray(event.body.images)
+    images = Array.isArray(event.body.images)
       ? event.body.images
       : [event.body.images];
     console.warn(`Processing ${images.length} image(s).`);
@@ -117,8 +134,6 @@ const processImages = async (event) => {
         body: JSON.stringify({ error: message, code: 'too_many_files' }),
       };
     }
-
-    let totalBytes = 0;
 
     const parsedImages = images.map((imageFile) => {
       const buffer = Buffer.isBuffer(imageFile.content)
@@ -166,6 +181,11 @@ const processImages = async (event) => {
         }),
       };
     }
+
+    // Set Sentry tags for this processing batch
+    setTag('exportType', exportType);
+    setTag('batchSize', images.length.toString());
+    setTag('totalBytes', totalBytes.toString());
 
     const processor = new ImageProcessor();
     const archive = archiver('zip', { zlib: { level: 9 } });
@@ -216,6 +236,20 @@ const processImages = async (event) => {
   } catch (error) {
     console.error('Error in processImages:', error.stack || error);
     const statusCode = error.statusCode || 500;
+
+    // Capture error in Sentry with context
+    captureError(error, {
+      tags: {
+        operation: 'batch_process',
+        statusCode: statusCode.toString(),
+        errorCode: error.code || 'server_error',
+      },
+      extra: {
+        imageCount: images?.length,
+        totalBytes,
+      },
+    });
+
     return {
       statusCode,
       body: JSON.stringify({ error: error.message, code: error.code || 'server_error' }),

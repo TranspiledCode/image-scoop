@@ -4,6 +4,7 @@ import App from './App';
 
 // Defer Sentry initialization until after page load to improve initial performance
 const SENTRY_DSN =
+  process.env.REACT_APP_SENTRY_DSN ||
   'https://836ef0c8872d0abfc75188d0fb481f47@o4509055999541248.ingest.us.sentry.io/4510621343875072';
 
 if (SENTRY_DSN && typeof window !== 'undefined') {
@@ -19,8 +20,9 @@ if (SENTRY_DSN && typeof window !== 'undefined') {
               blockAllMedia: false,
             }),
           ],
-          tracesSampleRate: 1.0,
-          replaysSessionSampleRate: 0.1,
+          tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+          replaysSessionSampleRate:
+            process.env.NODE_ENV === 'production' ? 0.05 : 0.1,
           replaysOnErrorSampleRate: 1.0,
           environment: process.env.NODE_ENV || 'development',
         });

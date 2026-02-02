@@ -59,6 +59,20 @@ export const useUserUsage = () => {
       },
       (err) => {
         console.error('Error loading usage:', err);
+
+        // Capture Firebase error in Sentry
+        if (window.Sentry) {
+          window.Sentry.captureException(err, {
+            tags: {
+              operation: 'firebase_load_usage',
+              collection: 'usage',
+            },
+            extra: {
+              errorMessage: err.message,
+            },
+          });
+        }
+
         setError(err);
         setLoading(false);
       },

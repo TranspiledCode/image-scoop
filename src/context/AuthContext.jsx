@@ -10,7 +10,7 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from 'firebase/auth';
-import { ref, set, get } from 'firebase/database';
+import { ref, set, get, onValue } from 'firebase/database';
 import { auth, database } from '../config/firebase';
 
 const AuthContext = createContext({});
@@ -120,9 +120,51 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setLoading(false);
+
+      // Set Sentry user context
+      if (window.Sentry) {
+        if (user) {
+          // Set basic user context immediately
+          window.Sentry.setUser({
+            id: user.uid,
+            email: user.email,
+          });
+
+          // Fetch subscription data to enrich context
+          try {
+            const subscriptionRef = ref(
+              database,
+              `users/${user.uid}/subscription`,
+            );
+            onValue(
+              subscriptionRef,
+              (snapshot) => {
+                const subscription = snapshot.val();
+                if (subscription) {
+                  window.Sentry.setUser({
+                    id: user.uid,
+                    email: user.email,
+                    subscriptionPlan: subscription.planId,
+                    subscriptionStatus: subscription.status,
+                  });
+                }
+              },
+              { onlyOnce: true },
+            );
+          } catch (error) {
+            console.error(
+              'Failed to load subscription for Sentry context:',
+              error,
+            );
+          }
+        } else {
+          // Clear user context on logout
+          window.Sentry.setUser(null);
+        }
+      }
     });
 
     return unsubscribe;

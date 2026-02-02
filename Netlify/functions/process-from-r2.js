@@ -2,6 +2,7 @@ import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } fro
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import sharp from 'sharp';
 import archiver from 'archiver';
+import { initSentry, captureError, setTag } from './utils/sentry.js';
 
 const s3Client = new S3Client({
   region: 'auto',
@@ -39,11 +40,16 @@ class ImageProcessor {
       return true;
     } catch (err) {
       console.error('Validation failed:', err);
+      captureError(err, {
+        tags: { operation: 'validate_image' },
+        extra: { bufferSize: buffer.length },
+      });
       return false;
     }
   }
 
   async processImage(buffer, format) {
+    const results = {};
     try {
       let image = sharp(buffer);
       const metadata = await image.metadata();
@@ -63,7 +69,6 @@ class ImageProcessor {
         image = image.toColorspace(this.srgbProfile);
       }
 
-      const results = {};
       for (const [sizeName, [width, height]] of Object.entries(CONFIG.SIZES)) {
         const resized = image.clone().resize(width, height, {
           fit: 'inside',
@@ -93,6 +98,10 @@ class ImageProcessor {
       return results;
     } catch (err) {
       console.error('Processing error:', err);
+      captureError(err, {
+        tags: { operation: 'process_image', format },
+        extra: { sizesProcessed: Object.keys(results).length },
+      });
       throw err;
     }
   }
@@ -155,6 +164,10 @@ const cleanupUploadedFiles = async (files) => {
       );
     } catch (error) {
       console.error(`Failed to delete ${file.key}:`, error);
+      captureError(error, {
+        tags: { operation: 'cleanup_r2' },
+        extra: { fileKey: file.key },
+      });
     }
   });
 
@@ -162,6 +175,9 @@ const cleanupUploadedFiles = async (files) => {
 };
 
 export const handler = async (event) => {
+  // Initialize Sentry for error tracking
+  initSentry('process-from-r2');
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -169,8 +185,15 @@ export const handler = async (event) => {
     };
   }
 
+  const startTime = Date.now();
+
   try {
     const { batchId, files, format, omitFilename = false } = JSON.parse(event.body);
+
+    // Set Sentry tags for this processing batch
+    setTag('format', format);
+    setTag('fileCount', files?.length?.toString() || '0');
+    setTag('operation', 'process_from_r2');
 
     if (!batchId || !files || !Array.isArray(files) || files.length === 0) {
       return {
@@ -266,6 +289,21 @@ export const handler = async (event) => {
     };
   } catch (error) {
     console.error('Processing error:', error);
+
+    const processingTime = Date.now() - startTime;
+
+    // Capture error in Sentry with context
+    captureError(error, {
+      tags: {
+        operation: 'process_from_r2',
+        errorType: error.name,
+      },
+      extra: {
+        processingTimeMs: processingTime,
+        errorMessage: error.message,
+      },
+    });
+
     return {
       statusCode: 500,
       body: JSON.stringify({

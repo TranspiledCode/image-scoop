@@ -151,6 +151,22 @@ const useFileProcessor = ({
 
         trackError(errorType, message);
 
+        // Capture processing error in Sentry
+        if (window.Sentry) {
+          window.Sentry.captureException(error, {
+            tags: {
+              operation: 'file_processing',
+              errorCode: error?.code || 'unknown',
+              errorType,
+            },
+            extra: {
+              errorMessage: message,
+              fileCount: files?.length,
+              format: exportType,
+            },
+          });
+        }
+
         toastWithLog(message, 'danger');
         updatedStatuses.forEach((status) => {
           status.status = 'error';

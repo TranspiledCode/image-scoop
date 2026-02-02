@@ -363,6 +363,21 @@ const PlanSelection = () => {
     } catch (error) {
       console.error('Error selecting plan:', error);
       addToast('Failed to select plan. Please try again.', 'error');
+
+      // Capture subscription error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(error, {
+          tags: {
+            operation: 'select_plan',
+            planId: plan.id,
+            context,
+          },
+          extra: {
+            errorMessage: error.message,
+            currentPlanId,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -393,6 +408,20 @@ const PlanSelection = () => {
     } catch (error) {
       console.error('Error scheduling downgrade:', error);
       addToast('Failed to schedule downgrade. Please try again.', 'error');
+
+      // Capture subscription error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(error, {
+          tags: {
+            operation: 'schedule_downgrade',
+            planId: selectedDowngrade?.id,
+            currentPlanId: subscription?.planId,
+          },
+          extra: {
+            errorMessage: error.message,
+          },
+        });
+      }
     } finally {
       setIsScheduling(false);
     }

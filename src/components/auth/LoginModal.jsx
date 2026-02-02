@@ -228,6 +228,20 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignup, onSwitchToReset }) => {
       setError(
         err.message || 'Failed to log in. Please check your credentials.',
       );
+
+      // Capture authentication error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(err, {
+          tags: {
+            authMethod: 'email',
+            errorCode: err.code || 'unknown',
+            operation: 'login',
+          },
+          extra: {
+            errorMessage: err.message,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -242,6 +256,20 @@ const LoginModal = ({ isOpen, onClose, onSwitchToSignup, onSwitchToReset }) => {
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to sign in with Google.');
+
+      // Capture authentication error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(err, {
+          tags: {
+            authMethod: 'google',
+            errorCode: err.code || 'unknown',
+            operation: 'login',
+          },
+          extra: {
+            errorMessage: err.message,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

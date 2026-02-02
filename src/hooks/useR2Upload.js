@@ -109,6 +109,21 @@ const useR2Upload = () => {
       } catch (error) {
         setUploading(false);
         trackError('upload_error', error.message || 'Upload failed');
+
+        // Capture upload error in Sentry
+        if (window.Sentry) {
+          window.Sentry.captureException(error, {
+            tags: {
+              operation: 'r2_upload',
+              errorType: 'upload_error',
+            },
+            extra: {
+              errorMessage: error.message,
+              fileCount: files?.length,
+            },
+          });
+        }
+
         toastWithLog(error.message || 'Upload failed', 'danger');
         throw error;
       }
@@ -159,6 +174,22 @@ const useR2Upload = () => {
         return result;
       } catch (error) {
         trackError('processing_error', error.message || 'Processing failed');
+
+        // Capture processing error in Sentry
+        if (window.Sentry) {
+          window.Sentry.captureException(error, {
+            tags: {
+              operation: 'r2_processing',
+              errorType: 'processing_error',
+              format,
+            },
+            extra: {
+              errorMessage: error.message,
+              fileCount: uploadedFiles?.length,
+            },
+          });
+        }
+
         toastWithLog(error.message || 'Processing failed', 'danger');
         throw error;
       }
