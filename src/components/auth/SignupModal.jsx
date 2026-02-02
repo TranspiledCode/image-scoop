@@ -235,6 +235,20 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to create account. Please try again.');
+
+      // Capture authentication error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(err, {
+          tags: {
+            authMethod: 'email',
+            errorCode: err.code || 'unknown',
+            operation: 'signup',
+          },
+          extra: {
+            errorMessage: err.message,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -249,6 +263,20 @@ const SignupModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to sign up with Google.');
+
+      // Capture authentication error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(err, {
+          tags: {
+            authMethod: 'google',
+            errorCode: err.code || 'unknown',
+            operation: 'signup',
+          },
+          extra: {
+            errorMessage: err.message,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

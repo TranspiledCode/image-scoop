@@ -5,6 +5,7 @@ import middy from '@middy/core';
 import httpMultipartBodyParser from '@middy/http-multipart-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import cors from '@middy/http-cors';
+import { initSentry, captureError, setTag } from './utils/sentry.js';
 
 const CONFIG = {
   JPEG_QUALITY: 95,
@@ -33,14 +34,19 @@ class ImageProcessor {
       return true;
     } catch (err) {
       console.error('Validation failed:', err);
+      captureError(err, {
+        tags: { operation: 'validate_image' },
+        extra: { bufferSize: buffer.length },
+      });
       return false;
     }
   }
 
   async processImage(buffer, format) {
+    let metadata;
     try {
       let image = sharp(buffer);
-      const metadata = await image.metadata();
+      metadata = await image.metadata();
 
       if (
         metadata.width > CONFIG.MAX_IMAGE_DIMENSION ||
@@ -61,6 +67,10 @@ class ImageProcessor {
       return image;
     } catch (error) {
       console.error('Error during processing:', error);
+      captureError(error, {
+        tags: { operation: 'process_image', format },
+        extra: { metadataAvailable: !!metadata },
+      });
       throw new Error(`Image processing failed: ${error.message}`);
     }
   }
@@ -88,6 +98,9 @@ class ImageProcessor {
 }
 
 const processSingleImage = async (event) => {
+  // Initialize Sentry for error tracking
+  initSentry('process-single');
+
   console.warn('Received single image processing request');
   try {
     if (!event.body || !event.body.file) {
@@ -112,7 +125,7 @@ const processSingleImage = async (event) => {
 
     const format = (event.headers['x-output-format'] || 'webp').toLowerCase();
     console.warn('Processing with format:', format);
-    
+
     const validFormats = ['png', 'webp', 'jpeg'];
     if (!validFormats.includes(format)) {
       console.error('Invalid format received:', format);
@@ -123,6 +136,10 @@ const processSingleImage = async (event) => {
         }),
       };
     }
+
+    // Set Sentry tags for this processing request
+    setTag('format', format);
+    setTag('variantCount', Object.keys(CONFIG.SIZES).length.toString());
 
     const processor = new ImageProcessor();
 
@@ -165,6 +182,10 @@ const processSingleImage = async (event) => {
       );
     } catch (variantError) {
       console.error('Error creating variants:', variantError);
+      captureError(variantError, {
+        tags: { operation: 'create_variants', format },
+        extra: { totalVariants: Object.keys(CONFIG.SIZES).length },
+      });
       throw new Error(`Failed to create image variants: ${variantError.message}`);
     }
 
@@ -192,6 +213,18 @@ const processSingleImage = async (event) => {
     };
   } catch (error) {
     console.error('Error in processSingleImage:', error.stack || error);
+
+    // Capture error in Sentry with context
+    captureError(error, {
+      tags: {
+        operation: 'process_single',
+        errorType: error.name,
+      },
+      extra: {
+        errorMessage: error.message,
+      },
+    });
+
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),

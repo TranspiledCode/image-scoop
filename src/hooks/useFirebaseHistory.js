@@ -62,6 +62,20 @@ export const useFirebaseHistory = () => {
       }
     } catch (error) {
       console.error('Error loading history:', error);
+
+      // Capture Firebase error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(error, {
+          tags: {
+            operation: 'firebase_load_history',
+            collection: 'history',
+          },
+          extra: {
+            errorMessage: error.message,
+          },
+        });
+      }
+
       setHistory([]);
     } finally {
       setLoading(false);

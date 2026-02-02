@@ -30,6 +30,19 @@ export const useFirebasePreferences = () => {
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
+
+      // Capture Firebase error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(error, {
+          tags: {
+            operation: 'firebase_load_preferences',
+            collection: 'preferences',
+          },
+          extra: {
+            errorMessage: error.message,
+          },
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -44,6 +57,20 @@ export const useFirebasePreferences = () => {
       setPreferences(newPreferences);
     } catch (error) {
       console.error('Error saving preferences:', error);
+
+      // Capture Firebase error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(error, {
+          tags: {
+            operation: 'firebase_save_preferences',
+            collection: 'preferences',
+          },
+          extra: {
+            errorMessage: error.message,
+          },
+        });
+      }
+
       throw error;
     }
   };

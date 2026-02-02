@@ -248,6 +248,20 @@ const SecuritySection = () => {
       } else {
         setError('Failed to update password. Please try again.');
       }
+
+      // Capture authentication error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(err, {
+          tags: {
+            authMethod: 'email',
+            errorCode: err.code || 'unknown',
+            operation: 'password_change',
+          },
+          extra: {
+            errorMessage: err.message,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

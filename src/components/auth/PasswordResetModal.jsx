@@ -163,6 +163,20 @@ const PasswordResetModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       addToast('Password reset email sent!', 'success');
     } catch (err) {
       setError(err.message || 'Failed to send reset email. Please try again.');
+
+      // Capture authentication error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(err, {
+          tags: {
+            authMethod: 'email',
+            errorCode: err.code || 'unknown',
+            operation: 'password_reset',
+          },
+          extra: {
+            errorMessage: err.message,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

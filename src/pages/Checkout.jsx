@@ -515,6 +515,22 @@ const Checkout = () => {
       console.error('Error processing payment:', err);
       setError('An error occurred. Please try again.');
       setIsLoading(false);
+
+      // Capture payment error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(err, {
+          tags: {
+            operation: 'payment_processing',
+            planId: planParam,
+            billingCycle: billingParam,
+            context: contextParam,
+          },
+          extra: {
+            errorMessage: err.message,
+            fromPlan: fromPlanParam,
+          },
+        });
+      }
     }
   };
 

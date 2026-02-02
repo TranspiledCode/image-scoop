@@ -13,7 +13,9 @@ require('dotenv').config();
 
 // Initialize Sentry for error tracking
 Sentry.init({
-  dsn: 'https://836ef0c8872d0abfc75188d0fb481f47@o4509055999541248.ingest.us.sentry.io/4510621343875072',
+  dsn:
+    process.env.SENTRY_DSN ||
+    'https://836ef0c8872d0abfc75188d0fb481f47@o4509055999541248.ingest.us.sentry.io/4510621343875072',
   environment: process.env.NODE_ENV || 'development',
   tracesSampleRate: 1.0,
 });

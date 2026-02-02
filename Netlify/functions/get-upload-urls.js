@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomBytes } from 'crypto';
+import { initSentry, captureError, setTag } from './utils/sentry.js';
 
 const s3Client = new S3Client({
   region: 'auto',
@@ -12,6 +13,9 @@ const s3Client = new S3Client({
 });
 
 export const handler = async (event) => {
+  // Initialize Sentry for error tracking
+  initSentry('get-upload-urls');
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -21,6 +25,10 @@ export const handler = async (event) => {
 
   try {
     const { files } = JSON.parse(event.body);
+
+    // Set Sentry tags for this request
+    setTag('fileCount', files?.length?.toString() || '0');
+    setTag('bucket', process.env.R2_BUCKET_NAME);
 
     if (!files || !Array.isArray(files) || files.length === 0) {
       return {
@@ -62,6 +70,19 @@ export const handler = async (event) => {
     };
   } catch (error) {
     console.error('Error generating presigned URLs:', error);
+
+    // Capture error in Sentry with context
+    captureError(error, {
+      tags: {
+        operation: 'generate_presigned_urls',
+        errorType: error.name,
+      },
+      extra: {
+        errorMessage: error.message,
+        bucket: process.env.R2_BUCKET_NAME,
+      },
+    });
+
     return {
       statusCode: 500,
       body: JSON.stringify({

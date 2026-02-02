@@ -423,6 +423,19 @@ const SubscriptionSection = () => {
     } catch (error) {
       console.error('Error canceling scheduled change:', error);
       addToast('Failed to cancel scheduled change', 'error');
+
+      // Capture subscription error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(error, {
+          tags: {
+            operation: 'cancel_scheduled_downgrade',
+            planId: subscription?.planId,
+          },
+          extra: {
+            errorMessage: error.message,
+          },
+        });
+      }
     }
   };
 
@@ -443,6 +456,19 @@ const SubscriptionSection = () => {
     } catch (error) {
       console.error('Error canceling subscription:', error);
       addToast('Failed to cancel subscription. Please try again.', 'error');
+
+      // Capture subscription error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(error, {
+          tags: {
+            operation: 'cancel_subscription',
+            planId: subscription?.planId,
+          },
+          extra: {
+            errorMessage: error.message,
+          },
+        });
+      }
     } finally {
       setIsCanceling(false);
     }
@@ -462,6 +488,19 @@ const SubscriptionSection = () => {
     } catch (error) {
       console.error('Error reactivating subscription:', error);
       addToast('Failed to reactivate subscription', 'error');
+
+      // Capture subscription error in Sentry
+      if (window.Sentry) {
+        window.Sentry.captureException(error, {
+          tags: {
+            operation: 'reactivate_subscription',
+            planId: subscription?.planId,
+          },
+          extra: {
+            errorMessage: error.message,
+          },
+        });
+      }
     }
   };
 
