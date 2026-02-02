@@ -35,6 +35,49 @@ yarn dev
 
 The Netlify dev server proxies requests to Parcel (running on 1234) and provides access to serverless functions.
 
+### Environment Variables
+
+This project uses environment variables for configuration. **Important naming conventions:**
+
+- **Frontend variables** (exposed to browser): MUST use `REACT_APP_` prefix
+  - Accessible in React components via `process.env.REACT_APP_*`
+  - Bundled into frontend code and visible in browser
+  - ⚠️ **NEVER put secrets here** - they're publicly visible!
+
+- **Backend variables** (server-side only): MUST NOT use `REACT_APP_` prefix
+  - Only available in Netlify Functions
+  - Never exposed to the browser
+  - ✅ Safe for secrets and API keys
+
+#### Setup
+
+```bash
+# 1. Copy the example file
+cp .env.example .env
+
+# 2. Edit .env and fill in your actual values
+# (Never commit .env to git!)
+
+# 3. For local development
+netlify dev
+
+# 4. Deploy variables to Netlify
+netlify env:import .env
+```
+
+See `.env.example` for a complete list of required variables and detailed documentation.
+
+#### Required Variables
+
+**Frontend (REACT_APP_ prefix):**
+- `REACT_APP_API_URL` - API endpoint URL
+- `REACT_APP_FIREBASE_*` - Firebase client SDK config (7 variables)
+
+**Backend (no prefix):**
+- `R2_*` - Cloudflare R2 storage credentials (4 variables)
+- `FIREBASE_*` - Firebase Admin SDK credentials (4 variables)
+- `CLOUDFLARE_*` - Cloudflare Images API (2 variables)
+
 ### Scripts
 
 - `yarn dev` - Start Netlify development server
