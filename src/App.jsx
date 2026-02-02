@@ -1,6 +1,7 @@
 // App.jsx (with container styles)
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import ContextProvider from './context/GlobalProvider';
 import { ToastProvider } from './context/ToastContext';
 import { ConditionalAuthProvider } from './context/ConditionalAuthProvider';
@@ -43,100 +44,102 @@ const PageLoader = () => (
 const App = () => {
   return (
     <ErrorBoundary>
-      <ContextProvider>
-        <ThemeProvider theme={theme}>
-          <Router>
-            <ConditionalAuthProvider>
-              <ToastProvider position="bottom-right">
-                <Header />
-                <Routes>
-                  <Route path="/" element={<Marketing />} />
-                  <Route
-                    path="/process"
-                    element={
-                      <Suspense fallback={<PageLoader />}>
-                        <Process />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="/plan-selection"
-                    element={
-                      <ProtectedRoute>
+      <HelmetProvider>
+        <ContextProvider>
+          <ThemeProvider theme={theme}>
+            <Router>
+              <ConditionalAuthProvider>
+                <ToastProvider position="bottom-right">
+                  <Header />
+                  <Routes>
+                    <Route path="/" element={<Marketing />} />
+                    <Route
+                      path="/process"
+                      element={
                         <Suspense fallback={<PageLoader />}>
-                          <PlanSelection />
+                          <Process />
                         </Suspense>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/checkout"
-                    element={
-                      <ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/plan-selection"
+                      element={
+                        <ProtectedRoute>
+                          <Suspense fallback={<PageLoader />}>
+                            <PlanSelection />
+                          </Suspense>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/checkout"
+                      element={
+                        <ProtectedRoute>
+                          <Suspense fallback={<PageLoader />}>
+                            <Checkout />
+                          </Suspense>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <Suspense fallback={<PageLoader />}>
+                            <Profile />
+                          </Suspense>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile/:section"
+                      element={
+                        <ProtectedRoute>
+                          <Suspense fallback={<PageLoader />}>
+                            <Profile />
+                          </Suspense>
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/about"
+                      element={
                         <Suspense fallback={<PageLoader />}>
-                          <Checkout />
+                          <About />
                         </Suspense>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/login"
+                      element={
                         <Suspense fallback={<PageLoader />}>
-                          <Profile />
+                          <Login />
                         </Suspense>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile/:section"
-                    element={
-                      <ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/signup"
+                      element={
                         <Suspense fallback={<PageLoader />}>
-                          <Profile />
+                          <SignUp />
                         </Suspense>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/about"
-                    element={
-                      <Suspense fallback={<PageLoader />}>
-                        <About />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="/login"
-                    element={
-                      <Suspense fallback={<PageLoader />}>
-                        <Login />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="/signup"
-                    element={
-                      <Suspense fallback={<PageLoader />}>
-                        <SignUp />
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="/reset-password"
-                    element={
-                      <Suspense fallback={<PageLoader />}>
-                        <ResetPassword />
-                      </Suspense>
-                    }
-                  />
-                </Routes>
-              </ToastProvider>
-            </ConditionalAuthProvider>
-          </Router>
-        </ThemeProvider>
-      </ContextProvider>
+                      }
+                    />
+                    <Route
+                      path="/reset-password"
+                      element={
+                        <Suspense fallback={<PageLoader />}>
+                          <ResetPassword />
+                        </Suspense>
+                      }
+                    />
+                  </Routes>
+                </ToastProvider>
+              </ConditionalAuthProvider>
+            </Router>
+          </ThemeProvider>
+        </ContextProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 };
