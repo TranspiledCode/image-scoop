@@ -1,22 +1,16 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import {
-  User,
-  IceCream,
-  LogOut,
-  Key,
-  CreditCard,
-  Settings,
-  ChevronDown,
-} from 'lucide-react';
+import { User, LogOut, CreditCard, Settings, ChevronDown } from 'lucide-react';
 import { useUserSubscription } from '../../hooks/useUserSubscription';
+import { useUserUsage } from '../../hooks/useUserUsage';
 import PropTypes from 'prop-types';
 
 const DropdownMenu = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 300px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
   background: white;
   border-radius: 20px;
   box-shadow:
@@ -33,6 +27,11 @@ const DropdownMenu = styled.div`
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    width: calc(100vw - 32px);
+    right: -8px;
   }
 `;
 
@@ -189,6 +188,16 @@ const MenuItem = styled.button`
 
   &:hover {
     background: #fdf2f8;
+    transform: translateX(2px);
+  }
+
+  &:focus {
+    outline: 2px solid #ec4899;
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 `;
 
@@ -274,7 +283,39 @@ const UserDropdown = ({
   onLogout,
 }) => {
   const { subscription } = useUserSubscription();
+  const { planLimits, totalImagesProcessed, monthlyUsagePercentage } =
+    useUserUsage();
   const planName = subscription?.planName || 'Free';
+
+  // Calculate usage display
+  const displayUsage = () => {
+    if (planLimits.unlimited) {
+      return {
+        current: totalImagesProcessed,
+        limit: 'unlimited',
+        percentage: Math.min((totalImagesProcessed / 100) * 10, 100), // Show growth up to 100 scoops
+        isUnlimited: true,
+      };
+    }
+
+    if (planLimits.monthlyLimit) {
+      return {
+        current: totalImagesProcessed,
+        limit: planLimits.monthlyLimit,
+        percentage: monthlyUsagePercentage,
+        isUnlimited: false,
+      };
+    }
+
+    return {
+      current: totalImagesProcessed,
+      limit: 0,
+      percentage: 0,
+      isUnlimited: false,
+    };
+  };
+
+  const usageData = displayUsage();
 
   return (
     <DropdownMenu className={isOpen ? 'open' : ''}>
@@ -291,11 +332,11 @@ const UserDropdown = ({
         <UsageHeader>
           <UsageLabel>Monthly Scoops</UsageLabel>
           <UsageCount>
-            <span>347</span> / 1,000
+            <span>{usageData.current}</span> of {usageData.limit}
           </UsageCount>
         </UsageHeader>
         <ProgressBar>
-          <ProgressFill percentage={35} />
+          <ProgressFill percentage={usageData.percentage} />
         </ProgressBar>
       </DropdownUsage>
       <DropdownMenuItems>
@@ -304,48 +345,28 @@ const UserDropdown = ({
             <User size={18} />
           </MenuItemIcon>
           <MenuItemText>
-            <span>My Profile</span>
+            <span>Profile</span>
             <small>View and edit account</small>
           </MenuItemText>
           <MenuItemArrow size={16} />
         </MenuItem>
-        <MenuItem onClick={() => onMenuItemClick('/process')}>
-          <MenuItemIcon background="#fce7f3" color="#ec4899">
-            <IceCream size={18} />
-          </MenuItemIcon>
-          <MenuItemText>
-            <span>Process Images</span>
-            <small>Optimize your photos</small>
-          </MenuItemText>
-          <MenuItemArrow size={16} />
-        </MenuItem>
-        <MenuItem onClick={() => onMenuItemClick()}>
-          <MenuItemIcon background="#ffedd5" color="#f97316">
-            <Key size={18} />
-          </MenuItemIcon>
-          <MenuItemText>
-            <span>API Keys</span>
-            <small>3 active keys</small>
-          </MenuItemText>
-          <MenuItemArrow size={16} />
-        </MenuItem>
-        <MenuItem onClick={() => onMenuItemClick()}>
+        <MenuItem onClick={() => onMenuItemClick('/profile#subscription')}>
           <MenuItemIcon background="#dcfce7" color="#22c55e">
             <CreditCard size={18} />
           </MenuItemIcon>
           <MenuItemText>
-            <span>Billing</span>
-            <small>Manage subscription</small>
+            <span>Subscription</span>
+            <small>Manage your plan</small>
           </MenuItemText>
           <MenuItemArrow size={16} />
         </MenuItem>
-        <MenuItem onClick={() => onMenuItemClick()}>
+        <MenuItem onClick={() => onMenuItemClick('/profile#preferences')}>
           <MenuItemIcon background="#f3f4f6" color="#6b7280">
             <Settings size={18} />
           </MenuItemIcon>
           <MenuItemText>
-            <span>Settings</span>
-            <small>Account preferences</small>
+            <span>Preferences</span>
+            <small>Customize your experience</small>
           </MenuItemText>
           <MenuItemArrow size={16} />
         </MenuItem>
