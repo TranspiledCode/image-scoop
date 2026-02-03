@@ -102,13 +102,21 @@ const PlanDot = styled.span`
 const DropdownUsage = styled.div`
   padding: 16px 20px;
   border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const UsageRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
 const UsageHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
 `;
 
 const UsageLabel = styled.span`
@@ -283,39 +291,15 @@ const UserDropdown = ({
   onLogout,
 }) => {
   const { subscription } = useUserSubscription();
-  const { planLimits, totalImagesProcessed, monthlyUsagePercentage } =
-    useUserUsage();
+  const {
+    planLimits,
+    totalImagesProcessed,
+    imagesProcessedToday,
+    monthlyUsagePercentage,
+    dailyUsagePercentage,
+  } = useUserUsage();
   const planName = subscription?.planName || 'Free';
-
-  // Calculate usage display
-  const displayUsage = () => {
-    if (planLimits.unlimited) {
-      return {
-        current: totalImagesProcessed,
-        limit: 'unlimited',
-        percentage: Math.min((totalImagesProcessed / 100) * 10, 100), // Show growth up to 100 scoops
-        isUnlimited: true,
-      };
-    }
-
-    if (planLimits.monthlyLimit) {
-      return {
-        current: totalImagesProcessed,
-        limit: planLimits.monthlyLimit,
-        percentage: monthlyUsagePercentage,
-        isUnlimited: false,
-      };
-    }
-
-    return {
-      current: totalImagesProcessed,
-      limit: 0,
-      percentage: 0,
-      isUnlimited: false,
-    };
-  };
-
-  const usageData = displayUsage();
+  const payAsYouGoBalance = subscription?.payAsYouGoBalance || 0;
 
   return (
     <DropdownMenu className={isOpen ? 'open' : ''}>
@@ -329,15 +313,71 @@ const UserDropdown = ({
         </PlanBadge>
       </DropdownHeader>
       <DropdownUsage>
-        <UsageHeader>
-          <UsageLabel>Monthly Scoops</UsageLabel>
-          <UsageCount>
-            <span>{usageData.current}</span> of {usageData.limit}
-          </UsageCount>
-        </UsageHeader>
-        <ProgressBar>
-          <ProgressFill percentage={usageData.percentage} />
-        </ProgressBar>
+        {/* Daily Usage - show if plan has daily limit */}
+        {planLimits.dailyLimit && (
+          <UsageRow>
+            <UsageHeader>
+              <UsageLabel>Daily Scoops</UsageLabel>
+              <UsageCount>
+                <span>{planLimits.dailyLimit - imagesProcessedToday}</span>{' '}
+                remaining
+              </UsageCount>
+            </UsageHeader>
+            <ProgressBar>
+              <ProgressFill percentage={100 - dailyUsagePercentage} />
+            </ProgressBar>
+          </UsageRow>
+        )}
+
+        {/* Monthly Usage - show if plan has monthly limit */}
+        {planLimits.monthlyLimit && (
+          <UsageRow>
+            <UsageHeader>
+              <UsageLabel>Monthly Scoops</UsageLabel>
+              <UsageCount>
+                <span>{planLimits.monthlyLimit - totalImagesProcessed}</span>{' '}
+                remaining
+              </UsageCount>
+            </UsageHeader>
+            <ProgressBar>
+              <ProgressFill percentage={100 - monthlyUsagePercentage} />
+            </ProgressBar>
+          </UsageRow>
+        )}
+
+        {/* Unlimited Plan */}
+        {planLimits.unlimited && (
+          <UsageRow>
+            <UsageHeader>
+              <UsageLabel>Total Scoops</UsageLabel>
+              <UsageCount>
+                <span>{totalImagesProcessed}</span> of unlimited
+              </UsageCount>
+            </UsageHeader>
+            <ProgressBar>
+              <ProgressFill
+                percentage={Math.min((totalImagesProcessed / 100) * 10, 100)}
+              />
+            </ProgressBar>
+          </UsageRow>
+        )}
+
+        {/* Pay As You Go Balance */}
+        {payAsYouGoBalance > 0 && (
+          <UsageRow>
+            <UsageHeader>
+              <UsageLabel>PAYG Balance</UsageLabel>
+              <UsageCount>
+                <span>{payAsYouGoBalance}</span> remaining
+              </UsageCount>
+            </UsageHeader>
+            <ProgressBar>
+              <ProgressFill
+                percentage={Math.min((payAsYouGoBalance / 100) * 100, 100)}
+              />
+            </ProgressBar>
+          </UsageRow>
+        )}
       </DropdownUsage>
       <DropdownMenuItems>
         <MenuItem onClick={() => onMenuItemClick('/profile')}>
