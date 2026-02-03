@@ -18,6 +18,7 @@ const CONFIG = {
   JPEG_QUALITY: 95,
   PNG_COMPRESSION: 6,
   WEBP_QUALITY: 90,
+  AVIF_QUALITY: 85,
   MAX_IMAGE_DIMENSION: 8000,
   SIZES: {
     t: [100, 100],
@@ -87,6 +88,10 @@ class ImageProcessor {
         } else if (format === 'webp') {
           processed = await resized
             .webp({ quality: CONFIG.WEBP_QUALITY })
+            .toBuffer();
+        } else if (format === 'avif') {
+          processed = await resized
+            .avif({ quality: CONFIG.AVIF_QUALITY })
             .toBuffer();
         } else {
           throw new Error(`Unsupported format: ${format}`);
@@ -204,7 +209,7 @@ export const handler = async (event) => {
       };
     }
 
-    if (!['jpeg', 'png', 'webp'].includes(format)) {
+    if (!['jpeg', 'png', 'webp', 'avif'].includes(format)) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Invalid format' }),

@@ -60,6 +60,7 @@ const StyledOption = styled.div`
 
 const formatOptions = [
   { value: 'webp', label: 'WebP', color: 'tertiary' },
+  { value: 'avif', label: 'AVIF', color: 'blueberry' },
   { value: 'png', label: 'PNG', color: 'secondary' },
   { value: 'jpeg', label: 'JPEG', color: 'primary' },
 ];

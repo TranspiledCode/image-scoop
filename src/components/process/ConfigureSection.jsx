@@ -211,6 +211,12 @@ const ConfigureSection = ({
           WebP
         </FormatButton>
         <FormatButton
+          active={exportType === 'avif'}
+          onClick={() => setExportType('avif')}
+        >
+          AVIF
+        </FormatButton>
+        <FormatButton
           active={exportType === 'jpeg'}
           onClick={() => setExportType('jpeg')}
         >
