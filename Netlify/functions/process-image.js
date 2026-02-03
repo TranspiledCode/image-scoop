@@ -19,6 +19,7 @@ const CONFIG = {
   JPEG_QUALITY: 95,
   PNG_COMPRESSION: 6,
   WEBP_QUALITY: 90,
+  AVIF_QUALITY: 85,
   MAX_IMAGE_DIMENSION: 8000,
   SIZES: {
     t: [100, 100],
@@ -65,7 +66,7 @@ class ImageProcessor {
       }
 
       image = image.toColorspace(this.srgbProfile);
-      if (format === 'png' || format === 'webp') {
+      if (format === 'png' || format === 'webp' || format === 'avif') {
         image = image.ensureAlpha();
       } else if (format === 'jpeg') {
         image = image.flatten({ background: { r: 255, g: 255, b: 255 } });
@@ -88,6 +89,7 @@ class ImageProcessor {
       jpeg: { quality: CONFIG.JPEG_QUALITY, progressive: true },
       png: { compressionLevel: CONFIG.PNG_COMPRESSION },
       webp: { quality: CONFIG.WEBP_QUALITY },
+      avif: { quality: CONFIG.AVIF_QUALITY },
     };
 
     return image
@@ -171,13 +173,13 @@ const processImages = async (event) => {
     });
 
     const exportType = (event.body['Export-Type'] || 'webp').toLowerCase();
-    const validFormats = ['png', 'webp', 'jpeg'];
+    const validFormats = ['png', 'webp', 'jpeg', 'avif'];
     if (!validFormats.includes(exportType)) {
       console.error('Invalid export type:', exportType);
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error: 'Invalid export type. Use "png", "webp", or "jpeg"',
+          error: 'Invalid export type. Use "png", "webp", "jpeg", or "avif"',
         }),
       };
     }
