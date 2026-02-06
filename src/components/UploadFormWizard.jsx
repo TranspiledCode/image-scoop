@@ -59,19 +59,6 @@ const UploadFormWizard = ({
     getCategoryUpgradeMessage,
   } = useAdvancedOptions();
 
-  // Debug: Log what UploadFormWizard sees
-  useEffect(() => {
-    console.warn('UploadFormWizard - Current advancedOptions:', {
-      filenamePrefix: advancedOptions.filenamePrefix,
-      filenameSuffix: advancedOptions.filenameSuffix,
-      omitFilename: advancedOptions.omitFilename,
-    });
-  }, [
-    advancedOptions.filenamePrefix,
-    advancedOptions.filenameSuffix,
-    advancedOptions.omitFilename,
-  ]);
-
   const totalSize = useMemo(() => {
     return files.reduce((sum, file) => sum + file.size, 0);
   }, [files]);
@@ -236,13 +223,6 @@ const UploadFormWizard = ({
   }, []);
 
   const handleOptimize = useCallback(async () => {
-    console.warn('handleOptimize called with advancedOptions:', {
-      filenamePrefix: advancedOptions.filenamePrefix,
-      filenameSuffix: advancedOptions.filenameSuffix,
-      omitFilename: advancedOptions.omitFilename,
-      fullOptions: advancedOptions,
-    });
-
     // Check limits before processing
     const fileSizes = files.map((f) => f.size);
     const limitCheck = canProcess(files.length, fileSizes);
