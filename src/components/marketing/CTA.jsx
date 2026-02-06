@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
+import { useAuth } from '../../context/AuthContext';
 
 const Section = styled.section`
   padding: 100px 48px;
@@ -57,6 +58,8 @@ const Button = styled(Link)`
 `;
 
 const CTA = () => {
+  const { currentUser } = useAuth();
+
   return (
     <Section>
       <Content>
@@ -67,8 +70,8 @@ const CTA = () => {
           Join the growing community of creators and developers optimizing
           images with Image Scoop.
         </Description>
-        <Button to="/process?mode=demo">
-          Start Optimizing — It&apos;s Free
+        <Button to={currentUser ? '/process' : '/process?mode=demo'}>
+          {currentUser ? 'Process Images' : "Start Optimizing — It's Free"}
         </Button>
       </Content>
     </Section>

@@ -132,11 +132,18 @@ const useR2Upload = () => {
   );
 
   const processFromR2 = useCallback(
-    async (batchId, uploadedFiles, format, omitFilename = false) => {
+    async (batchId, uploadedFiles, format, advancedOptions = {}) => {
       const startTime = Date.now();
       const fromFormat =
         uploadedFiles[0]?.originalName?.split('.').pop() || 'unknown';
       trackFormatConversion(fromFormat, format, uploadedFiles.length);
+
+      console.warn('DEBUG - Sending to backend:', {
+        filenamePrefix: advancedOptions.filenamePrefix,
+        filenameSuffix: advancedOptions.filenameSuffix,
+        omitFilename: advancedOptions.omitFilename,
+        fullAdvancedOptions: advancedOptions,
+      });
 
       try {
         const response = await fetch('/.netlify/functions/process-from-r2', {
@@ -146,7 +153,7 @@ const useR2Upload = () => {
             batchId,
             files: uploadedFiles,
             format,
-            omitFilename,
+            advancedOptions,
           }),
         });
 

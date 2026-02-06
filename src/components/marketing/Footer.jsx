@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { IceCream } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const FooterSection = styled.footer`
   background: #111827;
@@ -145,6 +146,8 @@ const TranspiledLogo = styled.img`
 `;
 
 const Footer = () => {
+  const { currentUser } = useAuth();
+
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -210,9 +213,18 @@ const Footer = () => {
 
           <FooterColumn>
             <ColumnTitle>Account</ColumnTitle>
-            <FooterLink to="/login">Login</FooterLink>
-            {/* <FooterLink to="/signup">Sign Up</FooterLink> */}
-            {/* <FooterLink to="/process">Get Started</FooterLink> */}
+            {currentUser ? (
+              <>
+                <FooterLink to="/process">Process Images</FooterLink>
+                <FooterLink to="/dashboard">Dashboard</FooterLink>
+                <FooterLink to="/settings">Settings</FooterLink>
+              </>
+            ) : (
+              <>
+                <FooterLink to="/login">Login</FooterLink>
+                <FooterLink to="/process?mode=demo">Try Demo</FooterLink>
+              </>
+            )}
           </FooterColumn>
         </FooterGrid>
 

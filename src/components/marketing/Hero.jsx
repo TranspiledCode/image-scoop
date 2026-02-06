@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Zap, FileText, ImageIcon, Sparkles } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const HeroSection = styled.section`
   min-height: 100vh;
@@ -322,6 +323,8 @@ const HeroFeature = styled.div`
 `;
 
 const Hero = () => {
+  const { currentUser } = useAuth();
+
   const scrollToPricing = () => {
     const element = document.getElementById('pricing');
     if (element) {
@@ -351,9 +354,9 @@ const Hero = () => {
           </HeroDescription>
 
           <CTAButtons>
-            <CTAButton to="/process?mode=demo">
+            <CTAButton to={currentUser ? '/process' : '/process?mode=demo'}>
               <Sparkles />
-              Start Optimizing Free
+              {currentUser ? 'Process Images' : 'Start Optimizing Free'}
             </CTAButton>
             <CTAButtonSecondary onClick={scrollToPricing}>
               View Pricing
