@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 import { Check, Zap } from 'lucide-react';
 import { usePricing } from '../../hooks/usePricing';
 import { useAuth } from '../../context/AuthContext';
+import { useUserSubscription } from '../../hooks/useUserSubscription';
+import { ref, onValue } from 'firebase/database';
+import { database } from '../../config/firebase';
 
 const Section = styled.section`
   padding: 100px 48px;
@@ -290,7 +293,7 @@ const plans = [
     description: 'For creators & small businesses',
     price: 5,
     period: 'per month',
-    cta: 'Start Free Trial',
+    cta: 'Subscribe',
     featured: true,
     features: [
       '100 images per day (~3,000/month)',
@@ -306,7 +309,7 @@ const plans = [
     description: 'For professionals & developers',
     price: 10,
     period: 'per month',
-    cta: 'Start Free Trial',
+    cta: 'Subscribe',
     features: [
       'Unlimited images',
       'All variants + App icons',
@@ -322,16 +325,95 @@ const plans = [
 
 const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState({});
   const { pricing, loading, error } = usePricing();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { subscription } = useUserSubscription();
+
+  // Load payment history for trial detection
+  useEffect(() => {
+    if (currentUser) {
+      const paymentHistoryRef = ref(database, `users/${currentUser.uid}/paymentHistory`);
+      const unsubscribe = onValue(paymentHistoryRef, (snapshot) => {
+        setPaymentHistory(snapshot.val() || {});
+      });
+      return unsubscribe;
+    }
+  }, [currentUser]);
 
   // Use fallback plans if pricing data is not loaded yet
   const plansToDisplay = pricing?.plans || plans;
   const annualDiscount = pricing?.metadata?.annualDiscount || 0.2;
 
+  // Helper function to detect if user has previously used a trial
+  const hasUserUsedTrial = (subscription, paymentHistory) => {
+    // Currently in trial
+    if (subscription?.status === 'trialing') return true;
+    
+    // Previously on paid plan (inferred from payment history)
+    if (paymentHistory && Object.keys(paymentHistory).length > 0) {
+      const hasPaidPayments = Object.values(paymentHistory).some(
+        payment => ['plus', 'pro', 'payAsYouGo'].includes(payment.planId)
+      );
+      if (hasPaidPayments) return true;
+    }
+    
+    // Previously had trial (inferred from current paid status)
+    if (['plus', 'pro'].includes(subscription?.planId) && 
+        subscription?.status === 'active') {
+      return true;
+    }
+    
+    // PAYG users who have purchased scoops are considered paid users
+    if (subscription?.planId === 'payAsYouGo' && 
+        subscription?.payAsYouGoBalance > 0) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Helper function to get appropriate button text
+  const getButtonText = (plan) => {
+    const currentPlanId = subscription?.planId || 'free';
+    
+    if (plan.name.toLowerCase() === currentPlanId) {
+      if (plan.name.toLowerCase() === 'pay as you go') {
+        return 'Buy More Scoops';
+      }
+      return 'Current Plan';
+    }
+
+    // Special handling for PAYG users trying to downgrade to free plan
+    if (plan.name === 'Free' && subscription?.planId === 'payAsYouGo' && subscription?.payAsYouGoBalance > 0) {
+      const scoopCount = subscription.payAsYouGoBalance;
+      return `Use ${scoopCount} Scoop${scoopCount === 1 ? '' : 's'} First`;
+    }
+
+    // Handle trial-eligible plans (Plus and Pro)
+    if (['Plus', 'Pro'].includes(plan.name)) {
+      const hasUsedTrial = hasUserUsedTrial(subscription, paymentHistory);
+      
+      if (hasUsedTrial) {
+        return 'Subscribe';
+      } else {
+        return 'Start Free Trial';
+      }
+    }
+
+    return plan.cta;
+  };
+
   const handlePlanCTAClick = (plan) => {
     if (currentUser) {
+      // Prevent PAYG users with scoops from downgrading to free plan
+      if (plan.name === 'Free' && subscription?.planId === 'payAsYouGo' && subscription?.payAsYouGoBalance > 0) {
+        // Navigate to plan selection with context to show the proper message
+        navigate('/plan-selection?context=downgrade&from=payAsYouGo');
+        return;
+      }
+
       if (plan.payAsYouGo) {
         navigate('/checkout?plan=payAsYouGo');
       } else if (plan.name === 'Free') {
@@ -437,7 +519,7 @@ const Pricing = () => {
                 featured={plan.featured}
                 onClick={() => handlePlanCTAClick(plan)}
               >
-                {plan.cta}
+                {getButtonText(plan)}
               </CTAButton>
 
               <FeatureList>
