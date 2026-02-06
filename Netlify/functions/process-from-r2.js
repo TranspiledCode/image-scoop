@@ -49,49 +49,143 @@ class ImageProcessor {
     }
   }
 
-  async processImage(buffer, format) {
+  async processImage(buffer, format, advancedOptions = {}) {
     const results = {};
     try {
       let image = sharp(buffer);
       const metadata = await image.metadata();
 
+      // Use maxDimension from advanced options or default
+      const maxDimension = advancedOptions.maxDimension || CONFIG.MAX_IMAGE_DIMENSION;
+
       if (
-        metadata.width > CONFIG.MAX_IMAGE_DIMENSION ||
-        metadata.height > CONFIG.MAX_IMAGE_DIMENSION
+        metadata.width > maxDimension ||
+        metadata.height > maxDimension
       ) {
         throw new Error(
-          `Image dimensions exceed maximum of ${CONFIG.MAX_IMAGE_DIMENSION}px`,
+          `Image dimensions exceed maximum of ${maxDimension}px`,
         );
       }
 
       image = image.rotate();
 
-      if (metadata.space && metadata.space !== 'srgb') {
+      // Apply color space conversion
+      const colorSpace = advancedOptions.colorSpace || 'srgb';
+      if (colorSpace === 'srgb' && metadata.space && metadata.space !== 'srgb') {
         image = image.toColorspace(this.srgbProfile);
+      } else if (colorSpace === 'linear' && metadata.space !== 'linear') {
+        image = image.toColorspace('linear');
+      }
+      // 'original' colorSpace means skip conversion
+
+      // Apply metadata stripping if requested
+      if (advancedOptions.stripMetadata) {
+        image = image.withMetadata({});
       }
 
-      for (const [sizeName, [width, height]] of Object.entries(CONFIG.SIZES)) {
-        const resized = image.clone().resize(width, height, {
-          fit: 'inside',
+      // Apply sharpening if requested
+      const sharpening = advancedOptions.sharpening || 'none';
+      if (sharpening !== 'none') {
+        const sharpeningPresets = {
+          light: [0.5, 1.0, 2.0],
+          medium: [1.0, 1.5, 2.5],
+          strong: [2.0, 2.0, 3.0],
+        };
+        const [sigma, flat, jagged] = sharpeningPresets[sharpening] || [1.0, 1.5, 2.5];
+        image = image.sharpen(sigma, flat, jagged);
+      }
+
+      // Filter sizes based on selectedVariants
+      const selectedVariants = advancedOptions.selectedVariants || ['t', 's', 'm', 'l', 'xl', 'xxl'];
+      const activeSizes = Object.fromEntries(
+        Object.entries(CONFIG.SIZES).filter(([key]) =>
+          selectedVariants.includes(key)
+        )
+      );
+
+      // Get resize algorithm (kernel)
+      const resizeAlgorithm = advancedOptions.resizeAlgorithm || 'lanczos3';
+      const kernelMap = {
+        lanczos3: sharp.kernel.lanczos3,
+        lanczos2: sharp.kernel.lanczos2,
+        cubic: sharp.kernel.cubic,
+        mitchell: sharp.kernel.mitchell,
+        nearest: sharp.kernel.nearest,
+      };
+      const kernel = kernelMap[resizeAlgorithm] || sharp.kernel.lanczos3;
+
+      // Get aspect ratio setting
+      const aspectRatio = advancedOptions.aspectRatio || 'original';
+
+      for (const [sizeName, [width, height]] of Object.entries(activeSizes)) {
+        let resizedWidth = width;
+        let resizedHeight = height;
+        let resizeFit = 'inside'; // Default: preserve aspect ratio
+
+        // Calculate target dimensions based on aspect ratio
+        if (aspectRatio !== 'original') {
+          // Parse aspect ratio (e.g., "1:1", "16:9", "4:3")
+          const [widthRatio, heightRatio] = aspectRatio.split(':').map(Number);
+
+          if (widthRatio && heightRatio) {
+            // Use 'cover' to crop to exact aspect ratio
+            resizeFit = 'cover';
+
+            // Calculate dimensions maintaining the specified aspect ratio
+            if (widthRatio === heightRatio) {
+              // Square: use max dimension for both
+              resizedWidth = width;
+              resizedHeight = height;
+            } else if (widthRatio > heightRatio) {
+              // Landscape: width is max dimension
+              resizedWidth = width;
+              resizedHeight = Math.round(width * (heightRatio / widthRatio));
+            } else {
+              // Portrait: height is max dimension
+              resizedHeight = height;
+              resizedWidth = Math.round(height * (widthRatio / heightRatio));
+            }
+          }
+        }
+
+        const resized = image.clone().resize(resizedWidth, resizedHeight, {
+          fit: resizeFit,
           withoutEnlargement: true,
+          kernel,
         });
 
         let processed;
         if (format === 'jpeg') {
+          const jpegQuality = advancedOptions.jpegQuality || CONFIG.JPEG_QUALITY;
+          const progressiveJpeg = advancedOptions.progressiveJpeg !== false;
+          const chromaSubsampling = advancedOptions.chromaSubsampling || '4:2:0';
+
           processed = await resized
-            .jpeg({ quality: CONFIG.JPEG_QUALITY })
+            .jpeg({
+              quality: jpegQuality,
+              progressive: progressiveJpeg,
+              chromaSubsampling,
+            })
             .toBuffer();
         } else if (format === 'png') {
+          const pngCompression = advancedOptions.pngCompression !== undefined
+            ? advancedOptions.pngCompression
+            : CONFIG.PNG_COMPRESSION;
+
           processed = await resized
-            .png({ compressionLevel: CONFIG.PNG_COMPRESSION })
+            .png({ compressionLevel: pngCompression })
             .toBuffer();
         } else if (format === 'webp') {
+          const webpQuality = advancedOptions.webpQuality || CONFIG.WEBP_QUALITY;
+
           processed = await resized
-            .webp({ quality: CONFIG.WEBP_QUALITY })
+            .webp({ quality: webpQuality })
             .toBuffer();
         } else if (format === 'avif') {
+          const avifQuality = advancedOptions.avifQuality || CONFIG.AVIF_QUALITY;
+
           processed = await resized
-            .avif({ quality: CONFIG.AVIF_QUALITY })
+            .avif({ quality: avifQuality })
             .toBuffer();
         } else {
           throw new Error(`Unsupported format: ${format}`);
@@ -193,7 +287,7 @@ export const handler = async (event) => {
   const startTime = Date.now();
 
   try {
-    const { batchId, files, format, omitFilename = false } = JSON.parse(event.body);
+    const { batchId, files, format, advancedOptions = {} } = JSON.parse(event.body);
 
     // Set Sentry tags for this processing batch
     setTag('format', format);
@@ -231,7 +325,7 @@ export const handler = async (event) => {
         throw new Error(`Invalid image: ${originalName}`);
       }
 
-      const processed = await processor.processImage(buffer, format);
+      const processed = await processor.processImage(buffer, format, advancedOptions);
 
       processedFiles.push({
         originalName,
@@ -251,9 +345,26 @@ export const handler = async (event) => {
 
     // Calculate total size of largest variants only (for compression savings metric)
     let totalProcessedSize = 0;
-    
+
+    // Get naming and organization options
+    const omitFilename = advancedOptions.omitFilename !== false; // default true
+    const filenamePrefix = advancedOptions.filenamePrefix || '';
+    const filenameSuffix = advancedOptions.filenameSuffix || '';
+    const folderOrganization = advancedOptions.folderOrganization || 'by-original';
+
+    console.warn('DEBUG - Naming options:', {
+      omitFilename,
+      filenamePrefix,
+      filenameSuffix,
+      folderOrganization,
+      fullAdvancedOptions: advancedOptions,
+    });
+
     for (const file of processedFiles) {
       const baseName = file.originalName.replace(/\.[^/.]+$/, '');
+
+      // Apply prefix/suffix to base name for filename generation
+      const processedName = `${filenamePrefix}${baseName}${filenameSuffix}`;
 
       // Find the largest variant (typically xxl)
       let largestSize = 0;
@@ -261,16 +372,56 @@ export const handler = async (event) => {
         if (buffer.length > largestSize) {
           largestSize = buffer.length;
         }
-        
-        // Conditionally include or omit filename based on option
-        const filename = omitFilename
-          ? `${sizeName}.${format}`
-          : `${baseName}_${sizeName}.${format}`;
-        // Organize files into folders by original filename
-        const folderPath = `${baseName}/${filename}`;
+
+        // Generate filename based on omitFilename option
+        let filename;
+        if (omitFilename) {
+          // When omitting filename, just use prefix+size+suffix
+          filename = `${filenamePrefix}${sizeName}${filenameSuffix}.${format}`;
+        } else {
+          // When including filename, use processed name with size
+          filename = `${processedName}_${sizeName}.${format}`;
+        }
+
+        console.warn(`DEBUG - Generated filename for ${baseName}/${sizeName}:`, {
+          filename,
+          filenamePrefix,
+          filenameSuffix,
+          omitFilename,
+          processedName,
+        });
+
+        // Organize files based on folder organization mode
+        let folderPath;
+        if (folderOrganization === 'by-original') {
+          // Folder per original image - use original basename for folder
+          folderPath = `${baseName}/${filename}`;
+        } else if (folderOrganization === 'by-size') {
+          // Folder per variant size - use size for folder, processed name for file
+          // When omitFilename=true, use processedName; when false, filename already has it
+          const sizeFilename = omitFilename
+            ? `${processedName}.${format}`
+            : `${processedName}.${format}`;
+          folderPath = `${sizeName}/${sizeFilename}`;
+        } else if (folderOrganization === 'flat') {
+          // No folders - must ensure unique names across all images
+          if (omitFilename) {
+            // Include basename for uniqueness: prefix+basename_size+suffix
+            folderPath = filenamePrefix || filenameSuffix
+              ? `${filenamePrefix}${baseName}_${sizeName}${filenameSuffix}.${format}`
+              : `${baseName}_${sizeName}.${format}`;
+          } else {
+            // Already includes basename in filename
+            folderPath = filename;
+          }
+        } else {
+          // Default to by-original
+          folderPath = `${baseName}/${filename}`;
+        }
+
         archive.append(buffer, { name: folderPath });
       }
-      
+
       totalProcessedSize += largestSize;
     }
 

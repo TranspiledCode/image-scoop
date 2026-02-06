@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useUserSubscription } from './useUserSubscription';
 
 const STORAGE_KEY = 'image-scoop-advanced-options';
+const SAVED_PREFS_KEY = 'image-scoop-saved-preferences';
 
 const DEFAULT_OPTIONS = {
   // Quality & Compression
@@ -99,28 +100,27 @@ const FEATURE_RANGES = {
 export const useAdvancedOptions = () => {
   const { subscription } = useUserSubscription();
   const [options, setOptions] = useState(() => {
-    // Load from localStorage on init
+    // Only load from localStorage if user has explicitly saved preferences
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Merge with defaults to handle new options added over time
-        return { ...DEFAULT_OPTIONS, ...parsed };
+      const hasSavedPrefs = localStorage.getItem(SAVED_PREFS_KEY) === 'true';
+      if (hasSavedPrefs) {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          // Exclude per-batch options (prefix/suffix should reset each time)
+          // eslint-disable-next-line no-unused-vars
+          const { filenamePrefix, filenameSuffix, ...persistentOptions } =
+            parsed;
+          // Merge with defaults to handle new options added over time
+          return { ...DEFAULT_OPTIONS, ...persistentOptions };
+        }
       }
     } catch (error) {
       console.error('Error loading advanced options from localStorage:', error);
     }
+    // Default: always start fresh
     return DEFAULT_OPTIONS;
   });
-
-  // Persist to localStorage whenever options change
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(options));
-    } catch (error) {
-      console.error('Error saving advanced options to localStorage:', error);
-    }
-  }, [options]);
 
   // Get current plan tier
   const getPlanTier = useCallback(() => {
@@ -253,6 +253,48 @@ export const useAdvancedOptions = () => {
     setOptions(DEFAULT_OPTIONS);
   }, []);
 
+  // Reset per-batch options (prefix/suffix) after processing
+  const resetBatchOptions = useCallback(() => {
+    setOptions((prev) => ({
+      ...prev,
+      filenamePrefix: '',
+      filenameSuffix: '',
+    }));
+  }, []);
+
+  // Save current preferences to localStorage
+  const savePreferences = useCallback(() => {
+    try {
+      // Exclude per-batch options (prefix/suffix)
+      // eslint-disable-next-line no-unused-vars
+      const { filenamePrefix, filenameSuffix, ...persistentOptions } = options;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(persistentOptions));
+      localStorage.setItem(SAVED_PREFS_KEY, 'true');
+      return true;
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      return false;
+    }
+  }, [options]);
+
+  // Clear saved preferences
+  const clearSavedPreferences = useCallback(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SAVED_PREFS_KEY);
+      setOptions(DEFAULT_OPTIONS);
+      return true;
+    } catch (error) {
+      console.error('Error clearing preferences:', error);
+      return false;
+    }
+  }, []);
+
+  // Check if user has saved preferences
+  const hasSavedPreferences = useCallback(() => {
+    return localStorage.getItem(SAVED_PREFS_KEY) === 'true';
+  }, []);
+
   // Get upgrade prompt message for locked category
   const getCategoryUpgradeMessage = useCallback(
     (category) => {
@@ -300,6 +342,10 @@ export const useAdvancedOptions = () => {
     setOption,
     updateOptions,
     resetToDefaults,
+    resetBatchOptions,
+    savePreferences,
+    clearSavedPreferences,
+    hasSavedPreferences,
     isLocked,
     isCategoryLocked,
     getAllowedRange,

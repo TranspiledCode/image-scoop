@@ -17,6 +17,7 @@ import SuccessSection from './process/SuccessSection';
 import LimitErrorModal from './process/LimitErrorModal';
 import useR2Upload from '../hooks/useR2Upload';
 import { useProcessingLimits } from '../hooks/useProcessingLimits';
+import { useAdvancedOptions } from '../hooks/useAdvancedOptions';
 import { MAX_FILES_PER_BATCH, humanFileSize } from 'shared/uploadLimits';
 
 const PER_FILE_LIMIT_BYTES = 10 * 1024 * 1024;
@@ -30,7 +31,6 @@ const UploadFormWizard = ({
   const [fileStatuses, setFileStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exportType, setExportType] = useState('webp');
-  const [omitFilename, setOmitFilename] = useState(true);
   const [processPhase, setProcessPhase] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
@@ -47,6 +47,30 @@ const UploadFormWizard = ({
   const { uploadProgress, uploadFiles, processFromR2 } = useR2Upload();
   const { canProcess, incrementUsage, deductScoops, planLimits } =
     useProcessingLimits();
+  const {
+    options: advancedOptions,
+    setOption,
+    resetBatchOptions,
+    savePreferences,
+    clearSavedPreferences,
+    hasSavedPreferences,
+    isCategoryLocked,
+    getAllowedRange,
+    getCategoryUpgradeMessage,
+  } = useAdvancedOptions();
+
+  // Debug: Log what UploadFormWizard sees
+  useEffect(() => {
+    console.warn('UploadFormWizard - Current advancedOptions:', {
+      filenamePrefix: advancedOptions.filenamePrefix,
+      filenameSuffix: advancedOptions.filenameSuffix,
+      omitFilename: advancedOptions.omitFilename,
+    });
+  }, [
+    advancedOptions.filenamePrefix,
+    advancedOptions.filenameSuffix,
+    advancedOptions.omitFilename,
+  ]);
 
   const totalSize = useMemo(() => {
     return files.reduce((sum, file) => sum + file.size, 0);
@@ -212,6 +236,13 @@ const UploadFormWizard = ({
   }, []);
 
   const handleOptimize = useCallback(async () => {
+    console.warn('handleOptimize called with advancedOptions:', {
+      filenamePrefix: advancedOptions.filenamePrefix,
+      filenameSuffix: advancedOptions.filenameSuffix,
+      omitFilename: advancedOptions.omitFilename,
+      fullOptions: advancedOptions,
+    });
+
     // Check limits before processing
     const fileSizes = files.map((f) => f.size);
     const limitCheck = canProcess(files.length, fileSizes);
@@ -258,7 +289,7 @@ const UploadFormWizard = ({
         batchId,
         uploadedFiles,
         exportType,
-        omitFilename,
+        advancedOptions,
       );
 
       const imageCount = uploadedFiles.length;
@@ -283,6 +314,9 @@ const UploadFormWizard = ({
         setProcessPhase(null);
       }, 1000);
 
+      // Reset per-batch options (prefix/suffix) for next processing
+      resetBatchOptions();
+
       addToast('Images processed successfully!', 'success');
     } catch (error) {
       console.error('Processing error:', error);
@@ -295,7 +329,7 @@ const UploadFormWizard = ({
     files,
     fileStatuses,
     exportType,
-    omitFilename,
+    advancedOptions,
     uploadFiles,
     processFromR2,
     addToast,
@@ -303,6 +337,7 @@ const UploadFormWizard = ({
     incrementUsage,
     deductScoops,
     planLimits,
+    resetBatchOptions,
   ]);
 
   const handleCancel = useCallback(() => {
@@ -391,10 +426,18 @@ const UploadFormWizard = ({
           <ConfigureSection
             exportType={exportType}
             setExportType={setExportType}
-            omitFilename={omitFilename}
-            setOmitFilename={setOmitFilename}
             onOptimize={handleOptimize}
             filesCount={files.length}
+            advancedOptionsHook={{
+              options: advancedOptions,
+              setOption,
+              savePreferences,
+              clearSavedPreferences,
+              hasSavedPreferences,
+              isCategoryLocked,
+              getAllowedRange,
+              getCategoryUpgradeMessage,
+            }}
           />
         </div>
       )}

@@ -5,8 +5,9 @@ import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import { Zap, ChevronDown, Lock } from 'lucide-react';
 import processTheme from '../../style/processTheme';
-import { useAdvancedOptions } from '../../hooks/useAdvancedOptions';
+import { useToast } from '../../context/ToastContext';
 import SliderControl from './SliderControl';
+import VariantSelector from './VariantSelector';
 
 const expandIn = keyframes`
   from {
@@ -190,7 +191,7 @@ const CheckboxLabel = styled.label`
     background: #374151;
   }
 
-  input {
+  input[type='checkbox'] {
     width: 18px;
     height: 18px;
     cursor: pointer;
@@ -209,11 +210,85 @@ const CheckboxLabel = styled.label`
   }
 `;
 
-const PlaceholderText = styled.p`
-  font-size: 13px;
+const InputGroup = styled.div`
+  margin-bottom: 16px;
+`;
+
+const InputLabel = styled.label`
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${processTheme.textPrimary};
+  margin-bottom: 8px;
+`;
+
+const TextInput = styled.input`
+  width: 100%;
+  padding: 12px 16px;
+  background: #1f2937;
+  border: 1px solid ${processTheme.borderDefault};
+  border-radius: 8px;
+  color: ${processTheme.textPrimary};
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: ${processTheme.primary};
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+
+  &::placeholder {
+    color: ${processTheme.textMuted};
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 12px 16px;
+  background: #1f2937;
+  border: 1px solid ${processTheme.borderDefault};
+  border-radius: 8px;
+  color: ${processTheme.textPrimary};
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: ${processTheme.primary};
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+
+  option {
+    background: #1f2937;
+    color: ${processTheme.textPrimary};
+  }
+`;
+
+const HintText = styled.p`
+  font-size: 12px;
   color: ${processTheme.textMuted};
-  margin: 0;
-  font-style: italic;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+`;
+
+const PresetInfo = styled.div`
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: ${processTheme.textSecondary};
+  line-height: 1.5;
+
+  strong {
+    color: ${processTheme.primary};
+    font-weight: 600;
+  }
 `;
 
 const UpgradePrompt = styled.div`
@@ -246,6 +321,59 @@ const UpgradePrompt = styled.div`
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
     }
+  }
+`;
+
+const PreferenceControls = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid ${processTheme.borderDefault};
+
+  @media (max-width: ${processTheme.breakpoints.mobile}) {
+    flex-direction: column;
+  }
+`;
+
+const PreferenceButton = styled.button`
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  ${({ variant }) =>
+    variant === 'save'
+      ? `
+    background: ${processTheme.primaryGradient};
+    color: ${processTheme.textPrimary};
+    border: none;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+  `
+      : `
+    background: transparent;
+    color: ${processTheme.textSecondary};
+    border: 1px solid ${processTheme.borderDefault};
+
+    &:hover {
+      border-color: ${processTheme.textSecondary};
+      color: ${processTheme.textPrimary};
+    }
+  `}
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
@@ -290,22 +418,56 @@ const ProcessButton = styled.button`
   }
 `;
 
+const FilenamePreview = styled.div`
+  margin: 16px 0;
+  padding: 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+`;
+
+const PreviewLabel = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${processTheme.textSecondary};
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const PreviewExample = styled.div`
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: ${processTheme.textSecondary};
+  line-height: 1.6;
+
+  div {
+    margin: 4px 0;
+  }
+
+  .folder {
+    color: ${processTheme.textSecondary};
+  }
+`;
+
 const ConfigureSection = ({
   exportType,
   setExportType,
-  omitFilename,
-  setOmitFilename,
   onOptimize,
   filesCount,
+  advancedOptionsHook,
 }) => {
   const {
     options,
     setOption,
+    savePreferences,
+    clearSavedPreferences,
     isCategoryLocked,
     getAllowedRange,
     getCategoryUpgradeMessage,
-  } = useAdvancedOptions();
+  } = advancedOptionsHook;
 
+  const { addToast } = useToast();
   const [showAdvanced, setShowAdvanced] = React.useState(false);
   const [expandedSections, setExpandedSections] = React.useState({
     quality: false,
@@ -313,6 +475,7 @@ const ConfigureSection = ({
     naming: false,
     processing: false,
   });
+  const [justSavedPreferences, setJustSavedPreferences] = React.useState(false);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -321,17 +484,121 @@ const ConfigureSection = ({
     }));
   };
 
-  // Sync omitFilename with advanced options
-  React.useEffect(() => {
-    if (options.omitFilename !== omitFilename) {
-      setOmitFilename(options.omitFilename);
-    }
-  }, [options.omitFilename, omitFilename, setOmitFilename]);
-
   const handleOmitFilenameChange = (checked) => {
     setOption('omitFilename', checked);
-    setOmitFilename(checked);
   };
+
+  // Handle size preset changes - update BOTH variants AND aspect ratio
+  const handleSizePresetChange = (preset) => {
+    setOption('sizePreset', preset);
+
+    // Don't update for custom selection (user manages both themselves)
+    if (preset === 'custom') {
+      return;
+    }
+
+    // Define comprehensive preset packages (variants + aspect ratio)
+    const presetPackages = {
+      standard: {
+        variants: ['t', 's', 'm', 'l', 'xl', 'xxl'],
+        aspectRatio: 'original',
+        description: 'All sizes, original aspect ratio',
+      },
+      social: {
+        variants: ['l', 'xl', 'xxl'],
+        aspectRatio: '1:1',
+        description: 'Large sizes, square for social media',
+      },
+      web: {
+        variants: ['s', 'm', 'l', 'xl'],
+        aspectRatio: 'original',
+        description: 'Web sizes, original aspect ratio',
+      },
+    };
+
+    const presetConfig = presetPackages[preset];
+    if (presetConfig) {
+      setOption('selectedVariants', presetConfig.variants);
+      setOption('aspectRatio', presetConfig.aspectRatio);
+    }
+  };
+
+  // Generate filename preview examples
+  const getFilenamePreview = () => {
+    const { filenamePrefix, filenameSuffix, omitFilename, folderOrganization } =
+      options;
+    const exampleBasename = 'photo';
+    const exampleSize = 'm';
+    const format = exportType;
+
+    let folderName = '';
+    let fileName = '';
+
+    if (omitFilename) {
+      // When omitting filename: prefix+size+suffix
+      fileName = `${filenamePrefix}${exampleSize}${filenameSuffix}.${format}`;
+    } else {
+      // When including filename: prefix+basename+suffix_size
+      const processedName = `${filenamePrefix}${exampleBasename}${filenameSuffix}`;
+      fileName = `${processedName}_${exampleSize}.${format}`;
+    }
+
+    if (folderOrganization === 'by-original') {
+      folderName = exampleBasename;
+    } else if (folderOrganization === 'by-size') {
+      folderName = exampleSize;
+      if (omitFilename) {
+        const processedName = `${filenamePrefix}${exampleBasename}${filenameSuffix}`;
+        fileName = `${processedName}.${format}`;
+      }
+    } else {
+      // flat - no folders
+      folderName = '';
+      if (omitFilename) {
+        if (filenamePrefix || filenameSuffix) {
+          // Must include basename for uniqueness in flat mode when using prefix/suffix
+          fileName = `${filenamePrefix}${exampleBasename}_${exampleSize}${filenameSuffix}.${format}`;
+        }
+        // else: fileName already set to prefix+size+suffix from line 430
+      }
+      // else: fileName already set with basename from line 434
+    }
+
+    return { folderName, fileName };
+  };
+
+  const preview = getFilenamePreview();
+
+  // Get preset configuration description
+  const getPresetDescription = () => {
+    const presetDescriptions = {
+      standard: {
+        variants: 'T, S, M, L, XL, XXL (all sizes)',
+        aspectRatio: 'Original (preserves input)',
+      },
+      social: {
+        variants: 'L, XL, XXL (large sizes)',
+        aspectRatio: 'Square 1:1 (crops to square)',
+      },
+      web: {
+        variants: 'S, M, L, XL (web sizes)',
+        aspectRatio: 'Original (preserves input)',
+      },
+    };
+
+    return presetDescriptions[options.sizePreset] || null;
+  };
+
+  const presetInfo = getPresetDescription();
+
+  // Debug: Log current prefix/suffix values
+  React.useEffect(() => {
+    console.warn('ConfigureSection - Current naming options:', {
+      filenamePrefix: options.filenamePrefix,
+      filenameSuffix: options.filenameSuffix,
+      omitFilename: options.omitFilename,
+    });
+  }, [options.filenamePrefix, options.filenameSuffix, options.omitFilename]);
 
   return (
     <Section>
@@ -397,9 +664,87 @@ const ConfigureSection = ({
                   <small>(Shorter file paths)</small>
                 </span>
               </CheckboxLabel>
-              <PlaceholderText style={{ marginTop: '12px' }}>
-                Examples: imageName_xl.webp vs. xl.webp
-              </PlaceholderText>
+
+              <InputGroup>
+                <InputLabel htmlFor="filename-prefix">
+                  Filename Prefix
+                </InputLabel>
+                <TextInput
+                  id="filename-prefix"
+                  type="text"
+                  value={options.filenamePrefix}
+                  onChange={(e) => {
+                    const newValue = e.target.value.slice(0, 20);
+                    console.warn('Prefix changed to:', newValue);
+                    setOption('filenamePrefix', newValue);
+                  }}
+                  placeholder="e.g., thumb_"
+                  maxLength={20}
+                />
+                <HintText>
+                  Add a prefix to all exported filenames (max 20 characters)
+                </HintText>
+              </InputGroup>
+
+              <InputGroup>
+                <InputLabel htmlFor="filename-suffix">
+                  Filename Suffix
+                </InputLabel>
+                <TextInput
+                  id="filename-suffix"
+                  type="text"
+                  value={options.filenameSuffix}
+                  onChange={(e) =>
+                    setOption('filenameSuffix', e.target.value.slice(0, 20))
+                  }
+                  placeholder="e.g., _optimized"
+                  maxLength={20}
+                />
+                <HintText>
+                  Add a suffix to all exported filenames (max 20 characters)
+                </HintText>
+              </InputGroup>
+
+              {(options.filenamePrefix ||
+                options.filenameSuffix ||
+                !options.omitFilename) && (
+                <FilenamePreview>
+                  <PreviewLabel>Preview:</PreviewLabel>
+                  <PreviewExample>
+                    {preview.folderName ? (
+                      <div>
+                        <div className="folder">
+                          {preview.folderName}/{preview.fileName}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="file">{preview.fileName}</div>
+                    )}
+                  </PreviewExample>
+                </FilenamePreview>
+              )}
+
+              <InputGroup>
+                <InputLabel htmlFor="folder-organization">
+                  Folder Organization
+                </InputLabel>
+                <Select
+                  id="folder-organization"
+                  value={options.folderOrganization}
+                  onChange={(e) =>
+                    setOption('folderOrganization', e.target.value)
+                  }
+                >
+                  <option value="by-original">
+                    By Original (folder per image)
+                  </option>
+                  <option value="by-size">By Size (folder per variant)</option>
+                  <option value="flat">Flat (no folders)</option>
+                </Select>
+                <HintText>
+                  Choose how files are organized in the exported ZIP
+                </HintText>
+              </InputGroup>
             </AccordionInner>
           </AccordionContent>
         </AccordionSection>
@@ -515,10 +860,81 @@ const ConfigureSection = ({
                   <a href="/plan-selection">View Plans</a>
                 </UpgradePrompt>
               ) : (
-                <PlaceholderText>
-                  Variant selection, presets, and dimension controls (coming
-                  soon)
-                </PlaceholderText>
+                <>
+                  <VariantSelector
+                    selectedVariants={options.selectedVariants}
+                    onChange={(variants) => {
+                      setOption('selectedVariants', variants);
+                      // When manually changing variants, switch to custom preset
+                      setOption('sizePreset', 'custom');
+                    }}
+                    aspectRatio={options.aspectRatio}
+                  />
+
+                  <InputGroup>
+                    <InputLabel htmlFor="size-preset">Size Preset</InputLabel>
+                    <Select
+                      id="size-preset"
+                      value={options.sizePreset}
+                      onChange={(e) => handleSizePresetChange(e.target.value)}
+                    >
+                      <option value="custom">Custom (Manual control)</option>
+                      <option value="standard">
+                        Standard (All sizes, original ratio)
+                      </option>
+                      <option value="social">
+                        Social Media (Large sizes, square 1:1)
+                      </option>
+                      <option value="web">
+                        Web Optimized (Web sizes, original ratio)
+                      </option>
+                    </Select>
+                    <HintText>
+                      Presets configure both variant sizes and aspect ratio
+                      together
+                    </HintText>
+                    {presetInfo && (
+                      <PresetInfo>
+                        <strong>Variants:</strong> {presetInfo.variants}
+                        <br />
+                        <strong>Aspect Ratio:</strong> {presetInfo.aspectRatio}
+                      </PresetInfo>
+                    )}
+                  </InputGroup>
+
+                  <InputGroup>
+                    <InputLabel htmlFor="aspect-ratio">Aspect Ratio</InputLabel>
+                    <Select
+                      id="aspect-ratio"
+                      value={options.aspectRatio}
+                      onChange={(e) => {
+                        setOption('aspectRatio', e.target.value);
+                        // When manually changing aspect ratio, switch to custom preset
+                        setOption('sizePreset', 'custom');
+                      }}
+                    >
+                      <option value="original">Keep Original</option>
+                      <option value="1:1">Square (1:1)</option>
+                      <option value="16:9">Landscape (16:9)</option>
+                      <option value="9:16">Portrait (9:16)</option>
+                      <option value="4:3">Classic (4:3)</option>
+                      <option value="3:2">Photo (3:2)</option>
+                    </Select>
+                    <HintText>
+                      Force images to a specific aspect ratio (crops if needed)
+                    </HintText>
+                  </InputGroup>
+
+                  <SliderControl
+                    label="Max Dimension"
+                    value={options.maxDimension}
+                    onChange={(value) => setOption('maxDimension', value)}
+                    min={getAllowedRange('maxDimension').min || 1000}
+                    max={getAllowedRange('maxDimension').max || 8000}
+                    step={100}
+                    tooltip="Maximum width or height for exported images (in pixels)"
+                  />
+                </>
               )}
             </AccordionInner>
           </AccordionContent>
@@ -546,13 +962,140 @@ const ConfigureSection = ({
                   <a href="/plan-selection">View Plans</a>
                 </UpgradePrompt>
               ) : (
-                <PlaceholderText>
-                  Metadata, sharpening, color space controls (coming soon)
-                </PlaceholderText>
+                <>
+                  <CheckboxLabel>
+                    <input
+                      type="checkbox"
+                      checked={options.stripMetadata}
+                      onChange={(e) =>
+                        setOption('stripMetadata', e.target.checked)
+                      }
+                    />
+                    <span>Strip Metadata</span>
+                    <small>Remove EXIF data</small>
+                  </CheckboxLabel>
+
+                  <InputGroup>
+                    <InputLabel htmlFor="sharpening">Sharpening</InputLabel>
+                    <Select
+                      id="sharpening"
+                      value={options.sharpening}
+                      onChange={(e) => setOption('sharpening', e.target.value)}
+                    >
+                      <option value="none">None</option>
+                      <option value="light">Light (subtle enhancement)</option>
+                      <option value="medium">Medium (balanced)</option>
+                      <option value="strong">Strong (maximum clarity)</option>
+                    </Select>
+                    <HintText>
+                      Apply sharpening to enhance image detail
+                    </HintText>
+                  </InputGroup>
+
+                  <InputGroup>
+                    <InputLabel htmlFor="color-space">Color Space</InputLabel>
+                    <Select
+                      id="color-space"
+                      value={options.colorSpace}
+                      onChange={(e) => setOption('colorSpace', e.target.value)}
+                    >
+                      <option value="srgb">sRGB (standard)</option>
+                      <option value="original">Keep Original</option>
+                      <option value="linear-rgb">Linear RGB</option>
+                    </Select>
+                    <HintText>
+                      Choose the color space for exported images
+                    </HintText>
+                  </InputGroup>
+
+                  <InputGroup>
+                    <InputLabel htmlFor="resize-algorithm">
+                      Resize Algorithm
+                    </InputLabel>
+                    <Select
+                      id="resize-algorithm"
+                      value={options.resizeAlgorithm}
+                      onChange={(e) =>
+                        setOption('resizeAlgorithm', e.target.value)
+                      }
+                    >
+                      <option value="lanczos3">Lanczos3 (best quality)</option>
+                      <option value="lanczos2">Lanczos2 (balanced)</option>
+                      <option value="cubic">Cubic (faster)</option>
+                      <option value="mitchell">Mitchell (smooth)</option>
+                      <option value="nearest">Nearest (pixelated)</option>
+                    </Select>
+                    <HintText>Algorithm used for resizing images</HintText>
+                  </InputGroup>
+
+                  {exportType === 'jpeg' && (
+                    <InputGroup>
+                      <InputLabel htmlFor="chroma-subsampling">
+                        Chroma Subsampling
+                      </InputLabel>
+                      <Select
+                        id="chroma-subsampling"
+                        value={options.chromaSubsampling}
+                        onChange={(e) =>
+                          setOption('chromaSubsampling', e.target.value)
+                        }
+                      >
+                        <option value="4:2:0">
+                          4:2:0 (standard, smallest)
+                        </option>
+                        <option value="4:2:2">4:2:2 (better quality)</option>
+                        <option value="4:4:4">
+                          4:4:4 (best quality, largest)
+                        </option>
+                      </Select>
+                      <HintText>
+                        Color sampling method for JPEG compression
+                      </HintText>
+                    </InputGroup>
+                  )}
+                </>
               )}
             </AccordionInner>
           </AccordionContent>
         </AccordionSection>
+
+        {/* Preference Management Controls */}
+        <PreferenceControls>
+          <PreferenceButton
+            variant="save"
+            onClick={() => {
+              const success = savePreferences();
+              if (success) {
+                setJustSavedPreferences(true);
+                addToast(
+                  'Preferences saved! Will be applied on next visit.',
+                  'success',
+                );
+                // Reset the saved state after 2 seconds
+                setTimeout(() => {
+                  setJustSavedPreferences(false);
+                }, 2000);
+              } else {
+                addToast('Failed to save preferences', 'danger');
+              }
+            }}
+          >
+            {justSavedPreferences ? '✓ Preferences Saved' : 'Save Preferences'}
+          </PreferenceButton>
+          <PreferenceButton
+            variant="reset"
+            onClick={() => {
+              const success = clearSavedPreferences();
+              if (success) {
+                addToast('Preferences cleared. Reset to defaults.', 'success');
+              } else {
+                addToast('Failed to clear preferences', 'danger');
+              }
+            }}
+          >
+            Reset to Defaults
+          </PreferenceButton>
+        </PreferenceControls>
       </AdvancedOptionsContainer>
 
       <ProcessButton onClick={onOptimize} disabled={filesCount === 0}>
@@ -566,10 +1109,17 @@ const ConfigureSection = ({
 ConfigureSection.propTypes = {
   exportType: PropTypes.string.isRequired,
   setExportType: PropTypes.func.isRequired,
-  omitFilename: PropTypes.bool.isRequired,
-  setOmitFilename: PropTypes.func.isRequired,
   onOptimize: PropTypes.func.isRequired,
   filesCount: PropTypes.number.isRequired,
+  advancedOptionsHook: PropTypes.shape({
+    options: PropTypes.object.isRequired,
+    setOption: PropTypes.func.isRequired,
+    savePreferences: PropTypes.func.isRequired,
+    clearSavedPreferences: PropTypes.func.isRequired,
+    isCategoryLocked: PropTypes.func.isRequired,
+    getAllowedRange: PropTypes.func.isRequired,
+    getCategoryUpgradeMessage: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 export default ConfigureSection;

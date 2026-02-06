@@ -334,7 +334,10 @@ const Pricing = () => {
   // Load payment history for trial detection
   useEffect(() => {
     if (currentUser) {
-      const paymentHistoryRef = ref(database, `users/${currentUser.uid}/paymentHistory`);
+      const paymentHistoryRef = ref(
+        database,
+        `users/${currentUser.uid}/paymentHistory`,
+      );
       const unsubscribe = onValue(paymentHistoryRef, (snapshot) => {
         setPaymentHistory(snapshot.val() || {});
       });
@@ -350,34 +353,38 @@ const Pricing = () => {
   const hasUserUsedTrial = (subscription, paymentHistory) => {
     // Currently in trial
     if (subscription?.status === 'trialing') return true;
-    
+
     // Previously on paid plan (inferred from payment history)
     if (paymentHistory && Object.keys(paymentHistory).length > 0) {
-      const hasPaidPayments = Object.values(paymentHistory).some(
-        payment => ['plus', 'pro', 'payAsYouGo'].includes(payment.planId)
+      const hasPaidPayments = Object.values(paymentHistory).some((payment) =>
+        ['plus', 'pro', 'payAsYouGo'].includes(payment.planId),
       );
       if (hasPaidPayments) return true;
     }
-    
+
     // Previously had trial (inferred from current paid status)
-    if (['plus', 'pro'].includes(subscription?.planId) && 
-        subscription?.status === 'active') {
+    if (
+      ['plus', 'pro'].includes(subscription?.planId) &&
+      subscription?.status === 'active'
+    ) {
       return true;
     }
-    
+
     // PAYG users who have purchased scoops are considered paid users
-    if (subscription?.planId === 'payAsYouGo' && 
-        subscription?.payAsYouGoBalance > 0) {
+    if (
+      subscription?.planId === 'payAsYouGo' &&
+      subscription?.payAsYouGoBalance > 0
+    ) {
       return true;
     }
-    
+
     return false;
   };
 
   // Helper function to get appropriate button text
   const getButtonText = (plan) => {
     const currentPlanId = subscription?.planId || 'free';
-    
+
     if (plan.name.toLowerCase() === currentPlanId) {
       if (plan.name.toLowerCase() === 'pay as you go') {
         return 'Buy More Scoops';
@@ -386,7 +393,11 @@ const Pricing = () => {
     }
 
     // Special handling for PAYG users trying to downgrade to free plan
-    if (plan.name === 'Free' && subscription?.planId === 'payAsYouGo' && subscription?.payAsYouGoBalance > 0) {
+    if (
+      plan.name === 'Free' &&
+      subscription?.planId === 'payAsYouGo' &&
+      subscription?.payAsYouGoBalance > 0
+    ) {
       const scoopCount = subscription.payAsYouGoBalance;
       return `Use ${scoopCount} Scoop${scoopCount === 1 ? '' : 's'} First`;
     }
@@ -394,7 +405,7 @@ const Pricing = () => {
     // Handle trial-eligible plans (Plus and Pro)
     if (['Plus', 'Pro'].includes(plan.name)) {
       const hasUsedTrial = hasUserUsedTrial(subscription, paymentHistory);
-      
+
       if (hasUsedTrial) {
         return 'Subscribe';
       } else {
@@ -408,7 +419,11 @@ const Pricing = () => {
   const handlePlanCTAClick = (plan) => {
     if (currentUser) {
       // Prevent PAYG users with scoops from downgrading to free plan
-      if (plan.name === 'Free' && subscription?.planId === 'payAsYouGo' && subscription?.payAsYouGoBalance > 0) {
+      if (
+        plan.name === 'Free' &&
+        subscription?.planId === 'payAsYouGo' &&
+        subscription?.payAsYouGoBalance > 0
+      ) {
         // Navigate to plan selection with context to show the proper message
         navigate('/plan-selection?context=downgrade&from=payAsYouGo');
         return;
