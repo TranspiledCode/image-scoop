@@ -252,10 +252,28 @@ export const useProcessingLimits = () => {
       `users/${currentUser.uid}/subscription/payAsYouGoBalance`,
     );
 
-    await runTransaction(balanceRef, (currentBalance) => {
+    const result = await runTransaction(balanceRef, (currentBalance) => {
       if (currentBalance === null || currentBalance === 0) return 0;
       return Math.max(0, currentBalance - imageCount);
     });
+
+    // Auto-downgrade to 'free' if balance reaches 0 and user is on PAYG plan
+    const newBalance = result.snapshot.val();
+    if (newBalance === 0 && subscription?.planId === 'payAsYouGo') {
+      const subscriptionRef = ref(
+        database,
+        `users/${currentUser.uid}/subscription`,
+      );
+      await runTransaction(subscriptionRef, (current) => {
+        return {
+          ...current,
+          planId: 'free',
+          planName: 'Free',
+          payAsYouGoBalance: 0,
+          updatedAt: Date.now(),
+        };
+      });
+    }
   };
 
   const dailyRemaining = planLimits.dailyLimit

@@ -418,7 +418,7 @@ const Checkout = () => {
         const isExistingUser = subscription?.planId !== undefined;
 
         if (isExistingUser) {
-          // Existing user buying scoops - just add to balance, don't change plan
+          // Existing user buying scoops - add to balance AND set planId to payAsYouGo
           const balanceRef = ref(
             database,
             `users/${currentUser.uid}/subscription/payAsYouGoBalance`,
@@ -427,6 +427,22 @@ const Checkout = () => {
             const current = currentBalance || 0;
             return current + selectedPack.scoops;
           });
+
+          // Update planId to payAsYouGo if they're currently on free plan
+          if (subscription?.planId === 'free' || !subscription?.planId) {
+            const subscriptionRef = ref(
+              database,
+              `users/${currentUser.uid}/subscription`,
+            );
+            await runTransaction(subscriptionRef, (current) => {
+              return {
+                ...current,
+                planId: 'payAsYouGo',
+                planName: 'Pay As You Go',
+                updatedAt: Date.now(),
+              };
+            });
+          }
 
           addToast(
             `Successfully added ${selectedPack.scoops} backup scoops!`,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Zap } from 'lucide-react';
@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useUserSubscription } from '../hooks/useUserSubscription';
 import DowngradeConfirmationModal from '../components/profile/DowngradeConfirmationModal';
+import { ref, onValue } from 'firebase/database';
+import { database } from '../config/firebase';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -54,10 +56,14 @@ const Subtitle = styled.p`
 
 const PricingGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 1280px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
     max-width: 500px;
     margin: 0 auto;
@@ -243,12 +249,31 @@ const plans = [
     ],
   },
   {
+    id: 'payAsYouGo',
+    name: 'Pay As You Go',
+    description: 'Buy scoops when you need them',
+    price: 5,
+    period: 'Starting at',
+    cta: 'Buy Scoops',
+    payAsYouGo: true,
+    features: [
+      '100 scoops for $5 (5¢ each)',
+      '250 scoops for $10 (4¢ each)',
+      '600 scoops for $20 (3.3¢ each)',
+      'Scoops never expire',
+      '6 variants (xs, s, m, l, xl, xxl)',
+      'WebP, JPEG, PNG, AVIF formats',
+      'Up to 20MB per file',
+      'Single image processing',
+    ],
+  },
+  {
     id: 'plus',
     name: 'Plus',
     description: 'For creators & small businesses',
     price: 5,
     period: 'per month',
-    cta: 'Start Free Trial',
+    cta: 'Subscribe',
     featured: true,
     features: [
       '14-day free trial',
@@ -266,7 +291,7 @@ const plans = [
     description: 'For professionals & developers',
     price: 10,
     period: 'per month',
-    cta: 'Start Free Trial',
+    cta: 'Subscribe',
     features: [
       '14-day free trial',
       'Unlimited images',
@@ -286,6 +311,7 @@ const PlanSelection = () => {
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [selectedDowngrade, setSelectedDowngrade] = useState(null);
   const [isScheduling, setIsScheduling] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState({});
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -293,11 +319,50 @@ const PlanSelection = () => {
   const { addToast } = useToast();
   const { subscription, scheduleDowngrade } = useUserSubscription();
 
+  // Load payment history for trial detection
+  useEffect(() => {
+    if (currentUser) {
+      const paymentHistoryRef = ref(database, `users/${currentUser.uid}/paymentHistory`);
+      const unsubscribe = onValue(paymentHistoryRef, (snapshot) => {
+        setPaymentHistory(snapshot.val() || {});
+      });
+      return unsubscribe;
+    }
+  }, [currentUser]);
+
   const searchParams = new URLSearchParams(location.search);
   const context = searchParams.get('context'); // 'upgrade' or 'downgrade'
   const fromPlan = searchParams.get('from'); // 'free', 'plus', 'pro', 'payAsYouGo'
 
   const currentPlanId = subscription?.planId || fromPlan || 'free';
+
+  // Helper function to detect if user has previously used a trial
+  const hasUserUsedTrial = (subscription, paymentHistory) => {
+    // Currently in trial
+    if (subscription?.status === 'trialing') return true;
+    
+    // Previously on paid plan (inferred from payment history)
+    if (paymentHistory && Object.keys(paymentHistory).length > 0) {
+      const hasPaidPayments = Object.values(paymentHistory).some(
+        payment => ['plus', 'pro', 'payAsYouGo'].includes(payment.planId)
+      );
+      if (hasPaidPayments) return true;
+    }
+    
+    // Previously had trial (inferred from current paid status)
+    if (['plus', 'pro'].includes(subscription?.planId) && 
+        subscription?.status === 'active') {
+      return true;
+    }
+    
+    // PAYG users who have purchased scoops are considered paid users
+    if (subscription?.planId === 'payAsYouGo' && 
+        subscription?.payAsYouGoBalance > 0) {
+      return true;
+    }
+    
+    return false;
+  };
 
   const getPlanOrder = (planId) => {
     const order = { free: 0, payAsYouGo: 0, plus: 1, pro: 2 };
@@ -314,6 +379,10 @@ const PlanSelection = () => {
 
   const getButtonText = (plan) => {
     if (plan.id === currentPlanId) {
+      // Allow PAYG users to buy more scoops
+      if (plan.id === 'payAsYouGo') {
+        return 'Buy More Scoops';
+      }
       return 'Current Plan';
     }
 
@@ -323,6 +392,23 @@ const PlanSelection = () => {
 
     if (context === 'downgrade' && isDowngrade(plan.id)) {
       return 'Downgrade';
+    }
+
+    // Special handling for PAYG users trying to downgrade to free plan
+    if (plan.id === 'free' && subscription?.planId === 'payAsYouGo' && subscription?.payAsYouGoBalance > 0) {
+      const scoopCount = subscription.payAsYouGoBalance;
+      return `Use ${scoopCount} Scoop${scoopCount === 1 ? '' : 's'} First`;
+    }
+
+    // Handle trial-eligible plans (Plus and Pro)
+    if (['plus', 'pro'].includes(plan.id)) {
+      const hasUsedTrial = hasUserUsedTrial(subscription, paymentHistory);
+      
+      if (hasUsedTrial) {
+        return context === 'upgrade' ? 'Upgrade' : 'Subscribe';
+      } else {
+        return 'Start Free Trial';
+      }
     }
 
     return plan.cta;
@@ -335,8 +421,18 @@ const PlanSelection = () => {
       return;
     }
 
-    // Can't select current plan
-    if (plan.id === currentPlanId) {
+    // Can't select current plan (unless PAYG - always allow buying more scoops)
+    if (plan.id === currentPlanId && plan.id !== 'payAsYouGo') {
+      return;
+    }
+
+    // Prevent PAYG users with scoops from downgrading to free plan
+    if (plan.id === 'free' && subscription?.planId === 'payAsYouGo' && subscription?.payAsYouGoBalance > 0) {
+      const scoopCount = subscription.payAsYouGoBalance;
+      addToast(
+        `You have ${scoopCount} scoop${scoopCount === 1 ? '' : 's'} remaining. You'll be downgraded to the free plan once your scoop${scoopCount === 1 ? '' : 's'} are used up.`,
+        'info'
+      );
       return;
     }
 
@@ -355,6 +451,9 @@ const PlanSelection = () => {
         await createUserSubscription(currentUser.uid, 'free', null);
         addToast('Welcome to Image Scoop!', 'success');
         navigate('/process');
+      } else if (plan.payAsYouGo) {
+        // Pay-as-you-go always goes to checkout to select scoop pack
+        navigate('/checkout?plan=payAsYouGo');
       } else {
         const upgradeParam =
           context === 'upgrade' ? `&context=upgrade&from=${currentPlanId}` : '';
@@ -481,7 +580,7 @@ const PlanSelection = () => {
                 <CTAButton
                   featured={plan.featured && !isCurrent}
                   onClick={() => handlePlanSelect(plan)}
-                  disabled={isLoading || isCurrent}
+                  disabled={isLoading || (isCurrent && plan.id !== 'payAsYouGo')}
                 >
                   {isLoading ? 'Loading...' : getButtonText(plan)}
                 </CTAButton>
