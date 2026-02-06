@@ -352,14 +352,6 @@ export const handler = async (event) => {
     const filenameSuffix = advancedOptions.filenameSuffix || '';
     const folderOrganization = advancedOptions.folderOrganization || 'by-original';
 
-    console.warn('DEBUG - Naming options:', {
-      omitFilename,
-      filenamePrefix,
-      filenameSuffix,
-      folderOrganization,
-      fullAdvancedOptions: advancedOptions,
-    });
-
     for (const file of processedFiles) {
       const baseName = file.originalName.replace(/\.[^/.]+$/, '');
 
@@ -382,14 +374,6 @@ export const handler = async (event) => {
           // When including filename, use processed name with size
           filename = `${processedName}_${sizeName}.${format}`;
         }
-
-        console.warn(`DEBUG - Generated filename for ${baseName}/${sizeName}:`, {
-          filename,
-          filenamePrefix,
-          filenameSuffix,
-          omitFilename,
-          processedName,
-        });
 
         // Organize files based on folder organization mode
         let folderPath;
